@@ -1,0 +1,133 @@
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+  <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <h1 class="h3 mb-2">📱 WhatsApp Manager</h1>
+        <p class="text-muted">Bulk messaging made simple</p>
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
+          <span id="loginText">Login</span>
+          <span id="loadingText" class="d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Logging in...
+          </span>
+        </button>
+      </form>
+
+      <div class="text-center">
+        <p class="mb-0">Don't have an account? <a href="/register" class="text-decoration-none">Register here</a></p>
+        <button type="button" class="btn btn-link btn-sm mt-2" onclick="clearStorage()">Clear Storage & Refresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const loginBtn = document.getElementById('loginBtn');
+    const loginText = document.getElementById('loginText');
+    const loadingText = document.getElementById('loadingText');
+    const alertContainer = document.getElementById('alertContainer');
+
+    // Clear previous alerts
+    alertContainer.innerHTML = '';
+
+    // Show loading
+    loginBtn.disabled = true;
+    loginText.classList.add('d-none');
+    loadingText.classList.remove('d-none');
+
+    try {
+      // IMPORTANT: skipAuth so Authorization header is not added
+      const resObj = await apiCall('/users/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+        skipAuth: true
+      });
+
+      // resObj is already JSON (from main.hbs apiCall)
+      const data = resObj || {};
+      const payload = data.data || data; // handle ApiResponse or plain
+
+      // If API returned an error shape
+      if (data.error || data.message && !payload.tokens) {
+        showAlert(data.message || data.error || 'Login failed', 'danger');
+        return;
+      }
+
+      const user   = payload.user || payload.data?.user || null;
+      const tokens = payload.tokens || payload.data?.tokens || {};
+
+      if (!tokens || !tokens.accessToken) {
+        showAlert('Login failed: no token received', 'danger');
+        return;
+      }
+
+      // Store user + token
+      if (user) localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('accessToken', tokens.accessToken);
+
+      // Success + redirect
+      showAlert('Login successful! Redirecting...', 'success');
+      const url = new URL(location.href);
+      const next = url.searchParams.get('next');
+      setTimeout(() => {
+        window.location.replace(next || '/dashboard');
+      }, 500);
+
+    } catch (error) {
+      console.error('Login error:', error);
+      showAlert('Network error. Please try again.', 'danger');
+    } finally {
+      // Hide loading
+      loginBtn.disabled = false;
+      loginText.classList.remove('d-none');
+      loadingText.classList.add('d-none');
+    }
+  });
+
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    alertContainer.innerHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+  }
+
+  // This log is harmless; it does not block redirects
+  document.addEventListener('DOMContentLoaded', function() {
+    window.loginRedirected = false;
+    console.log('Login page loaded - auto-redirect disabled to prevent loops');
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // Intentionally not auto-redirecting here
+    }
+  });
+  
+  function clearStorage() {
+    localStorage.clear();
+    sessionStorage.clear();
+    console.log('Storage cleared, refreshing page...');
+    window.location.reload();
+  }
+</script>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage</title>
+</head>
+<body>
+    <h1>Clearing localStorage...</h1>
+    <script>
+        // Clear all localStorage data
+        localStorage.clear();
+        console.log('localStorage cleared');
+        
+        // Clear sessionStorage as well
+        sessionStorage.clear();
+        console.log('sessionStorage cleared');
+        
+        // Redirect to login
+        window.location.replace('/login');
+    </script>
+</body>
+</html>

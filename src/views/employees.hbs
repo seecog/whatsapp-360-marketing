@@ -1,0 +1,997 @@
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 px-0">
+            <div class="sidebar p-3">
+                <div class="text-center mb-4">
+                    <h5 class="text-white">WhatsApp Manager</h5>
+                    <small class="text-white-50">{{user.firstName}} {{user.lastName}}</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <!-- WhatsApp Menu -->
+                    <div class="menu-toggle" onclick="toggleMenu('whatsapp-submenu')">
+                        <div class="nav-link">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                            <i class="fas fa-chevron-down float-end"></i>
+                        </div>
+                    </div>
+                    <div class="submenu show" id="whatsapp-submenu">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="/customers">
+                            <i class="fas fa-users"></i> Customers
+                        </a>
+                        <a class="nav-link" href="/templates">
+                            <i class="fas fa-file-alt"></i> Templates
+                        </a>
+                        <a class="nav-link" href="/campaigns">
+                            <i class="fas fa-bullhorn"></i> Campaigns
+                        </a>
+                        <a class="nav-link" href="/business">
+                            <i class="fas fa-building"></i> Business
+                        </a>
+                    </div>
+                    
+                    <!-- HR Tools Menu -->
+                    <div class="menu-toggle" onclick="toggleMenu('hr-submenu')">
+                        <div class="nav-link">
+                            <i class="fas fa-users-cog"></i> HR Tools
+                            <i class="fas fa-chevron-down float-end"></i>
+                        </div>
+                    </div>
+                    <div class="submenu show" id="hr-submenu">
+                        <a class="nav-link active" href="/employees">
+                            <i class="fas fa-user-tie"></i> Employee List
+                        </a>
+                    </div>
+                    
+                    <hr class="text-white-50">
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="main-content p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-user-tie me-2"></i>Employee Management</h2>
+                    <div>
+                        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
+                            <i class="fas fa-upload me-1"></i>Bulk Import
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEmployeeModal">
+                            <i class="fas fa-plus me-1"></i>Add Employee
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="totalEmployees">0</h4>
+                                        <p class="mb-0">Total Employees</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="activeEmployees">0</h4>
+                                        <p class="mb-0">Active Employees</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-user-check fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="inactiveEmployees">0</h4>
+                                        <p class="mb-0">Inactive Employees</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-user-times fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="avgCTC">₹0</h4>
+                                        <p class="mb-0">Average CTC</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-rupee-sign fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchEmployees" placeholder="Search employees...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="departmentFilter">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="designationFilter">
+                            <option value="">All Designations</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Employees Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Emp ID</th>
+                                        <th>Name</th>
+                                        <th>Designation</th>
+                                        <th>Department</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>CTC</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employeesTableBody">
+                                    <!-- Employees will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Employee pagination">
+                            <ul class="pagination justify-content-center" id="pagination">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Employee Modal -->
+<div class="modal fade" id="createEmployeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createEmployeeForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Employee Name *</label>
+                                <input type="text" class="form-control" name="empName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Designation *</label>
+                                <input type="text" class="form-control" name="empDesignation" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department *</label>
+                                <input type="text" class="form-control" name="empDepartment" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Work Location *</label>
+                                <input type="text" class="form-control" name="empWorkLoc" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 fancy-datepicker">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-plus"></i>Date of Joining *
+                                </label>
+                                <input type="text" class="form-control" name="empDateOfJoining" id="empDateOfJoining" placeholder="Select joining date" required readonly>
+                                <i class="fas fa-calendar-alt date-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 fancy-datepicker">
+                                <label class="form-label">
+                                    <i class="fas fa-birthday-cake"></i>Date of Birth *
+                                </label>
+                                <input type="text" class="form-control" name="empDob" id="empDob" placeholder="Select birth date" required readonly>
+                                <i class="fas fa-calendar-alt date-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">CTC (Annual) *</label>
+                                <input type="number" class="form-control" name="empCtc" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Aadhar Number *</label>
+                                <input type="text" class="form-control" name="empAadhar" pattern="[0-9]{12}" maxlength="12" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">PAN Number *</label>
+                                <input type="text" class="form-control" name="empPan" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10" style="text-transform: uppercase;" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="empEmail" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" name="empPhone" pattern="[0-9]{10}" maxlength="10" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editEmployeeForm">
+                <div class="modal-body">
+                    <input type="hidden" name="employeeId" id="editEmployeeId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Employee Name *</label>
+                                <input type="text" class="form-control" name="emp_name" id="editEmpName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Designation *</label>
+                                <input type="text" class="form-control" name="empDesignation" id="editEmpDesignation" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department *</label>
+                                <input type="text" class="form-control" name="empDepartment" id="editEmpDepartment" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Work Location *</label>
+                                <input type="text" class="form-control" name="empWorkLoc" id="editEmpWorkLoc" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 fancy-datepicker">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-plus"></i>Date of Joining *
+                                </label>
+                                <input type="text" class="form-control" name="empDateOfJoining" id="editEmpDateOfJoining" placeholder="Select joining date" required readonly>
+                                <i class="fas fa-calendar-alt date-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 fancy-datepicker">
+                                <label class="form-label">
+                                    <i class="fas fa-birthday-cake"></i>Date of Birth *
+                                </label>
+                                <input type="text" class="form-control" name="empDob" id="editEmpDob" placeholder="Select birth date" required readonly>
+                                <i class="fas fa-calendar-alt date-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">CTC (Annual) *</label>
+                                <input type="number" class="form-control" name="empCtc" id="editEmpCtc" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Aadhar Number *</label>
+                                <input type="text" class="form-control" name="empAadhar" id="editEmpAadhar" pattern="[0-9]{12}" maxlength="12" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">PAN Number *</label>
+                                <input type="text" class="form-control" name="empPan" id="editEmpPan" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10" style="text-transform: uppercase;" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="empEmail" id="editEmpEmail" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" name="empPhone" id="editEmpPhone" pattern="[0-9]{10}" maxlength="10" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="is_active" id="editIsActive">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal fade" id="bulkImportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Import Employees</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Instructions:</strong> Upload a CSV file with the following columns:
+                    emp_name, emp_designation, emp_department, emp_work_loc, emp_date_of_joining (YYYY-MM-DD), 
+                    emp_dob (YYYY-MM-DD), emp_ctc, emp_aadhar, emp_pan, emp_email, emp_phone
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Select CSV File</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv">
+                </div>
+                <div id="importPreview" class="d-none">
+                    <h6>Preview (First 5 rows):</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead id="previewHeader"></thead>
+                            <tbody id="previewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="importEmployees" disabled>Import Employees</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Employee Modal -->
+<div class="modal fade" id="viewEmployeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Employee Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="employeeDetails">
+                <!-- Employee details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let employeesData = [];
+
+// Load employees on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Only load data if we're on the employees page and user is authenticated
+    const currentPath = window.location.pathname;
+    const token = localStorage.getItem('accessToken');
+    
+    if (currentPath === '/employees' && token) {
+        loadEmployees();
+        loadEmployeeStats();
+        setupEventListeners();
+        initializeFancyCalendars();
+    } else if (currentPath === '/employees' && !token) {
+        // Redirect to login if no token
+        window.location.replace('/login');
+    }
+});
+
+function initializeFancyCalendars() {
+    // Initialize Date of Joining calendar
+    flatpickr("#empDateOfJoining", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        defaultDate: null,
+        placeholder: "Select joining date",
+        theme: "material_blue",
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+            // Add visual feedback
+            instance.input.style.borderColor = "#ffd700";
+            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
+        }
+    });
+
+    // Initialize Date of Birth calendar
+    flatpickr("#empDob", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        defaultDate: null,
+        placeholder: "Select birth date",
+        theme: "material_blue",
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+            // Add visual feedback
+            instance.input.style.borderColor = "#ffd700";
+            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
+        }
+    });
+
+    // Initialize Edit modal calendars
+    flatpickr("#editEmpDateOfJoining", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        defaultDate: null,
+        placeholder: "Select joining date",
+        theme: "material_blue",
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+            instance.input.style.borderColor = "#ffd700";
+            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
+        }
+    });
+
+    flatpickr("#editEmpDob", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        defaultDate: null,
+        placeholder: "Select birth date",
+        theme: "material_blue",
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+            instance.input.style.borderColor = "#ffd700";
+            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
+        }
+    });
+}
+
+function setupEventListeners() {
+    // Search functionality
+    document.getElementById('searchEmployees').addEventListener('input', debounce(loadEmployees, 300));
+    
+    // Filter functionality
+    document.getElementById('departmentFilter').addEventListener('change', loadEmployees);
+    document.getElementById('designationFilter').addEventListener('change', loadEmployees);
+    document.getElementById('statusFilter').addEventListener('change', loadEmployees);
+    
+    // Form submissions
+    document.getElementById('createEmployeeForm').addEventListener('submit', handleCreateEmployee);
+    document.getElementById('editEmployeeForm').addEventListener('submit', handleUpdateEmployee);
+    
+    // CSV import
+    document.getElementById('csvFile').addEventListener('change', handleCSVFile);
+    document.getElementById('importEmployees').addEventListener('click', handleBulkImport);
+}
+
+async function loadEmployees() {
+    try {
+        // Check if we're still on the employees page
+        if (window.location.pathname !== '/employees') {
+            return;
+        }
+        
+        const search = document.getElementById('searchEmployees').value;
+        const department = document.getElementById('departmentFilter').value;
+        const designation = document.getElementById('designationFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        const params = new URLSearchParams({
+            page: currentPage,
+            limit: 10
+        });
+        
+        if (search) params.append('search', search);
+        if (department) params.append('department', department);
+        if (designation) params.append('designation', designation);
+        if (status) params.append('is_active', status);
+        
+        const response = await apiCall(`/employees?${params}`);
+        
+        if (response && response.success) {
+            employeesData = response.data.employees;
+            displayEmployees(employeesData);
+            updatePagination(response.data.pagination);
+            updateFilters(response.data.employees);
+        }
+    } catch (error) {
+        console.error('Error loading employees:', error);
+        // Don't show alert for authentication errors as they're handled by apiCall
+        if (!error.message || !error.message.includes('Authentication failed')) {
+            showAlert('Error loading employees: ' + error.message, 'danger');
+        }
+    }
+}
+
+async function loadEmployeeStats() {
+    try {
+        // Check if we're still on the employees page
+        if (window.location.pathname !== '/employees') {
+            return;
+        }
+        
+        const response = await apiCall('/employees/stats');
+        
+        if (response && response.success) {
+            const stats = response.data.overview;
+            document.getElementById('totalEmployees').textContent = stats.totalEmployees || 0;
+            document.getElementById('activeEmployees').textContent = stats.activeEmployees || 0;
+            document.getElementById('inactiveEmployees').textContent = stats.inactiveEmployees || 0;
+            document.getElementById('avgCTC').textContent = '₹' + (stats.avgCTC ? stats.avgCTC.toLocaleString() : '0');
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        // Don't show alert for authentication errors as they're handled by apiCall
+    }
+}
+
+function displayEmployees(employees) {
+    const tbody = document.getElementById('employeesTableBody');
+    
+    if (employees.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No employees found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = employees.map(emp => `
+        <tr>
+            <td><strong>${emp.empId}</strong></td>
+            <td>${emp.empName}</td>
+            <td>${emp.empDesignation}</td>
+            <td>${emp.empDepartment}</td>
+            <td>${emp.empEmail}</td>
+            <td>${emp.empPhone}</td>
+            <td>₹${emp.empCtc.toLocaleString()}</td>
+            <td>
+                <span class="badge ${emp.isActive ? 'bg-success' : 'bg-danger'}">
+                    ${emp.isActive ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-info me-1" onclick="viewEmployee('${emp.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning me-1" onclick="editEmployee('${emp.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${emp.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updatePagination(pagination) {
+    const paginationContainer = document.getElementById('pagination');
+    totalPages = pagination.totalPages;
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    paginationHTML += `
+        <li class="page-item ${pagination.hasPrev ? '' : 'disabled'}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    // Next button
+    paginationHTML += `
+        <li class="page-item ${pagination.hasNext ? '' : 'disabled'}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+        </li>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+function updateFilters(employees) {
+    // Update department filter
+    const departments = [...new Set(employees.map(emp => emp.empDepartment))];
+    const departmentFilter = document.getElementById('departmentFilter');
+    const currentDept = departmentFilter.value;
+    
+    departmentFilter.innerHTML = '<option value="">All Departments</option>' +
+        departments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+    departmentFilter.value = currentDept;
+    
+    // Update designation filter
+    const designations = [...new Set(employees.map(emp => emp.empDesignation))];
+    const designationFilter = document.getElementById('designationFilter');
+    const currentDesig = designationFilter.value;
+    
+    designationFilter.innerHTML = '<option value="">All Designations</option>' +
+        designations.map(desig => `<option value="${desig}">${desig}</option>`).join('');
+    designationFilter.value = currentDesig;
+}
+
+function changePage(page) {
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        loadEmployees();
+    }
+}
+
+async function handleCreateEmployee(e) {
+    e.preventDefault();
+    
+    try {
+        const formData = new FormData(e.target);
+        const employeeData = Object.fromEntries(formData.entries());
+        
+        const response = await apiCall('/employees', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(employeeData)
+        });
+        
+        if (response.success) {
+            showAlert('Employee created successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('createEmployeeModal')).hide();
+            e.target.reset();
+            loadEmployees();
+            loadEmployeeStats();
+        }
+    } catch (error) {
+        showAlert('Error creating employee: ' + error.message, 'danger');
+    }
+}
+
+async function viewEmployee(id) {
+    try {
+        const response = await apiCall(`/employees/${id}`);
+        
+        if (response.success) {
+            const emp = response.data;
+            const detailsHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Personal Information</h6>
+                        <p><strong>Employee ID:</strong> ${emp.empId}</p>
+                        <p><strong>Name:</strong> ${emp.empName}</p>
+                        <p><strong>Email:</strong> ${emp.empEmail}</p>
+                        <p><strong>Phone:</strong> ${emp.empPhone}</p>
+                        <p><strong>Date of Birth:</strong> ${new Date(emp.empDob).toLocaleDateString()}</p>
+                        <p><strong>Age:</strong> ${emp.getAge ? emp.getAge() : 'N/A'} years</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Professional Information</h6>
+                        <p><strong>Designation:</strong> ${emp.empDesignation}</p>
+                        <p><strong>Department:</strong> ${emp.empDepartment}</p>
+                        <p><strong>Work Location:</strong> ${emp.empWorkLoc}</p>
+                        <p><strong>Date of Joining:</strong> ${new Date(emp.empDateOfJoining).toLocaleDateString()}</p>
+                        <p><strong>Experience:</strong> ${emp.getExperience ? emp.getExperience() : 'N/A'} years</p>
+                        <p><strong>CTC:</strong> ₹${emp.empCtc.toLocaleString()}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Document Information</h6>
+                        <p><strong>Aadhar:</strong> ${emp.empAadhar}</p>
+                        <p><strong>PAN:</strong> ${emp.empPan}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Status</h6>
+                        <p><strong>Status:</strong> 
+                            <span class="badge ${emp.isActive ? 'bg-success' : 'bg-danger'}">
+                                ${emp.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                        </p>
+                        <p><strong>Created:</strong> ${new Date(emp.createdAt).toLocaleDateString()}</p>
+                        <p><strong>Updated:</strong> ${new Date(emp.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('employeeDetails').innerHTML = detailsHTML;
+            new bootstrap.Modal(document.getElementById('viewEmployeeModal')).show();
+        }
+    } catch (error) {
+        showAlert('Error loading employee details: ' + error.message, 'danger');
+    }
+}
+
+async function editEmployee(id) {
+    try {
+        const response = await apiCall(`/employees/${id}`);
+        
+        if (response.success) {
+            const emp = response.data;
+            
+            // Populate form fields
+            document.getElementById('editEmployeeId').value = emp.id;
+            document.getElementById('editEmpName').value = emp.empName;
+            document.getElementById('editEmpDesignation').value = emp.empDesignation;
+            document.getElementById('editEmpDepartment').value = emp.empDepartment;
+            document.getElementById('editEmpWorkLoc').value = emp.empWorkLoc;
+            
+            // Set date values for fancy calendars
+            const joiningDate = emp.empDateOfJoining ? emp.empDateOfJoining.split('T')[0] : '';
+            const birthDate = emp.empDob ? emp.empDob.split('T')[0] : '';
+            
+            // Update flatpickr instances
+            const joiningCalendar = document.getElementById('editEmpDateOfJoining')._flatpickr;
+            const birthCalendar = document.getElementById('editEmpDob')._flatpickr;
+            
+            if (joiningCalendar) {
+                joiningCalendar.setDate(joiningDate);
+            }
+            if (birthCalendar) {
+                birthCalendar.setDate(birthDate);
+            }
+            
+            document.getElementById('editEmpCtc').value = emp.empCtc;
+            document.getElementById('editEmpAadhar').value = emp.empAadhar;
+            document.getElementById('editEmpPan').value = emp.empPan;
+            document.getElementById('editEmpEmail').value = emp.empEmail;
+            document.getElementById('editEmpPhone').value = emp.empPhone;
+            document.getElementById('editIsActive').value = emp.isActive;
+            
+            new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
+        }
+    } catch (error) {
+        showAlert('Error loading employee for edit: ' + error.message, 'danger');
+    }
+}
+
+async function handleUpdateEmployee(e) {
+    e.preventDefault();
+    
+    try {
+        const formData = new FormData(e.target);
+        const employeeId = formData.get('employeeId');
+        const employeeData = Object.fromEntries(formData.entries());
+        delete employeeData.employeeId;
+        
+        const response = await apiCall(`/employees/${employeeId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(employeeData)
+        });
+        
+        if (response.success) {
+            showAlert('Employee updated successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
+            loadEmployees();
+            loadEmployeeStats();
+        }
+    } catch (error) {
+        showAlert('Error updating employee: ' + error.message, 'danger');
+    }
+}
+
+async function deleteEmployee(id) {
+    if (!confirm('Are you sure you want to delete this employee?')) {
+        return;
+    }
+    
+    try {
+        const response = await apiCall(`/employees/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.success) {
+            showAlert('Employee deleted successfully!', 'success');
+            loadEmployees();
+            loadEmployeeStats();
+        }
+    } catch (error) {
+        showAlert('Error deleting employee: ' + error.message, 'danger');
+    }
+}
+
+function handleCSVFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        // Show preview
+        const previewDiv = document.getElementById('importPreview');
+        const previewHeader = document.getElementById('previewHeader');
+        const previewBody = document.getElementById('previewBody');
+        
+        previewHeader.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+        previewBody.innerHTML = lines.slice(1, 6).map(line => {
+            const values = line.split(',').map(v => v.trim());
+            return `<tr>${values.map(v => `<td>${v}</td>`).join('')}</tr>`;
+        }).join('');
+        
+        previewDiv.classList.remove('d-none');
+        document.getElementById('importEmployees').disabled = false;
+        
+        // Store CSV data for import
+        window.csvData = { headers, lines: lines.slice(1) };
+    };
+    reader.readAsText(file);
+}
+
+async function handleBulkImport() {
+    if (!window.csvData) return;
+    
+    try {
+        const employees = window.csvData.lines
+            .filter(line => line.trim())
+            .map(line => {
+                const values = line.split(',').map(v => v.trim());
+                const employee = {};
+                window.csvData.headers.forEach((header, index) => {
+                    employee[header] = values[index] || '';
+                });
+                return employee;
+            });
+        
+        const response = await apiCall('/employees/bulk-import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employees })
+        });
+        
+        if (response.success) {
+            const result = response.data;
+            showAlert(`Bulk import completed! ${result.success.length} successful, ${result.errors.length} errors`, 
+                     result.errors.length > 0 ? 'warning' : 'success');
+            
+            if (result.errors.length > 0) {
+                console.log('Import errors:', result.errors);
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('bulkImportModal')).hide();
+            loadEmployees();
+            loadEmployeeStats();
+        }
+    } catch (error) {
+        showAlert('Error importing employees: ' + error.message, 'danger');
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.main-content').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>

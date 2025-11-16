@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - Bulk WhatsApp Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css" rel="stylesheet">
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.1.0/classic/ckeditor.js"></script>
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 50%, #ff8c00 100%);
+            box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.3);
+            overflow-y: auto; /* allow scroll when content taller than viewport */
+        }
+        .sidebar .nav-link {
+            color: rgba(0, 0, 0, 0.7);
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #000;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .sidebar .text-white {
+            color: #000 !important;
+        }
+        .sidebar .text-white-50 {
+            color: rgba(0, 0, 0, 0.6) !important;
+        }
+        .sidebar hr {
+            border-color: rgba(0, 0, 0, 0.3) !important;
+        }
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+        .sidebar .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        /* IMPORTANT FIX: remove the 200px cap so all items (e.g., Business) are visible */
+        .sidebar .submenu.show {
+            max-height: none;            /* no clipping */
+            overflow: visible;           /* let items be fully visible */
+            transition: max-height 0.3s ease-in;
+        }
+        .sidebar .submenu .nav-link {
+            padding-left: 2.5rem;
+            font-size: 0.9rem;
+        }
+        .sidebar .menu-toggle {
+            cursor: pointer;
+        }
+        .sidebar .menu-toggle i.fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+        .sidebar .menu-toggle.collapsed i.fa-chevron-down {
+            transform: rotate(-90deg);
+        }
+        
+        /* Fancy Calendar Styling */
+        .fancy-datepicker {
+            position: relative;
+        }
+        .fancy-datepicker .form-control {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 12px 45px 12px 15px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .fancy-datepicker .form-control:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        }
+        .fancy-datepicker .date-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ffd700;
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .fancy-datepicker .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fancy-datepicker .form-label i {
+            color: #ffd700;
+            font-size: 16px;
+        }
+        
+        /* Flatpickr Custom Styling */
+        .flatpickr-calendar {
+            border-radius: 15px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+            border: none !important;
+            font-family: inherit !important;
+        }
+        .flatpickr-months {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%) !important;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .flatpickr-month {
+            color: #000 !important;
+            font-weight: 600 !important;
+        }
+        .flatpickr-prev-month, .flatpickr-next-month {
+            color: #000 !important;
+        }
+        .flatpickr-prev-month:hover, .flatpickr-next-month:hover {
+            color: #333 !important;
+        }
+        .flatpickr-day.selected {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%) !important;
+            border-color: #ffd700 !important;
+            color: #000 !important;
+            font-weight: 600 !important;
+        }
+        .flatpickr-day:hover {
+            background: rgba(255, 215, 0, 0.2) !important;
+            border-color: #ffd700 !important;
+        }
+        .flatpickr-day.today {
+            border-color: #ffd700 !important;
+            color: #ffd700 !important;
+            font-weight: 600 !important;
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        .alert {
+            border: none;
+            border-radius: 0.75rem;
+        }
+        .ck-editor__editable {
+            min-height: 200px;
+        }
+        .ck-editor__main {
+            border-radius: 0.375rem;
+        }
+    </style>
+</head>
+<body>
+    {{{body}}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        const API_BASE = 'http://localhost:3002/api/v1';
+
+        // Helper: detect if current page is login or register
+        function isAuthPage() {
+            const p = window.location.pathname.toLowerCase();
+            return p === '/login' || p === '/register' || p.endsWith('/login') || p.endsWith('/register');
+        }
+        
+        // Helper function to make API calls (minimal fixes only)
+        async function apiCall(endpoint, options = {}) {
+            const token = localStorage.getItem('accessToken') || null;
+
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+
+            // Attach Authorization only if we have a real token and caller didn't skip auth
+            if (token && !options.skipAuth) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const defaultOptions = {
+                credentials: 'include',
+                ...options,
+                headers
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, defaultOptions);
+
+                // If unauthorized:
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+
+                    const isAuthError =
+                        response.status === 401 ||
+                        (errorData.error && (
+                            String(errorData.error).includes('jwt expired') ||
+                            String(errorData.error).includes('Invalid access Token') ||
+                            String(errorData.error).includes('Authentication failed')
+                        ));
+
+                    if (isAuthError) {
+                        // Only redirect to /login if we are NOT already on login/register
+                        if (!isAuthPage()) {
+                            console.log('Authentication failed, redirecting to login...');
+                            localStorage.removeItem('accessToken');
+                            localStorage.removeItem('user');
+                            window.location.replace('/login');
+                            return;
+                        }
+                        // If we are on an auth page, just return the error JSON to the caller
+                        return errorData;
+                    }
+
+                    // Non-auth failure: throw with message for the caller
+                    throw new Error(errorData.message || errorData.error || 'API request failed');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                // Network or other errors; don't force redirect if already on auth pages
+                const msg = String(error && error.message || '');
+                if (
+                    (msg.includes('jwt expired') || msg.includes('Invalid access Token') || msg.includes('Authentication failed')) &&
+                    !isAuthPage()
+                ) {
+                    console.log('Authentication failed, redirecting to login...');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login');
+                    return;
+                }
+                throw error;
+            }
+        }
+        
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('accessToken');
+            const currentPath = window.location.pathname;
+            
+            // Only redirect if we're not already on login/register pages and no token exists
+            if (!token && 
+                currentPath !== '/login' && 
+                currentPath !== '/register' && 
+                !currentPath.includes('/login') && 
+                !currentPath.includes('/register')) {
+                console.log('No token found, redirecting to login...');
+                // Use replace to prevent back button issues
+                window.location.replace('/login');
+            }
+        }
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            window.location.replace('/login');
+        }
+        
+        // Menu toggle functionality
+        function toggleMenu(menuId) {
+            const submenu = document.getElementById(menuId);
+            const toggle = document.querySelector(`[onclick="toggleMenu('${menuId}')"]`);
+            
+            if (submenu.classList.contains('show')) {
+                submenu.classList.remove('show');
+                toggle.classList.add('collapsed');
+            } else {
+                submenu.classList.add('show');
+                toggle.classList.remove('collapsed');
+            }
+        }
+        
+        // Initialize auth check (only on protected pages)
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/register' && !window.authChecked) {
+            window.authChecked = true;
+            checkAuth();
+        }
+    </script>
+</body>
+</html>
