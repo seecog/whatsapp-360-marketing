@@ -55,17 +55,34 @@
 </div>
 
 <script>
+    // Show alert helper
+    function showAlert(message, type) {
+        const alertContainer = document.getElementById('alertContainer');
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    // Restrict phone number input to digits only
+    document.getElementById('phoneNo').addEventListener('input', function (e) {
+        this.value = this.value.replace(/\D/g, '');
+    });
+
+    // Handle form submit
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const phoneNumber = document.getElementById('phoneNo').value.trim();
-        
+
         // Validate phone number
         if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
             showAlert('Please enter a valid 10-digit phone number', 'danger');
             return;
         }
-        
+
         const formData = {
             firstName: document.getElementById('firstName').value,
             lastName: document.getElementById('lastName').value,
@@ -88,30 +105,42 @@
         loadingText.classList.remove('d-none');
 
         try {
-            const response = await apiCall('/users/register', {
+            // apiCall already returns parsed JSON, NOT a Response object
+            const data = await apiCall('/users/register', {
                 method: 'POST',
                 body: JSON.stringify(formData),
                 skipAuth: true
             });
 
-            const data = await response.json();
+            // Determine success based on common patterns (adjust if needed)
+            const isSuccess =
+                data &&
+                (data.success === true ||
+                 data.status === 'success' ||
+                 data.statusCode === 200 ||
+                 data.statusCode === 201);
 
-            if (response.ok) {
-                // Store user data
-                localStorage.setItem('user', JSON.stringify(data.data.user));
-                localStorage.setItem('accessToken', data.data.tokens.accessToken);
-                
-                // Show success and redirect
-                showAlert('Registration successful! Redirecting...', 'success');
+            if (isSuccess) {
+                // Store user data if present
+                if (data.data && data.data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                }
+                if (data.data && data.data.tokens && data.data.tokens.accessToken) {
+                    localStorage.setItem('accessToken', data.data.tokens.accessToken);
+                }
+
+                // Show success and redirect to login
+                showAlert('Registration successful! Redirecting to login...', 'success');
+
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1000);
+                    window.location.replace('/login');
+                }, 1500); // small delay so user can see the alert
             } else {
-                showAlert(data.message || 'Registration failed', 'danger');
+                showAlert(data?.message || 'Registration failed', 'danger');
             }
         } catch (error) {
             console.error('Registration error:', error);
-            showAlert('Network error. Please try again.', 'danger',$error);
+            showAlert(`Network error. Please try again. ${error}`, 'danger');
         } finally {
             // Hide loading
             registerBtn.disabled = false;
@@ -120,25 +149,8 @@
         }
     });
 
-    function showAlert(message, type) {
-        const alertContainer = document.getElementById('alertContainer');
-        alertContainer.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-    }
-
-    // Restrict phone number input to digits only
-    document.getElementById('phoneNo').addEventListener('input', function(e) {
-        // Remove any non-digit characters
-        this.value = this.value.replace(/\D/g, '');
-    });
-
-    // Check if user is already logged in
+    // If already logged in, go to dashboard
     if (localStorage.getItem('accessToken')) {
         window.location.href = '/dashboard';
     }
 </script>
-
