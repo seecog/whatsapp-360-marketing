@@ -10,6 +10,7 @@ import { Service } from './Service.js';
 import { Designation } from './Designation.js';
 import { LeaveType } from './LeaveType.js';
 import { LeaveRequest } from './LeaveRequest.js';
+import DocumentType from './DocumentType.js';
 
 /**
  * IMPORTANT:
@@ -109,4 +110,6 @@ export {
   Designation,
   LeaveType,
   LeaveRequest,
+  Employee,
+  DocumentType,
 };

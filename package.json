@@ -39,6 +39,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.15.2",
     "nodemon": "^3.1.10",
+    "pdfkit": "^0.17.2",
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"

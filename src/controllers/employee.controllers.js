@@ -1,460 +1,219 @@
-import Employee from '../models/Employee.js';
+// src/controllers/employee.controllers.js
 import { Op } from 'sequelize';
+import Employee from '../models/Employee.js';
 
-// Create Employee
-export const createEmployee = async (req, res) => {
+const toBool = (val) =>
+    val === true || val === 'true' || val === '1' || val === 'on';
+
+/**
+ * GET /employees (HTML page)
+ */
+export const renderEmployeesPage = async (req, res, next) => {
     try {
-        const {
-            empName,
-            empDesignation,
-            empDepartment,
-            empWorkLoc,
-            empDateOfJoining,
-            empDob,
-            empCtc,
-            empAadhar,
-            empPan,
-            empEmail,
-            empPhone
-        } = req.body;
+        const search = (req.query.search || '').trim();
 
-        // Validation
-        if (!empName || !empDesignation || !empDepartment || !empWorkLoc || 
-            !empDateOfJoining || !empDob || !empCtc || !empAadhar || 
-            !empPan || !empEmail || !empPhone) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required"
-            });
-        }
+        const where = {};
 
-        // Check if employee with same email, phone, aadhar, or pan already exists for this user
-        const existingEmployee = await Employee.findOne({
-            where: {
-                userId: req.user.id,
-                [Op.or]: [
-                    { empEmail: empEmail.toLowerCase() },
-                    { empPhone },
-                    { empAadhar },
-                    { empPan: empPan.toUpperCase() }
-                ]
-            }
-        });
-
-        if (existingEmployee) {
-            return res.status(400).json({
-                success: false,
-                message: "Employee with this email, phone, Aadhar, or PAN already exists"
-            });
-        }
-
-        const employee = await Employee.create({
-            userId: req.user.id,
-            empName,
-            empDesignation,
-            empDepartment,
-            empWorkLoc,
-            empDateOfJoining,
-            empDob,
-            empCtc: parseFloat(empCtc),
-            empAadhar,
-            empPan: empPan.toUpperCase(),
-            empEmail: empEmail.toLowerCase(),
-            empPhone
-        });
-
-        res.status(201).json({
-            success: true,
-            data: employee,
-            message: "Employee created successfully"
-        });
-    } catch (error) {
-        console.error('Error creating employee:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
-
-// Get All Employees
-export const getAllEmployees = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search, department, designation, isActive } = req.query;
-        
-        const whereClause = { userId: req.user.id };
-        
-        // Add search functionality
         if (search) {
-            whereClause[Op.or] = [
+            where[Op.or] = [
                 { empName: { [Op.like]: `%${search}%` } },
-                { empId: { [Op.like]: `%${search}%` } },
                 { empEmail: { [Op.like]: `%${search}%` } },
-                { empPhone: { [Op.like]: `%${search}%` } }
+                { empId: { [Op.like]: `%${search}%` } },
             ];
         }
-        
-        // Add filters
-        if (department) {
-            whereClause.empDepartment = { [Op.like]: `%${department}%` };
-        }
-        
-        if (designation) {
-            whereClause.empDesignation = { [Op.like]: `%${designation}%` };
-        }
-        
-        if (isActive !== undefined) {
-            whereClause.isActive = isActive === 'true';
-        }
 
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-
-        const { count, rows: employees } = await Employee.findAndCountAll({
-            where: whereClause,
-            limit: parseInt(limit),
-            offset: offset,
-            order: [['createdAt', 'DESC']]
+        const employees = await Employee.findAll({
+            where,
+            order: [['empId', 'ASC']],
         });
 
-        res.json({
-            success: true,
-            data: {
-                employees,
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages: Math.ceil(count / parseInt(limit)),
-                    totalEmployees: count,
-                    hasNext: parseInt(page) < Math.ceil(count / parseInt(limit)),
-                    hasPrev: parseInt(page) > 1
-                }
-            },
-            message: "Employees retrieved successfully"
+        const employeesPlain = employees.map((e) => e.get({ plain: true }));
+
+        console.log('Employees fetched for page ');
+
+        const user = req.user
+            ? { firstName: req.user.firstName, lastName: req.user.lastName }
+            : {};
+
+        res.render('employees', {
+            layout: 'main',
+            title: 'Employee Management',
+            user,
+            employees: employeesPlain,
+            search,
         });
-    } catch (error) {
-        console.error('Error getting employees:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
+    } catch (err) {
+        console.error('Error rendering employees page:', err);
+        next(err);
     }
 };
 
-// Get Employee by ID
-export const getEmployeeById = async (req, res) => {
+/**
+ * GET /api/v1/employees (JSON)
+ */
+export const listEmployees = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const search = (req.query.search || '').trim();
 
-        const employee = await Employee.findOne({
-            where: {
-                id: id,
-                userId: req.user.id
-            }
-        });
+        const where = {};
 
-        if (!employee) {
-            return res.status(404).json({
-                success: false,
-                message: "Employee not found"
-            });
+        if (search) {
+            where[Op.or] = [
+                { empName: { [Op.like]: `%${search}%` } },
+                { empEmail: { [Op.like]: `%${search}%` } },
+                { empId: { [Op.like]: `%${search}%` } },
+            ];
         }
 
-        res.json({
-            success: true,
-            data: employee,
-            message: "Employee retrieved successfully"
+        const employees = await Employee.findAll({
+            where,
+            order: [['empId', 'ASC']],
         });
-    } catch (error) {
-        console.error('Error getting employee:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
+        console.log('Employees listed via API:');
+        res.json(employees);
+    } catch (err) {
+        console.error('Error listing employees:', err);
+        next(err);
     }
 };
 
-// Update Employee
-export const updateEmployee = async (req, res) => {
+/**
+ * POST /api/v1/employees
+ */
+export const createEmployee = async (req, res, next) => {
     try {
-        const { id } = req.params;
-        const {
-            empName,
-            empDesignation,
-            empDepartment,
-            empWorkLoc,
-            empDateOfJoining,
-            empDob,
-            empCtc,
-            empAadhar,
-            empPan,
-            empEmail,
-            empPhone,
-            isActive
-        } = req.body;
+        console.log('Received POST request with body:', req.body);
 
-        const employee = await Employee.findOne({
-            where: {
-                id: id,
-                userId: req.user.id
-            }
-        });
+        const userId = req.user?.id || 1;
 
-        if (!employee) {
-            return res.status(404).json({
-                success: false,
-                message: "Employee not found"
-            });
-        }
+        const payload = {
+            userId,
 
-        // Check for duplicate email, phone, aadhar, or pan (excluding current employee)
-        if (empEmail || empPhone || empAadhar || empPan) {
-            const duplicateWhere = {
-                userId: req.user.id,
-                id: { [Op.ne]: id },
-                [Op.or]: []
-            };
+            // --- Name ---
+            firstName: req.body.firstName,
+            middleName: req.body.middleName || null,
+            lastName: req.body.lastName,
 
-            if (empEmail) duplicateWhere[Op.or].push({ empEmail: empEmail.toLowerCase() });
-            if (empPhone) duplicateWhere[Op.or].push({ empPhone });
-            if (empAadhar) duplicateWhere[Op.or].push({ empAadhar });
-            if (empPan) duplicateWhere[Op.or].push({ empPan: empPan.toUpperCase() });
+            empName: req.body.empName || undefined, // will be auto-built if undefined
 
-            if (duplicateWhere[Op.or].length > 0) {
-                const existingEmployee = await Employee.findOne({ where: duplicateWhere });
-                if (existingEmployee) {
-                    return res.status(400).json({
-                        success: false,
-                        message: "Employee with this email, phone, Aadhar, or PAN already exists"
-                    });
-                }
-            }
-        }
+            // --- Personal profile ---
+            gender: req.body.gender || null,
+            maritalStatus: req.body.maritalStatus || null,
+            bloodGroup: req.body.bloodGroup || null,
+            nationality: req.body.nationality || null,
+            religion: req.body.religion || null,
+            casteCategory: req.body.casteCategory || null,
+            languagesKnown: req.body.languagesKnown || null,
 
-        // Update fields
-        const updateData = {};
-        if (empName) updateData.empName = empName;
-        if (empDesignation) updateData.empDesignation = empDesignation;
-        if (empDepartment) updateData.empDepartment = empDepartment;
-        if (empWorkLoc) updateData.empWorkLoc = empWorkLoc;
-        if (empDateOfJoining) updateData.empDateOfJoining = empDateOfJoining;
-        if (empDob) updateData.empDob = empDob;
-        if (empCtc) updateData.empCtc = parseFloat(empCtc);
-        if (empAadhar) updateData.empAadhar = empAadhar;
-        if (empPan) updateData.empPan = empPan.toUpperCase();
-        if (empEmail) updateData.empEmail = empEmail.toLowerCase();
-        if (empPhone) updateData.empPhone = empPhone;
-        if (isActive !== undefined) updateData.isActive = isActive;
+            // Contacts
+            empPhone: req.body.empPhone,
+            altPhone: req.body.altPhone || null,
+            empEmail: req.body.empEmail,
 
-        const updatedEmployee = await employee.update(updateData);
+            // Emergency
+            emergencyContactName: req.body.emergencyContactName || null,
+            emergencyContactRelation: req.body.emergencyContactRelation || null,
+            emergencyContactNumber: req.body.emergencyContactNumber || null,
 
-        res.json({
-            success: true,
-            data: updatedEmployee,
-            message: "Employee updated successfully"
-        });
-    } catch (error) {
-        console.error('Error updating employee:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
+            // Present address
+            presentAddressLine1: req.body.presentAddressLine1 || null,
+            presentAddressLine2: req.body.presentAddressLine2 || null,
+            presentCity: req.body.presentCity || null,
+            presentState: req.body.presentState || null,
+            presentZip: req.body.presentZip || null,
+            presentCountry: req.body.presentCountry || null,
 
-// Delete Employee
-export const deleteEmployee = async (req, res) => {
-    try {
-        const { id } = req.params;
+            // Permanent address
+            permanentSameAsPresent: toBool(req.body.permanentSameAsPresent),
+            permanentAddressLine1: req.body.permanentAddressLine1 || null,
+            permanentAddressLine2: req.body.permanentAddressLine2 || null,
+            permanentCity: req.body.permanentCity || null,
+            permanentState: req.body.permanentState || null,
+            permanentZip: req.body.permanentZip || null,
+            permanentCountry: req.body.permanentCountry || null,
 
-        const employee = await Employee.findOne({
-            where: {
-                id: id,
-                userId: req.user.id
-            }
-        });
+            // --- Professional ---
+            employeeType: req.body.employeeType || 'Permanent',
+            empDesignation: req.body.empDesignation,
+            empDepartment: req.body.empDepartment,
+            division: req.body.division || null,
+            subDepartment: req.body.subDepartment || null,
+            gradeBandLevel: req.body.gradeBandLevel || null,
+            reportingManagerId: req.body.reportingManagerId || null,
+            empWorkLoc: req.body.empWorkLoc,
+            empDateOfJoining: req.body.empDateOfJoining,
+            probationPeriodMonths: req.body.probationPeriodMonths || null,
+            confirmationDate: req.body.confirmationDate || null,
+            employmentStatus: req.body.employmentStatus || 'Active',
+            workMode: req.body.workMode || 'On-site',
 
-        if (!employee) {
-            return res.status(404).json({
-                success: false,
-                message: "Employee not found"
-            });
-        }
+            // --- Dates ---
+            empDob: req.body.empDob,
 
-        await employee.destroy();
+            // --- Compensation ---
+            empCtc: req.body.empCtc,
+            grossSalaryMonthly: req.body.grossSalaryMonthly || null,
+            basicSalary: req.body.basicSalary || null,
+            hra: req.body.hra || null,
+            conveyanceAllowance: req.body.conveyanceAllowance || null,
+            medicalAllowance: req.body.medicalAllowance || null,
+            specialAllowance: req.body.specialAllowance || null,
+            performanceBonus: req.body.performanceBonus || null,
+            variablePay: req.body.variablePay || null,
+            overtimeEligible: toBool(req.body.overtimeEligible),
+            shiftAllowance: req.body.shiftAllowance || null,
+            pfDeduction: req.body.pfDeduction || null,
+            esiDeduction: req.body.esiDeduction || null,
+            professionalTax: req.body.professionalTax || null,
+            tdsDeduction: req.body.tdsDeduction || null,
+            netSalary: req.body.netSalary || null,
 
-        res.json({
-            success: true,
-            message: "Employee deleted successfully"
-        });
-    } catch (error) {
-        console.error('Error deleting employee:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
+            // --- Attendance & shift ---
+            shiftName: req.body.shiftName || null,
+            shiftCode: req.body.shiftCode || null,
+            shiftStartTime: req.body.shiftStartTime || null,
+            shiftEndTime: req.body.shiftEndTime || null,
+            totalWorkHours: req.body.totalWorkHours || null,
+            breakDurationMinutes: req.body.breakDurationMinutes || null,
+            shiftType: req.body.shiftType || null,
+            shiftRotationCycle: req.body.shiftRotationCycle || null,
+            gracePeriodMinutes: req.body.gracePeriodMinutes || null,
+            halfDayRuleHours: req.body.halfDayRuleHours || null,
+            shiftEffectiveFrom: req.body.shiftEffectiveFrom || null,
+            workTimezone: req.body.workTimezone || null,
 
-// Get Employee Statistics
-export const getEmployeeStats = async (req, res) => {
-    try {
-        const stats = await Employee.findAll({
-            where: { userId: req.user.id },
-            attributes: [
-                [Employee.sequelize.fn('COUNT', Employee.sequelize.col('id')), 'totalEmployees'],
-                [Employee.sequelize.fn('COUNT', Employee.sequelize.literal('CASE WHEN isActive = true THEN 1 END')), 'activeEmployees'],
-                [Employee.sequelize.fn('COUNT', Employee.sequelize.literal('CASE WHEN isActive = false THEN 1 END')), 'inactiveEmployees'],
-                [Employee.sequelize.fn('AVG', Employee.sequelize.col('empCtc')), 'avgCTC'],
-                [Employee.sequelize.fn('SUM', Employee.sequelize.col('empCtc')), 'totalCTC']
-            ],
-            raw: true
-        });
+            // --- KYC / Compliance ---
+            empAadhar: req.body.empAadhar,
+            empPan: req.body.empPan,
+            idProofType: req.body.idProofType || null,
+            idProofNumber: req.body.idProofNumber || null,
+            idCountryOfIssue: req.body.idCountryOfIssue || null,
+            idExpiryDate: req.body.idExpiryDate || null,
+            // idVerificationStatus/idVerifiedBy... usually set later by HR
 
-        const departmentStats = await Employee.findAll({
-            where: { 
-                userId: req.user.id,
-                isActive: true 
-            },
-            attributes: [
-                'empDepartment',
-                [Employee.sequelize.fn('COUNT', Employee.sequelize.col('id')), 'count']
-            ],
-            group: ['empDepartment'],
-            order: [[Employee.sequelize.literal('count'), 'DESC']],
-            raw: true
-        });
-
-        const designationStats = await Employee.findAll({
-            where: { 
-                userId: req.user.id,
-                isActive: true 
-            },
-            attributes: [
-                'empDesignation',
-                [Employee.sequelize.fn('COUNT', Employee.sequelize.col('id')), 'count']
-            ],
-            group: ['empDesignation'],
-            order: [[Employee.sequelize.literal('count'), 'DESC']],
-            raw: true
-        });
-
-        res.json({
-            success: true,
-            data: {
-                overview: stats[0] || {
-                    totalEmployees: 0,
-                    activeEmployees: 0,
-                    inactiveEmployees: 0,
-                    avgCTC: 0,
-                    totalCTC: 0
-                },
-                departmentStats,
-                designationStats
-            },
-            message: "Employee statistics retrieved successfully"
-        });
-    } catch (error) {
-        console.error('Error getting employee stats:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
-
-// Bulk Import Employees
-export const bulkImportEmployees = async (req, res) => {
-    try {
-        const { employees } = req.body;
-
-        if (!employees || !Array.isArray(employees) || employees.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Employees array is required"
-            });
-        }
-
-        const results = {
-            success: [],
-            errors: []
+            // --- System & Access ---
+            workEmail: req.body.workEmail || null,
+            username: req.body.username || null,
+            systemRole: req.body.systemRole || null,
+            accountStatus: req.body.accountStatus || 'Active',
+            mfaEnabled: toBool(req.body.mfaEnabled),
         };
 
-        for (let i = 0; i < employees.length; i++) {
-            const emp = employees[i];
-            try {
-                // Validate required fields
-                if (!emp.empName || !emp.empDesignation || !emp.empDepartment || 
-                    !emp.empWorkLoc || !emp.empDateOfJoining || !emp.empDob || 
-                    !emp.empCtc || !emp.empAadhar || !emp.empPan || 
-                    !emp.empEmail || !emp.empPhone) {
-                    results.errors.push({
-                        row: i + 1,
-                        error: "Missing required fields"
-                    });
-                    continue;
-                }
-
-                // Check for duplicates
-                const existingEmployee = await Employee.findOne({
-                    where: {
-                        userId: req.user.id,
-                        [Op.or]: [
-                            { empEmail: emp.empEmail.toLowerCase() },
-                            { empPhone: emp.empPhone },
-                            { empAadhar: emp.empAadhar },
-                            { empPan: emp.empPan.toUpperCase() }
-                        ]
-                    }
-                });
-
-                if (existingEmployee) {
-                    results.errors.push({
-                        row: i + 1,
-                        error: "Employee with this email, phone, Aadhar, or PAN already exists"
-                    });
-                    continue;
-                }
-
-                const employee = await Employee.create({
-                    userId: req.user.id,
-                    empName: emp.empName,
-                    empDesignation: emp.empDesignation,
-                    empDepartment: emp.empDepartment,
-                    empWorkLoc: emp.empWorkLoc,
-                    empDateOfJoining: emp.empDateOfJoining,
-                    empDob: emp.empDob,
-                    empCtc: parseFloat(emp.empCtc),
-                    empAadhar: emp.empAadhar,
-                    empPan: emp.empPan.toUpperCase(),
-                    empEmail: emp.empEmail.toLowerCase(),
-                    empPhone: emp.empPhone
-                });
-
-                results.success.push(employee);
-            } catch (error) {
-                results.errors.push({
-                    row: i + 1,
-                    error: error.message
-                });
-            }
+        // Optional manual empId; otherwise auto-generate in hook
+        if (req.body.empId && req.body.empId.trim() !== '') {
+            payload.empId = req.body.empId.trim();
         }
 
-        res.json({
-            success: true,
-            data: results,
-            message: `Bulk import completed. ${results.success.length} successful, ${results.errors.length} errors`
-        });
-    } catch (error) {
-        console.error('Error bulk importing employees:', error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        });
+        const employee = await Employee.create(payload);
+        console.log('Created new employee:', employee.get({ plain: true }));
+        return res.status(201).json(employee);
+    } catch (err) {
+        console.error('Error creating employee:', err);
+        if (err.name === 'SequelizeValidationError') {
+            return res
+                .status(400)
+                .json({ error: err.errors.map((e) => e.message).join(', ') });
+        }
+        next(err);
     }
 };
