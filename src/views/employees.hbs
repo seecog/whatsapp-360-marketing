@@ -152,7 +152,7 @@
 
 {{!-- Add Employee Modal --}}
 <div class="modal fade" id="addEmployeeModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <form id="addEmployeeForm">
         <div class="modal-header">
@@ -161,7 +161,7 @@
         </div>
 
         <div class="modal-body">
-          {{!-- Tabs header --}}
+          {{!-- Tabs header (6 sections) --}}
           <ul class="nav nav-tabs" id="addEmployeeTabs" role="tablist">
             <li class="nav-item" role="presentation">
               <button
@@ -171,10 +171,8 @@
                 data-bs-target="#tab-basic"
                 type="button"
                 role="tab"
-                aria-controls="tab-basic"
-                aria-selected="true"
               >
-                Personal Details
+                1) Personal Details
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -185,10 +183,8 @@
                 data-bs-target="#tab-job"
                 type="button"
                 role="tab"
-                aria-controls="tab-job"
-                aria-selected="false"
               >
-                Professional Details
+                2) Professional Details
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -199,38 +195,44 @@
                 data-bs-target="#tab-comp"
                 type="button"
                 role="tab"
-                aria-controls="tab-comp"
-                aria-selected="false"
               >
-                Compensation &amp; KYC
+                3) Compensation
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button
                 class="nav-link"
-                id="att-tab"
+                id="edu-tab"
                 data-bs-toggle="tab"
-                data-bs-target="#tab-attendance"
+                data-bs-target="#tab-education"
                 type="button"
                 role="tab"
-                aria-controls="tab-attendance"
-                aria-selected="false"
               >
-                Attendance &amp; Leave
+                4) Education &amp; Qualification
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button
                 class="nav-link"
-                id="compAccess-tab"
+                id="exp-tab"
                 data-bs-toggle="tab"
-                data-bs-target="#tab-compliance"
+                data-bs-target="#tab-experience"
                 type="button"
                 role="tab"
-                aria-controls="tab-compliance"
-                aria-selected="false"
               >
-                Compliance &amp; Access
+                5) Experience / Employment History
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="docs-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-documents"
+                type="button"
+                role="tab"
+              >
+                6) Documents &amp; KYC
               </button>
             </li>
           </ul>
@@ -243,7 +245,6 @@
               class="tab-pane fade show active"
               id="tab-basic"
               role="tabpanel"
-              aria-labelledby="basic-tab"
             >
               <div class="row g-3">
                 <div class="col-md-4">
@@ -289,12 +290,10 @@
                   <label class="form-label">Blood Group</label>
                   <input type="text" name="bloodGroup" class="form-control" />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Nationality</label>
                   <input type="text" name="nationality" class="form-control" />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Religion</label>
                   <input type="text" name="religion" class="form-control" />
@@ -334,7 +333,6 @@
                     class="form-control"
                   />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Personal Email</label>
                   <input
@@ -470,11 +468,10 @@
               class="tab-pane fade"
               id="tab-job"
               role="tabpanel"
-              aria-labelledby="job-tab"
             >
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Employee ID (optional)</label>
+                  <label class="form-label">Employee Code / ID (optional)</label>
                   <input type="text" name="empId" class="form-control" />
                   <small class="text-muted">
                     Leave blank to autogenerate (EMP0001…)
@@ -504,20 +501,19 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label">Designation</label>
-                  <input
-                    type="text"
-                    name="empDesignation"
-                    class="form-control"
-                    required
-                  />
-                </div>
-
-                <div class="col-md-6">
                   <label class="form-label">Department</label>
                   <input
                     type="text"
                     name="empDepartment"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Designation / Job Title</label>
+                  <input
+                    type="text"
+                    name="empDesignation"
                     class="form-control"
                     required
                   />
@@ -531,7 +527,6 @@
                     class="form-control"
                   />
                 </div>
-
                 <div class="col-md-6">
                   <label class="form-label">Sub-Department / Team</label>
                   <input
@@ -549,7 +544,6 @@
                     class="form-control"
                   />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Reporting Manager (Employee ID / Ref)</label>
                   <input
@@ -558,7 +552,6 @@
                     class="form-control"
                   />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Work Mode</label>
                   <select name="workMode" class="form-select">
@@ -569,7 +562,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Work Location</label>
+                  <label class="form-label">Work Location / Branch</label>
                   <input
                     type="text"
                     name="empWorkLoc"
@@ -577,9 +570,8 @@
                     required
                   />
                 </div>
-
                 <div class="col-md-4">
-                  <label class="form-label">Date of Joining</label>
+                  <label class="form-label">Joining Date</label>
                   <input
                     type="date"
                     name="empDateOfJoining"
@@ -587,7 +579,6 @@
                     required
                   />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Probation Period (months)</label>
                   <input
@@ -597,7 +588,6 @@
                     min="0"
                   />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">Confirmation Date</label>
                   <input
@@ -609,12 +599,11 @@
               </div>
             </div>
 
-            {{!-- TAB 3: COMPENSATION & KYC --}}
+            {{!-- TAB 3: COMPENSATION --}}
             <div
               class="tab-pane fade"
               id="tab-comp"
               role="tabpanel"
-              aria-labelledby="comp-tab"
             >
               <div class="row g-3">
                 <div class="col-md-4">
@@ -647,7 +636,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">HRA</label>
+                  <label class="form-label">House Rent Allowance (HRA)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -710,7 +699,7 @@
                   </select>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Shift Allowance</label>
+                  <label class="form-label">Shift Allowance / Night Allowance</label>
                   <input
                     type="number"
                     step="0.01"
@@ -770,13 +759,218 @@
                     class="form-control"
                   />
                 </div>
+              </div>
+            </div>
 
+            {{!-- TAB 4: EDUCATION & QUALIFICATION --}}
+            <div
+              class="tab-pane fade"
+              id="tab-education"
+              role="tabpanel"
+            >
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Education Entries</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addEducationRowBtn">
+                  <i class="fas fa-plus me-1"></i>Add Education
+                </button>
+              </div>
+              <div id="educationRows" class="row g-3">
+                {{!-- one template row --}}
+                <div class="education-row border rounded p-3 mb-2">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Highest Qualification</label>
+                      <select class="form-select edu_level">
+                        <option value="">Select</option>
+                        <option value="10th">10th</option>
+                        <option value="12th">12th</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="Masters">Masters</option>
+                        <option value="Doctorate">Doctorate</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Degree / Course Name</label>
+                      <input type="text" class="form-control edu_degree" placeholder="e.g. B.Tech in CSE" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Specialization / Major</label>
+                      <input type="text" class="form-control edu_specialization" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Institution Name</label>
+                      <input type="text" class="form-control edu_institutionName" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Board (for school)</label>
+                      <input type="text" class="form-control edu_board" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Start Year</label>
+                      <input type="number" class="form-control edu_startYear" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">End Year</label>
+                      <input type="number" class="form-control edu_endYear" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Year of Passing</label>
+                      <input type="number" class="form-control edu_yearOfPassing" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Percentage / CGPA</label>
+                      <input type="text" class="form-control edu_percentageOrCgpa" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Mode of Study</label>
+                      <select class="form-select edu_modeOfStudy">
+                        <option value="">Select</option>
+                        <option value="Full-Time">Full-Time</option>
+                        <option value="Part-Time">Part-Time</option>
+                        <option value="Distance">Distance</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Education Type</label>
+                      <select class="form-select edu_educationType">
+                        <option value="">Select</option>
+                        <option value="School">School</option>
+                        <option value="College">College</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Country</label>
+                      <input type="text" class="form-control edu_country" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">City</label>
+                      <input type="text" class="form-control edu_city" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Certificate / Marksheet URL</label>
+                      <input type="text" class="form-control edu_certificateUrl" placeholder="https://..." />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-education-row-btn">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 5: EXPERIENCE --}}
+            <div
+              class="tab-pane fade"
+              id="tab-experience"
+              role="tabpanel"
+            >
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Employment History</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addExperienceRowBtn">
+                  <i class="fas fa-plus me-1"></i>Add Experience
+                </button>
+              </div>
+              <div id="experienceRows" class="row g-3">
+                <div class="experience-row border rounded p-3 mb-2">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Organization / Company Name</label>
+                      <input type="text" class="form-control exp_organizationName" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Designation / Job Title</label>
+                      <input type="text" class="form-control exp_jobTitle" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Employment Type</label>
+                      <select class="form-select exp_employmentType">
+                        <option value="">Select</option>
+                        <option value="Full-Time">Full-Time</option>
+                        <option value="Part-Time">Part-Time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Freelance">Freelance</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Department / Division</label>
+                      <input type="text" class="form-control exp_department" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Industry Type</label>
+                      <input type="text" class="form-control exp_industryType" />
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">City</label>
+                      <input type="text" class="form-control exp_companyLocationCity" />
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Country</label>
+                      <input type="text" class="form-control exp_companyLocationCountry" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Start Date</label>
+                      <input type="date" class="form-control exp_startDate" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">End Date</label>
+                      <input type="date" class="form-control exp_endDate" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center">
+                      <div class="form-check mt-3">
+                        <input
+                          type="checkbox"
+                          class="form-check-input exp_isCurrent"
+                        />
+                        <label class="form-check-label">Present (currently working)</label>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Last Drawn Salary / CTC</label>
+                      <input type="number" step="0.01" class="form-control exp_lastDrawnCtc" />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Reason for Leaving</label>
+                      <input type="text" class="form-control exp_reasonForLeaving" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center">
+                      <div class="form-check mt-3">
+                        <input
+                          type="checkbox"
+                          class="form-check-input exp_noticePeriodServed"
+                        />
+                        <label class="form-check-label">Notice Period Served</label>
+                      </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-experience-row-btn">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 6: DOCUMENTS & KYC --}}
+            <div
+              class="tab-pane fade"
+              id="tab-documents"
+              role="tabpanel"
+            >
+              <div class="row g-3">
                 <div class="col-12">
-                  <hr />
-                  <h6>KYC</h6>
+                  <h6>KYC Core (for uniqueness)</h6>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Aadhaar</label>
+                  <label class="form-label">Aadhaar Number</label>
                   <input
                     type="text"
                     name="empAadhar"
@@ -786,7 +980,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">PAN</label>
+                  <label class="form-label">PAN Number</label>
                   <input
                     type="text"
                     name="empPan"
@@ -796,213 +990,95 @@
                   />
                 </div>
               </div>
-            </div>
 
-            {{!-- TAB 4: ATTENDANCE & LEAVE --}}
-            <div
-              class="tab-pane fade"
-              id="tab-attendance"
-              role="tabpanel"
-              aria-labelledby="att-tab"
-            >
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Shift Name</label>
-                  <input type="text" name="shiftName" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Shift Code</label>
-                  <input type="text" name="shiftCode" class="form-control" />
-                </div>
+              <hr class="my-3" />
 
-                <div class="col-md-4">
-                  <label class="form-label">Shift Type</label>
-                  <select name="shiftType" class="form-select">
-                    <option value="">Select</option>
-                    <option value="Fixed">Fixed</option>
-                    <option value="Rotational">Rotational</option>
-                    <option value="Split">Split</option>
-                    <option value="Flexible">Flexible</option>
-                  </select>
-                </div>
-
-                <div class="col-md-3">
-                  <label class="form-label">Start Time</label>
-                  <input type="time" name="shiftStartTime" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">End Time</label>
-                  <input type="time" name="shiftEndTime" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Total Work Hours</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="totalWorkHours"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Break Duration (mins)</label>
-                  <input
-                    type="number"
-                    name="breakDurationMinutes"
-                    class="form-control"
-                  />
-                </div>
-
-                <div class="col-md-4">
-                  <label class="form-label">Shift Rotation Cycle</label>
-                  <input
-                    type="text"
-                    name="shiftRotationCycle"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Grace Period (mins)</label>
-                  <input
-                    type="number"
-                    name="gracePeriodMinutes"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Half-Day Rule (hours)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="halfDayRuleHours"
-                    class="form-control"
-                  />
-                </div>
-
-                <div class="col-md-4">
-                  <label class="form-label">Shift Effective From</label>
-                  <input
-                    type="date"
-                    name="shiftEffectiveFrom"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Timezone</label>
-                  <input
-                    type="text"
-                    name="workTimezone"
-                    class="form-control"
-                    placeholder="e.g. Asia/Kolkata"
-                  />
-                </div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Employee Documents</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addDocumentRowBtn">
+                  <i class="fas fa-plus me-1"></i>Add Document
+                </button>
               </div>
-            </div>
 
-            {{!-- TAB 5: COMPLIANCE & ACCESS --}}
-            <div
-              class="tab-pane fade"
-              id="tab-compliance"
-              role="tabpanel"
-              aria-labelledby="compAccess-tab"
-            >
-              <div class="row g-3">
-                <div class="col-12">
-                  <h6>ID Proof (Primary)</h6>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">ID Proof Type</label>
-                  <select name="idProofType" class="form-select">
-                    <option value="">Select</option>
-                    <option value="Aadhaar">Aadhaar</option>
-                    <option value="PAN">PAN</option>
-                    <option value="Passport">Passport</option>
-                    <option value="Driving License">Driving License</option>
-                    <option value="Voter ID">Voter ID</option>
-                    <option value="National ID">National ID</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">ID Proof Number</label>
-                  <input
-                    type="text"
-                    name="idProofNumber"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Country of Issue</label>
-                  <input
-                    type="text"
-                    name="idCountryOfIssue"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">ID Expiry Date</label>
-                  <input
-                    type="date"
-                    name="idExpiryDate"
-                    class="form-control"
-                  />
-                </div>
+              <div id="documentRows" class="row g-3">
+                <div class="document-row border rounded p-3 mb-2">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Category</label>
+                      <select class="form-select doc_category">
+                        <option value="KYC">KYC</option>
+                        <option value="ADDRESS">Address Proof</option>
+                        <option value="EDUCATION">Education</option>
+                        <option value="EXPERIENCE">Experience</option>
+                        <option value="HR">HR Letters</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Document Type</label>
+                      <input
+                        type="text"
+                        class="form-control doc_documentType"
+                        placeholder="Aadhaar, PAN, Passport, 10th Marksheet, Offer Letter..."
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Name as per Document</label>
+                      <input type="text" class="form-control doc_nameOnDocument" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Document Number</label>
+                      <input type="text" class="form-control doc_documentNumber" />
+                    </div>
 
-                <div class="col-12 mt-3">
-                  <hr />
-                  <h6>System Access</h6>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Work Email</label>
-                  <input
-                    type="email"
-                    name="workEmail"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Username / Login ID</label>
-                  <input
-                    type="text"
-                    name="username"
-                    class="form-control"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">System Role / Access Level</label>
-                  <input
-                    type="text"
-                    name="systemRole"
-                    class="form-control"
-                    placeholder="e.g. Employee, Manager, HR"
-                  />
-                </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Issue Date</label>
+                      <input type="date" class="form-control doc_issueDate" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Expiry Date</label>
+                      <input type="date" class="form-control doc_expiryDate" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Verification Status</label>
+                      <select class="form-select doc_verificationStatus">
+                        <option value="Pending">Pending</option>
+                        <option value="Verified">Verified</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
 
-                <div class="col-md-4">
-                  <label class="form-label">Account Status</label>
-                  <select name="accountStatus" class="form-select">
-                    <option value="Active">Active</option>
-                    <option value="Locked">Locked</option>
-                    <option value="Suspended">Suspended</option>
-                    <option value="Disabled">Disabled</option>
-                  </select>
-                </div>
+                    <div class="col-md-6">
+                      <label class="form-label">File URL (PDF / Doc)</label>
+                      <input
+                        type="text"
+                        class="form-control doc_fileUrl"
+                        placeholder="/uploads/documents/... or https://..."
+                      />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Document Image URL</label>
+                      <input
+                        type="text"
+                        class="form-control doc_documentImageUrl"
+                        placeholder="Scanned image URL/path"
+                      />
+                    </div>
 
-                <div class="col-md-4 d-flex align-items-center">
-                  <div class="form-check mt-3">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="mfaEnabled"
-                      name="mfaEnabled"
-                    />
-                    <label class="form-check-label" for="mfaEnabled">
-                      Enable MFA / 2FA
-                    </label>
+                    <div class="col-md-10">
+                      <label class="form-label">Notes</label>
+                      <textarea class="form-control doc_notes" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-document-row-btn">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
+            </div> {{!-- end tab-documents --}}
           </div> {{!-- end tab-content --}}
         </div> {{!-- end modal-body --}}
 
@@ -1032,9 +1108,18 @@
   </div>
 </div>
 
+
 <script>
   (function () {
-    const steps = ['tab-basic', 'tab-job', 'tab-comp', 'tab-attendance', 'tab-compliance'];
+    // --- Wizard steps (6 tabs) ---
+    const steps = [
+      'tab-basic',
+      'tab-job',
+      'tab-comp',
+      'tab-education',
+      'tab-experience',
+      'tab-documents',
+    ];
     let currentStep = 0;
 
     const nextBtn = document.getElementById('wizardNextBtn');
@@ -1044,11 +1129,9 @@
 
     function updateWizardButtons() {
       if (currentStep === steps.length - 1) {
-        // Last step: hide Next, show Save
         nextBtn.classList.add('d-none');
         saveBtn.classList.remove('d-none');
       } else {
-        // Not last step: show Next, hide Save
         nextBtn.classList.remove('d-none');
         saveBtn.classList.add('d-none');
       }
@@ -1064,7 +1147,6 @@
       }
     }
 
-    // Handle Next button click
     nextBtn.addEventListener('click', function () {
       if (currentStep < steps.length - 1) {
         currentStep += 1;
@@ -1073,10 +1155,9 @@
       }
     });
 
-    // When tab changes (user clicks tab directly), sync currentStep + buttons
     if (tabsContainer) {
       tabsContainer.addEventListener('shown.bs.tab', function (event) {
-        const target = event.target.getAttribute('data-bs-target'); // e.g. "#tab-job"
+        const target = event.target.getAttribute('data-bs-target'); // "#tab-job"
         if (!target) return;
         const id = target.replace('#', '');
         const idx = steps.indexOf(id);
@@ -1087,7 +1168,6 @@
       });
     }
 
-    // When modal opens, always reset to first step
     if (modalEl) {
       modalEl.addEventListener('shown.bs.modal', function () {
         currentStep = 0;
@@ -1096,7 +1176,7 @@
       });
     }
 
-    // Simple copy for "same as present" (front-end only helper)
+    // --- "Permanent same as present" helper ---
     const sameAsPresentCheckbox = document.getElementById('sameAsPresent');
     if (sameAsPresentCheckbox) {
       sameAsPresentCheckbox.addEventListener('change', function () {
@@ -1115,17 +1195,171 @@
       });
     }
 
-    // Form submit logic (only from final step)
+    // --- Dynamic rows: Education, Experience, Documents ---
+    const educationContainer = document.getElementById('educationRows');
+    const experienceContainer = document.getElementById('experienceRows');
+    const documentContainer = document.getElementById('documentRows');
+
+    const addEducationRowBtn = document.getElementById('addEducationRowBtn');
+    const addExperienceRowBtn = document.getElementById('addExperienceRowBtn');
+    const addDocumentRowBtn = document.getElementById('addDocumentRowBtn');
+
+    function cloneRow(container, rowSelector) {
+      const firstRow = container.querySelector(rowSelector);
+      if (!firstRow) return;
+      const clone = firstRow.cloneNode(true);
+      // Clear all inputs in clone
+      clone.querySelectorAll('input, select, textarea').forEach((el) => {
+        if (el.type === 'checkbox') {
+          el.checked = false;
+        } else {
+          el.value = '';
+        }
+      });
+      container.appendChild(clone);
+    }
+
+    if (addEducationRowBtn && educationContainer) {
+      addEducationRowBtn.addEventListener('click', function () {
+        cloneRow(educationContainer, '.education-row');
+      });
+
+      educationContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-education-row-btn')) {
+          const row = e.target.closest('.education-row');
+          // Keep at least one row
+          if (educationContainer.querySelectorAll('.education-row').length > 1) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    if (addExperienceRowBtn && experienceContainer) {
+      addExperienceRowBtn.addEventListener('click', function () {
+        cloneRow(experienceContainer, '.experience-row');
+      });
+
+      experienceContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-experience-row-btn')) {
+          const row = e.target.closest('.experience-row');
+          if (experienceContainer.querySelectorAll('.experience-row').length > 1) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    if (addDocumentRowBtn && documentContainer) {
+      addDocumentRowBtn.addEventListener('click', function () {
+        cloneRow(documentContainer, '.document-row');
+      });
+
+      documentContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-document-row-btn')) {
+          const row = e.target.closest('.document-row');
+          if (documentContainer.querySelectorAll('.document-row').length > 1) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    function collectEducationRows() {
+      const rows = [];
+      document.querySelectorAll('.education-row').forEach((row) => {
+        const obj = {
+          level: row.querySelector('.edu_level')?.value || '',
+          degree: row.querySelector('.edu_degree')?.value || '',
+          specialization: row.querySelector('.edu_specialization')?.value || '',
+          institutionName: row.querySelector('.edu_institutionName')?.value || '',
+          board: row.querySelector('.edu_board')?.value || '',
+          startYear: row.querySelector('.edu_startYear')?.value || '',
+          endYear: row.querySelector('.edu_endYear')?.value || '',
+          yearOfPassing: row.querySelector('.edu_yearOfPassing')?.value || '',
+          percentageOrCgpa: row.querySelector('.edu_percentageOrCgpa')?.value || '',
+          modeOfStudy: row.querySelector('.edu_modeOfStudy')?.value || '',
+          educationType: row.querySelector('.edu_educationType')?.value || '',
+          country: row.querySelector('.edu_country')?.value || '',
+          city: row.querySelector('.edu_city')?.value || '',
+          certificateUrl: row.querySelector('.edu_certificateUrl')?.value || '',
+        };
+        // Push only if some key fields present
+        if (obj.level || obj.degree || obj.institutionName) {
+          rows.push(obj);
+        }
+      });
+      return rows;
+    }
+
+    function collectExperienceRows() {
+      const rows = [];
+      document.querySelectorAll('.experience-row').forEach((row) => {
+        const obj = {
+          organizationName: row.querySelector('.exp_organizationName')?.value || '',
+          jobTitle: row.querySelector('.exp_jobTitle')?.value || '',
+          employmentType: row.querySelector('.exp_employmentType')?.value || '',
+          department: row.querySelector('.exp_department')?.value || '',
+          industryType: row.querySelector('.exp_industryType')?.value || '',
+          companyLocationCity: row.querySelector('.exp_companyLocationCity')?.value || '',
+          companyLocationCountry: row.querySelector('.exp_companyLocationCountry')?.value || '',
+          startDate: row.querySelector('.exp_startDate')?.value || '',
+          endDate: row.querySelector('.exp_endDate')?.value || '',
+          isCurrent: row.querySelector('.exp_isCurrent')?.checked || false,
+          lastDrawnCtc: row.querySelector('.exp_lastDrawnCtc')?.value || '',
+          reasonForLeaving: row.querySelector('.exp_reasonForLeaving')?.value || '',
+          noticePeriodServed: row.querySelector('.exp_noticePeriodServed')?.checked || false,
+        };
+        if (obj.organizationName || obj.jobTitle) {
+          rows.push(obj);
+        }
+      });
+      return rows;
+    }
+
+    function collectDocumentRows() {
+      const rows = [];
+      document.querySelectorAll('.document-row').forEach((row) => {
+        const obj = {
+          category: row.querySelector('.doc_category')?.value || '',
+          documentType: row.querySelector('.doc_documentType')?.value || '',
+          nameOnDocument: row.querySelector('.doc_nameOnDocument')?.value || '',
+          documentNumber: row.querySelector('.doc_documentNumber')?.value || '',
+          issueDate: row.querySelector('.doc_issueDate')?.value || '',
+          expiryDate: row.querySelector('.doc_expiryDate')?.value || '',
+          verificationStatus: row.querySelector('.doc_verificationStatus')?.value || 'Pending',
+          fileUrl: row.querySelector('.doc_fileUrl')?.value || '',
+          documentImageUrl: row.querySelector('.doc_documentImageUrl')?.value || '',
+          notes: row.querySelector('.doc_notes')?.value || '',
+        };
+        if (obj.documentType || obj.documentNumber || obj.fileUrl || obj.documentImageUrl) {
+          rows.push(obj);
+        }
+      });
+      return rows;
+    }
+
+    // --- Form submit logic ---
     document.getElementById('addEmployeeForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       const form = e.target;
-      const data = Object.fromEntries(new FormData(form).entries());
+
+      // Base payload from simple fields
+      const formData = new FormData(form);
+      const base = Object.fromEntries(formData.entries());
+
+      // Attach nested sections
+      base.educations = collectEducationRows();
+      base.experiences = collectExperienceRows();
+      base.documents = collectDocumentRows();
 
       try {
         const res = await fetch('/api/v1/employees', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(base),
         });
 
         if (!res.ok) {
@@ -1142,7 +1376,8 @@
 </script>
 
 
-<script>
+
+{{!-- <script>
   (function () {
     const steps = ['tab-basic', 'tab-job', 'tab-comp'];
     let currentStep = 0;
@@ -1230,4 +1465,4 @@
       }
     });
   })();
-</script>
+</script> --}}

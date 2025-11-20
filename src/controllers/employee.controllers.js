@@ -1,6 +1,10 @@
 // src/controllers/employee.controllers.js
 import { Op } from 'sequelize';
+import { sequelize } from '../db/index.js';
 import Employee from '../models/Employee.js';
+import EmployeeEducation from '../models/EmployeeEducation.js';
+import EmployeeExperience from '../models/EmployeeExperience.js';
+import EmployeeDocument from '../models/EmployeeDocument.js';
 
 const toBool = (val) =>
     val === true || val === 'true' || val === '1' || val === 'on';
@@ -11,8 +15,12 @@ const toBool = (val) =>
 export const renderEmployeesPage = async (req, res, next) => {
     try {
         const search = (req.query.search || '').trim();
+        const userId = req.user?.id;
 
         const where = {};
+        if (userId) {
+            where.userId = userId;
+        }
 
         if (search) {
             where[Op.or] = [
@@ -29,7 +37,7 @@ export const renderEmployeesPage = async (req, res, next) => {
 
         const employeesPlain = employees.map((e) => e.get({ plain: true }));
 
-        console.log('Employees fetched for page ');
+        console.log('Employees fetched for page');
 
         const user = req.user
             ? { firstName: req.user.firstName, lastName: req.user.lastName }
@@ -54,8 +62,12 @@ export const renderEmployeesPage = async (req, res, next) => {
 export const listEmployees = async (req, res, next) => {
     try {
         const search = (req.query.search || '').trim();
+        const userId = req.user?.id;
 
         const where = {};
+        if (userId) {
+            where.userId = userId;
+        }
 
         if (search) {
             where[Op.or] = [
@@ -69,7 +81,8 @@ export const listEmployees = async (req, res, next) => {
             where,
             order: [['empId', 'ASC']],
         });
-        console.log('Employees listed via API:');
+
+        console.log('Employees listed via API');
         res.json(employees);
     } catch (err) {
         console.error('Error listing employees:', err);
@@ -79,13 +92,22 @@ export const listEmployees = async (req, res, next) => {
 
 /**
  * POST /api/v1/employees
+ * Body:
+ * {
+ *   ... core employee fields (personal, professional, compensation),
+ *   educations: [ {...}, {...} ],
+ *   experiences: [ {...}, {...} ],
+ *   documents: [ {...}, {...} ]
+ * }
  */
 export const createEmployee = async (req, res, next) => {
+    const t = await sequelize.transaction();
     try {
         console.log('Received POST request with body:', req.body);
 
         const userId = req.user?.id || 1;
 
+        // 1) Core Employee payload (Sections 1–3: Personal, Professional, Compensation)
         const payload = {
             userId,
 
@@ -94,7 +116,7 @@ export const createEmployee = async (req, res, next) => {
             middleName: req.body.middleName || null,
             lastName: req.body.lastName,
 
-            empName: req.body.empName || undefined, // will be auto-built if undefined
+            empName: req.body.empName || undefined, // auto-built if undefined
 
             // --- Personal profile ---
             gender: req.body.gender || null,
@@ -132,7 +154,7 @@ export const createEmployee = async (req, res, next) => {
             permanentZip: req.body.permanentZip || null,
             permanentCountry: req.body.permanentCountry || null,
 
-            // --- Professional ---
+            // --- Professional (Section 2) ---
             employeeType: req.body.employeeType || 'Permanent',
             empDesignation: req.body.empDesignation,
             empDepartment: req.body.empDepartment,
@@ -150,7 +172,7 @@ export const createEmployee = async (req, res, next) => {
             // --- Dates ---
             empDob: req.body.empDob,
 
-            // --- Compensation ---
+            // --- Compensation (Section 3) ---
             empCtc: req.body.empCtc,
             grossSalaryMonthly: req.body.grossSalaryMonthly || null,
             basicSalary: req.body.basicSalary || null,
@@ -168,35 +190,12 @@ export const createEmployee = async (req, res, next) => {
             tdsDeduction: req.body.tdsDeduction || null,
             netSalary: req.body.netSalary || null,
 
-            // --- Attendance & shift ---
-            shiftName: req.body.shiftName || null,
-            shiftCode: req.body.shiftCode || null,
-            shiftStartTime: req.body.shiftStartTime || null,
-            shiftEndTime: req.body.shiftEndTime || null,
-            totalWorkHours: req.body.totalWorkHours || null,
-            breakDurationMinutes: req.body.breakDurationMinutes || null,
-            shiftType: req.body.shiftType || null,
-            shiftRotationCycle: req.body.shiftRotationCycle || null,
-            gracePeriodMinutes: req.body.gracePeriodMinutes || null,
-            halfDayRuleHours: req.body.halfDayRuleHours || null,
-            shiftEffectiveFrom: req.body.shiftEffectiveFrom || null,
-            workTimezone: req.body.workTimezone || null,
-
-            // --- KYC / Compliance ---
+            // KYC core (moved logically to "Documents" tab, still stored on employee for uniqueness)
             empAadhar: req.body.empAadhar,
             empPan: req.body.empPan,
-            idProofType: req.body.idProofType || null,
-            idProofNumber: req.body.idProofNumber || null,
-            idCountryOfIssue: req.body.idCountryOfIssue || null,
-            idExpiryDate: req.body.idExpiryDate || null,
-            // idVerificationStatus/idVerifiedBy... usually set later by HR
 
-            // --- System & Access ---
-            workEmail: req.body.workEmail || null,
-            username: req.body.username || null,
-            systemRole: req.body.systemRole || null,
-            accountStatus: req.body.accountStatus || 'Active',
-            mfaEnabled: toBool(req.body.mfaEnabled),
+            // System & access / attendance / exit fields can stay null for now:
+            // No need to send them from UI for this phase.
         };
 
         // Optional manual empId; otherwise auto-generate in hook
@@ -204,10 +203,112 @@ export const createEmployee = async (req, res, next) => {
             payload.empId = req.body.empId.trim();
         }
 
-        const employee = await Employee.create(payload);
-        console.log('Created new employee:', employee.get({ plain: true }));
+        // 2) Create Employee first
+        const employee = await Employee.create(payload, { transaction: t });
+        const employeeId = employee.id;
+
+        // 3) Parse related sections: education, experience, documents
+        const educations = Array.isArray(req.body.educations)
+            ? req.body.educations
+            : [];
+
+        const experiences = Array.isArray(req.body.experiences)
+            ? req.body.experiences
+            : [];
+
+        const documents = Array.isArray(req.body.documents)
+            ? req.body.documents
+            : [];
+
+        // 4) Insert education rows
+        if (educations.length) {
+            await Promise.all(
+                educations.map((edu) =>
+                    EmployeeEducation.create(
+                        {
+                            employeeId,
+                            level: edu.level || 'Other',
+                            degree: edu.degree || null,
+                            specialization: edu.specialization || null,
+                            institutionName: edu.institutionName || null,
+                            board: edu.board || null,
+                            startYear: edu.startYear || null,
+                            endYear: edu.endYear || null,
+                            yearOfPassing: edu.yearOfPassing || null,
+                            percentageOrCgpa: edu.percentageOrCgpa || null,
+                            modeOfStudy: edu.modeOfStudy || null,
+                            educationType: edu.educationType || null,
+                            country: edu.country || null,
+                            city: edu.city || null,
+                            certificateUrl: edu.certificateUrl || null,
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        // 5) Insert experience rows
+        if (experiences.length) {
+            await Promise.all(
+                experiences.map((exp) =>
+                    EmployeeExperience.create(
+                        {
+                            employeeId,
+                            organizationName: exp.organizationName,
+                            jobTitle: exp.jobTitle,
+                            employmentType: exp.employmentType || null,
+                            department: exp.department || null,
+                            industryType: exp.industryType || null,
+                            companyLocationCity: exp.companyLocationCity || null,
+                            companyLocationCountry: exp.companyLocationCountry || null,
+                            startDate: exp.startDate || null,
+                            endDate: exp.endDate || null,
+                            isCurrent: toBool(exp.isCurrent),
+                            durationText: exp.durationText || null,
+                            jobLevel: exp.jobLevel || null,
+                            lastDrawnCtc: exp.lastDrawnCtc || null,
+                            reasonForLeaving: exp.reasonForLeaving || null,
+                            noticePeriodServed: toBool(exp.noticePeriodServed),
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        // 6) Insert documents rows
+        if (documents.length) {
+            await Promise.all(
+                documents.map((doc) =>
+                    EmployeeDocument.create(
+                        {
+                            employeeId,
+                            category: doc.category || 'KYC',
+                            documentType: doc.documentType,
+                            nameOnDocument: doc.nameOnDocument || null,
+                            documentNumber: doc.documentNumber || null,
+                            issueDate: doc.issueDate || null,
+                            expiryDate: doc.expiryDate || null,
+                            verificationStatus: doc.verificationStatus || 'Pending',
+                            verifiedBy: doc.verifiedBy || null,
+                            verifiedAt: doc.verifiedAt || null,
+                            fileUrl: doc.fileUrl || null,
+                            documentImageUrl: doc.documentImageUrl || null,
+                            notes: doc.notes || null,
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        await t.commit();
+
+        console.log('Created new employee with related records:', employeeId);
         return res.status(201).json(employee);
     } catch (err) {
+        await t.rollback();
         console.error('Error creating employee:', err);
         if (err.name === 'SequelizeValidationError') {
             return res
