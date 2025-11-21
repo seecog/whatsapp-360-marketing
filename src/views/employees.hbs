@@ -70,7 +70,12 @@
             {{/if}}
           </div>
 
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addEmployeeModal"
+            id="openAddEmployeeModalBtn"
+          >
             <i class="fas fa-plus me-2"></i>Add Employee
           </button>
         </div>
@@ -116,6 +121,7 @@
                     <th>Designation</th>
                     <th>Department</th>
                     <th>DOJ</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -130,11 +136,39 @@
                         <td>{{empDesignation}}</td>
                         <td>{{empDepartment}}</td>
                         <td>{{empDateOfJoining}}</td>
+                        <td>
+                          <div class="btn-group btn-group-sm" role="group">
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary view-employee-btn"
+                              data-id="{{id}}"
+                              title="View Employee"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-primary edit-employee-btn"
+                              data-id="{{id}}"
+                              title="Edit Employee"
+                            >
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger delete-employee-btn"
+                              data-id="{{id}}"
+                              title="Delete Employee"
+                            >
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     {{/each}}
                   {{else}}
                     <tr>
-                      <td colspan="8" class="text-center py-3">
+                      <td colspan="9" class="text-center py-3">
                         No employees found.
                       </td>
                     </tr>
@@ -150,13 +184,14 @@
   </div>
 </div>
 
-{{!-- Add Employee Modal --}}
+{{!-- Add / Edit Employee Modal --}}
 <div class="modal fade" id="addEmployeeModal" tabindex="-1">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <form id="addEmployeeForm">
+        <input type="hidden" name="id" id="employeeIdField" />
         <div class="modal-header">
-          <h5 class="modal-title">Add Employee</h5>
+          <h5 class="modal-title" id="addEmployeeModalTitle">Add Employee</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
@@ -248,7 +283,7 @@
             >
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">First Name</label>
+                  <label class="form-label">First Name <span class="text-danger">*</span></label>
                   <input type="text" name="firstName" class="form-control" required />
                 </div>
                 <div class="col-md-4">
@@ -256,7 +291,7 @@
                   <input type="text" name="middleName" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Last Name</label>
+                  <label class="form-label">Last Name <span class="text-danger">*</span></label>
                   <input type="text" name="lastName" class="form-control" required />
                 </div>
 
@@ -282,7 +317,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Date of Birth</label>
+                  <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
                   <input type="date" name="empDob" class="form-control" required />
                 </div>
 
@@ -315,7 +350,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Primary Contact Number</label>
+                  <label class="form-label">Primary Contact Number <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empPhone"
@@ -334,7 +369,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Personal Email</label>
+                  <label class="form-label">Personal Email <span class="text-danger">*</span></label>
                   <input
                     type="email"
                     name="empEmail"
@@ -501,7 +536,7 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label">Department</label>
+                  <label class="form-label">Department <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empDepartment"
@@ -510,7 +545,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Designation / Job Title</label>
+                  <label class="form-label">Designation / Job Title <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empDesignation"
@@ -562,7 +597,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Work Location / Branch</label>
+                  <label class="form-label">Work Location / Branch <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empWorkLoc"
@@ -571,7 +606,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Joining Date</label>
+                  <label class="form-label">Joining Date <span class="text-danger">*</span></label>
                   <input
                     type="date"
                     name="empDateOfJoining"
@@ -607,7 +642,7 @@
             >
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">CTC (₹ - Annual)</label>
+                  <label class="form-label">CTC (₹ - Annual) <span class="text-danger">*</span></label>
                   <input
                     type="number"
                     step="0.01"
@@ -970,7 +1005,7 @@
                   <h6>KYC Core (for uniqueness)</h6>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Aadhaar Number</label>
+                  <label class="form-label">Aadhaar Number <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empAadhar"
@@ -980,7 +1015,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">PAN Number</label>
+                  <label class="form-label">PAN Number <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empPan"
@@ -1108,6 +1143,60 @@
   </div>
 </div>
 
+{{!-- View Employee Modal --}}
+<div class="modal fade" id="viewEmployeeModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Employee Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <h5 id="viewEmpName" class="mb-1"></h5>
+        <p class="text-muted mb-3">
+          <span id="viewEmpId"></span> &middot;
+          <span id="viewEmpEmail"></span> &middot;
+          <span id="viewEmpPhone"></span>
+        </p>
+
+        <hr />
+
+        <h6>Personal Details</h6>
+        <dl class="row" id="viewPersonalDetails"></dl>
+
+        <hr />
+
+        <h6>Professional Details</h6>
+        <dl class="row" id="viewProfessionalDetails"></dl>
+
+        <hr />
+
+        <h6>Compensation</h6>
+        <dl class="row" id="viewCompensationDetails"></dl>
+
+        <hr />
+
+        <h6>Education &amp; Qualification</h6>
+        <div id="viewEducationList"></div>
+
+        <hr />
+
+        <h6>Experience / Employment History</h6>
+        <div id="viewExperienceList"></div>
+
+        <hr />
+
+        <h6>Documents &amp; KYC</h6>
+        <div id="viewDocumentList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   (function () {
@@ -1126,6 +1215,12 @@
     const saveBtn = document.getElementById('wizardSaveBtn');
     const tabsContainer = document.getElementById('addEmployeeTabs');
     const modalEl = document.getElementById('addEmployeeModal');
+    const addEmployeeForm = document.getElementById('addEmployeeForm');
+    const employeeIdField = document.getElementById('employeeIdField');
+    const addEmployeeModalTitle = document.getElementById('addEmployeeModalTitle');
+
+    let formMode = 'create'; // 'create' or 'edit'
+    let currentEditingId = null;
 
     function updateWizardButtons() {
       if (currentStep === steps.length - 1) {
@@ -1204,19 +1299,34 @@
     const addExperienceRowBtn = document.getElementById('addExperienceRowBtn');
     const addDocumentRowBtn = document.getElementById('addDocumentRowBtn');
 
-    function cloneRow(container, rowSelector) {
-      const firstRow = container.querySelector(rowSelector);
-      if (!firstRow) return;
-      const clone = firstRow.cloneNode(true);
-      // Clear all inputs in clone
-      clone.querySelectorAll('input, select, textarea').forEach((el) => {
+    function clearInputsInRow(row) {
+      row.querySelectorAll('input, select, textarea').forEach((el) => {
         if (el.type === 'checkbox') {
           el.checked = false;
         } else {
           el.value = '';
         }
       });
+    }
+
+    function cloneRow(container, rowSelector) {
+      const firstRow = container.querySelector(rowSelector);
+      if (!firstRow) return;
+      const clone = firstRow.cloneNode(true);
+      clearInputsInRow(clone);
       container.appendChild(clone);
+    }
+
+    function resetDynamicSection(container, rowSelector) {
+      if (!container) return;
+      const rows = container.querySelectorAll(rowSelector);
+      rows.forEach((row, idx) => {
+        if (idx === 0) {
+          clearInputsInRow(row);
+        } else {
+          row.remove();
+        }
+      });
     }
 
     if (addEducationRowBtn && educationContainer) {
@@ -1339,8 +1449,128 @@
       return rows;
     }
 
-    // --- Form submit logic ---
-    document.getElementById('addEmployeeForm').addEventListener('submit', async function (e) {
+    // --- Helper: reset entire form (for Add mode) ---
+    function resetEmployeeForm() {
+      if (!addEmployeeForm) return;
+      addEmployeeForm.reset();
+      employeeIdField.value = '';
+      if (sameAsPresentCheckbox) sameAsPresentCheckbox.checked = false;
+      resetDynamicSection(educationContainer, '.education-row');
+      resetDynamicSection(experienceContainer, '.experience-row');
+      resetDynamicSection(documentContainer, '.document-row');
+    }
+
+    // --- Helper: populate form from employee data (for Edit mode) ---
+    function fillBaseField(name, value) {
+      const el = addEmployeeForm.elements[name];
+      if (!el) return;
+      if (el.type === 'checkbox') {
+        el.checked = !!value;
+      } else {
+        el.value = value != null ? value : '';
+      }
+    }
+
+    function setEducationRows(educations) {
+      resetDynamicSection(educationContainer, '.education-row');
+      if (!educationContainer) return;
+      if (!Array.isArray(educations) || educations.length === 0) return;
+
+      const firstRow = educationContainer.querySelector('.education-row');
+      educations.forEach((edu, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          educationContainer.appendChild(row);
+        }
+        row.querySelector('.edu_level').value = edu.level || '';
+        row.querySelector('.edu_degree').value = edu.degree || '';
+        row.querySelector('.edu_specialization').value = edu.specialization || '';
+        row.querySelector('.edu_institutionName').value = edu.institutionName || '';
+        row.querySelector('.edu_board').value = edu.board || '';
+        row.querySelector('.edu_startYear').value = edu.startYear || '';
+        row.querySelector('.edu_endYear').value = edu.endYear || '';
+        row.querySelector('.edu_yearOfPassing').value = edu.yearOfPassing || '';
+        row.querySelector('.edu_percentageOrCgpa').value = edu.percentageOrCgpa || '';
+        row.querySelector('.edu_modeOfStudy').value = edu.modeOfStudy || '';
+        row.querySelector('.edu_educationType').value = edu.educationType || '';
+        row.querySelector('.edu_country').value = edu.country || '';
+        row.querySelector('.edu_city').value = edu.city || '';
+        row.querySelector('.edu_certificateUrl').value = edu.certificateUrl || '';
+      });
+    }
+
+    function setExperienceRows(experiences) {
+      resetDynamicSection(experienceContainer, '.experience-row');
+      if (!experienceContainer) return;
+      if (!Array.isArray(experiences) || experiences.length === 0) return;
+
+      const firstRow = experienceContainer.querySelector('.experience-row');
+      experiences.forEach((exp, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          experienceContainer.appendChild(row);
+        }
+        row.querySelector('.exp_organizationName').value = exp.organizationName || '';
+        row.querySelector('.exp_jobTitle').value = exp.jobTitle || '';
+        row.querySelector('.exp_employmentType').value = exp.employmentType || '';
+        row.querySelector('.exp_department').value = exp.department || '';
+        row.querySelector('.exp_industryType').value = exp.industryType || '';
+        row.querySelector('.exp_companyLocationCity').value = exp.companyLocationCity || '';
+        row.querySelector('.exp_companyLocationCountry').value = exp.companyLocationCountry || '';
+        row.querySelector('.exp_startDate').value = exp.startDate || '';
+        row.querySelector('.exp_endDate').value = exp.endDate || '';
+        row.querySelector('.exp_isCurrent').checked = !!exp.isCurrent;
+        row.querySelector('.exp_lastDrawnCtc').value = exp.lastDrawnCtc || '';
+        row.querySelector('.exp_reasonForLeaving').value = exp.reasonForLeaving || '';
+        row.querySelector('.exp_noticePeriodServed').checked = !!exp.noticePeriodServed;
+      });
+    }
+
+    function setDocumentRows(documents) {
+      resetDynamicSection(documentContainer, '.document-row');
+      if (!documentContainer) return;
+      if (!Array.isArray(documents) || documents.length === 0) return;
+
+      const firstRow = documentContainer.querySelector('.document-row');
+      documents.forEach((doc, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          documentContainer.appendChild(row);
+        }
+        row.querySelector('.doc_category').value = doc.category || 'KYC';
+        row.querySelector('.doc_documentType').value = doc.documentType || '';
+        row.querySelector('.doc_nameOnDocument').value = doc.nameOnDocument || '';
+        row.querySelector('.doc_documentNumber').value = doc.documentNumber || '';
+        row.querySelector('.doc_issueDate').value = doc.issueDate || '';
+        row.querySelector('.doc_expiryDate').value = doc.expiryDate || '';
+        row.querySelector('.doc_verificationStatus').value = doc.verificationStatus || 'Pending';
+        row.querySelector('.doc_fileUrl').value = doc.fileUrl || '';
+        row.querySelector('.doc_documentImageUrl').value = doc.documentImageUrl || '';
+        row.querySelector('.doc_notes').value = doc.notes || '';
+      });
+    }
+
+    // --- Open Add Employee in Create mode ---
+    const openAddEmployeeModalBtn = document.getElementById('openAddEmployeeModalBtn');
+    if (openAddEmployeeModalBtn) {
+      openAddEmployeeModalBtn.addEventListener('click', function () {
+        formMode = 'create';
+        currentEditingId = null;
+        if (addEmployeeModalTitle) {
+          addEmployeeModalTitle.textContent = 'Add Employee';
+        }
+        resetEmployeeForm();
+      });
+    }
+
+    // --- Form submit logic (Create / Edit) ---
+    addEmployeeForm.addEventListener('submit', async function (e) {
       e.preventDefault();
       const form = e.target;
 
@@ -1348,14 +1578,25 @@
       const formData = new FormData(form);
       const base = Object.fromEntries(formData.entries());
 
+      // Remove id from base; for edit we use URL param
+      delete base.id;
+
       // Attach nested sections
       base.educations = collectEducationRows();
       base.experiences = collectExperienceRows();
       base.documents = collectDocumentRows();
 
+      let url = '/api/v1/employees';
+      let method = 'POST';
+
+      if (formMode === 'edit' && currentEditingId) {
+        url = '/api/v1/employees/' + currentEditingId;
+        method = 'PUT';
+      }
+
       try {
-        const res = await fetch('/api/v1/employees', {
-          method: 'POST',
+        const res = await fetch(url, {
+          method,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -1364,105 +1605,344 @@
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to create employee');
+          throw new Error(err.error || 'Failed to save employee');
         }
 
         window.location.reload();
       } catch (err) {
         alert(err.message);
+      }
+    });
+
+    // ========= VIEW / EDIT / DELETE BUTTON HANDLERS =========
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderKeyValueList(containerId, entries) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      entries.forEach(([label, value]) => {
+        const val = value != null && value !== '' ? value : '-';
+        container.insertAdjacentHTML(
+          'beforeend',
+          '<dt class="col-sm-4 text-muted">' + escapeHtml(label) + '</dt>' +
+          '<dd class="col-sm-8">' + escapeHtml(String(val)) + '</dd>'
+        );
+      });
+    }
+
+    async function fetchEmployee(id) {
+      const res = await fetch('/api/v1/employees/' + id);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to fetch employee');
+      }
+      return res.json();
+    }
+
+    async function openViewEmployeeModal(id) {
+      try {
+        const emp = await fetchEmployee(id);
+
+        const viewEmpName = document.getElementById('viewEmpName');
+        const viewEmpId = document.getElementById('viewEmpId');
+        const viewEmpEmail = document.getElementById('viewEmpEmail');
+        const viewEmpPhone = document.getElementById('viewEmpPhone');
+
+        if (viewEmpName) viewEmpName.textContent = emp.empName || (emp.firstName + ' ' + (emp.lastName || ''));
+        if (viewEmpId) viewEmpId.textContent = 'Emp ID: ' + (emp.empId || '-');
+        if (viewEmpEmail) viewEmpEmail.textContent = emp.empEmail || '-';
+        if (viewEmpPhone) viewEmpPhone.textContent = emp.empPhone || '-';
+
+        renderKeyValueList('viewPersonalDetails', [
+          ['Gender', emp.gender],
+          ['Marital Status', emp.maritalStatus],
+          ['Date of Birth', emp.empDob],
+          ['Blood Group', emp.bloodGroup],
+          ['Nationality', emp.nationality],
+          ['Religion', emp.religion],
+          ['Category / Caste', emp.casteCategory],
+          ['Languages Known', emp.languagesKnown],
+          ['Emergency Contact Name', emp.emergencyContactName],
+          ['Emergency Contact Relation', emp.emergencyContactRelation],
+          ['Emergency Contact Number', emp.emergencyContactNumber],
+          ['Present Address Line 1', emp.presentAddressLine1],
+          ['Present Address Line 2', emp.presentAddressLine2],
+          ['Present City', emp.presentCity],
+          ['Present State', emp.presentState],
+          ['Present ZIP', emp.presentZip],
+          ['Present Country', emp.presentCountry],
+          ['Permanent Same As Present', emp.permanentSameAsPresent ? 'Yes' : 'No'],
+          ['Permanent Address Line 1', emp.permanentAddressLine1],
+          ['Permanent Address Line 2', emp.permanentAddressLine2],
+          ['Permanent City', emp.permanentCity],
+          ['Permanent State', emp.permanentState],
+          ['Permanent ZIP', emp.permanentZip],
+          ['Permanent Country', emp.permanentCountry],
+        ]);
+
+        renderKeyValueList('viewProfessionalDetails', [
+          ['Employee Type', emp.employeeType],
+          ['Employment Status', emp.employmentStatus],
+          ['Department', emp.empDepartment],
+          ['Designation / Job Title', emp.empDesignation],
+          ['Division / Business Unit', emp.division],
+          ['Sub-Department / Team', emp.subDepartment],
+          ['Grade / Band / Level', emp.gradeBandLevel],
+          ['Reporting Manager ID', emp.reportingManagerId],
+          ['Work Mode', emp.workMode],
+          ['Work Location / Branch', emp.empWorkLoc],
+          ['Date of Joining', emp.empDateOfJoining],
+          ['Probation Period (months)', emp.probationPeriodMonths],
+          ['Confirmation Date', emp.confirmationDate],
+        ]);
+
+        renderKeyValueList('viewCompensationDetails', [
+          ['CTC (₹ - Annual)', emp.empCtc],
+          ['Gross Salary (Monthly)', emp.grossSalaryMonthly],
+          ['Basic Salary', emp.basicSalary],
+          ['HRA', emp.hra],
+          ['Conveyance Allowance', emp.conveyanceAllowance],
+          ['Medical Allowance', emp.medicalAllowance],
+          ['Special Allowance', emp.specialAllowance],
+          ['Performance Bonus', emp.performanceBonus],
+          ['Variable Pay', emp.variablePay],
+          ['Overtime Eligible', emp.overtimeEligible ? 'Yes' : 'No'],
+          ['Shift Allowance', emp.shiftAllowance],
+          ['PF Deduction', emp.pfDeduction],
+          ['ESI Deduction', emp.esiDeduction],
+          ['Professional Tax', emp.professionalTax],
+          ['TDS Deduction', emp.tdsDeduction],
+          ['Net Salary', emp.netSalary],
+          ['Aadhaar Number', emp.empAadhar],
+          ['PAN Number', emp.empPan],
+        ]);
+
+        const eduContainer = document.getElementById('viewEducationList');
+        if (eduContainer) {
+          eduContainer.innerHTML = '';
+          const edus = emp.educations || [];
+          if (edus.length === 0) {
+            eduContainer.innerHTML = '<p class="text-muted mb-0">No education entries.</p>';
+          } else {
+            const list = document.createElement('div');
+            edus.forEach((e) => {
+              const card = document.createElement('div');
+              card.className = 'border rounded p-2 mb-2';
+              card.innerHTML =
+                '<strong>' + escapeHtml(e.level || '') + '</strong> - ' +
+                escapeHtml(e.degree || '') +
+                '<br>' +
+                '<small>' +
+                escapeHtml(e.institutionName || '') +
+                (e.yearOfPassing ? ' &middot; Pass Year: ' + escapeHtml(e.yearOfPassing) : '') +
+                '</small>';
+              list.appendChild(card);
+            });
+            eduContainer.appendChild(list);
+          }
+        }
+
+        const expContainer = document.getElementById('viewExperienceList');
+        if (expContainer) {
+          expContainer.innerHTML = '';
+          const exps = emp.experiences || [];
+          if (exps.length === 0) {
+            expContainer.innerHTML = '<p class="text-muted mb-0">No experience entries.</p>';
+          } else {
+            const list = document.createElement('div');
+            exps.forEach((e) => {
+              const card = document.createElement('div');
+              card.className = 'border rounded p-2 mb-2';
+              card.innerHTML =
+                '<strong>' + escapeHtml(e.organizationName || '') + '</strong> - ' +
+                escapeHtml(e.jobTitle || '') +
+                '<br>' +
+                '<small>' +
+                (e.startDate || '-') + ' to ' + (e.isCurrent ? 'Present' : (e.endDate || '-')) +
+                '</small>';
+              list.appendChild(card);
+            });
+            expContainer.appendChild(list);
+          }
+        }
+
+        const docContainer = document.getElementById('viewDocumentList');
+        if (docContainer) {
+          docContainer.innerHTML = '';
+          const docs = emp.documents || [];
+          if (docs.length === 0) {
+            docContainer.innerHTML = '<p class="text-muted mb-0">No documents.</p>';
+          } else {
+            const list = document.createElement('div');
+            docs.forEach((d) => {
+              const card = document.createElement('div');
+              card.className = 'border rounded p-2 mb-2';
+              card.innerHTML =
+                '<strong>' + escapeHtml(d.category || '') + '</strong> - ' +
+                escapeHtml(d.documentType || '') +
+                '<br>' +
+                '<small>Status: ' + escapeHtml(d.verificationStatus || 'Pending') + '</small>';
+              list.appendChild(card);
+            });
+            docContainer.appendChild(list);
+          }
+        }
+
+        const viewModalEl = document.getElementById('viewEmployeeModal');
+        const viewModal = bootstrap.Modal.getOrCreateInstance(viewModalEl);
+        viewModal.show();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function openEditEmployeeModal(id) {
+      try {
+        const emp = await fetchEmployee(id);
+        formMode = 'edit';
+        currentEditingId = id;
+        if (addEmployeeModalTitle) {
+          addEmployeeModalTitle.textContent = 'Edit Employee';
+        }
+        resetEmployeeForm();
+
+        employeeIdField.value = emp.id;
+
+        // Base fields
+        fillBaseField('firstName', emp.firstName);
+        fillBaseField('middleName', emp.middleName);
+        fillBaseField('lastName', emp.lastName);
+        fillBaseField('gender', emp.gender);
+        fillBaseField('maritalStatus', emp.maritalStatus);
+        fillBaseField('empDob', emp.empDob);
+        fillBaseField('bloodGroup', emp.bloodGroup);
+        fillBaseField('nationality', emp.nationality);
+        fillBaseField('religion', emp.religion);
+        fillBaseField('casteCategory', emp.casteCategory);
+        fillBaseField('languagesKnown', emp.languagesKnown);
+        fillBaseField('empPhone', emp.empPhone);
+        fillBaseField('altPhone', emp.altPhone);
+        fillBaseField('empEmail', emp.empEmail);
+        fillBaseField('emergencyContactName', emp.emergencyContactName);
+        fillBaseField('emergencyContactRelation', emp.emergencyContactRelation);
+        fillBaseField('emergencyContactNumber', emp.emergencyContactNumber);
+        fillBaseField('presentAddressLine1', emp.presentAddressLine1);
+        fillBaseField('presentAddressLine2', emp.presentAddressLine2);
+        fillBaseField('presentCity', emp.presentCity);
+        fillBaseField('presentState', emp.presentState);
+        fillBaseField('presentZip', emp.presentZip);
+        fillBaseField('presentCountry', emp.presentCountry);
+        fillBaseField('permanentSameAsPresent', emp.permanentSameAsPresent);
+        if (sameAsPresentCheckbox) {
+          sameAsPresentCheckbox.checked = !!emp.permanentSameAsPresent;
+        }
+        fillBaseField('permanentAddressLine1', emp.permanentAddressLine1);
+        fillBaseField('permanentAddressLine2', emp.permanentAddressLine2);
+        fillBaseField('permanentCity', emp.permanentCity);
+        fillBaseField('permanentState', emp.permanentState);
+        fillBaseField('permanentZip', emp.permanentZip);
+        fillBaseField('permanentCountry', emp.permanentCountry);
+
+        fillBaseField('empId', emp.empId);
+        fillBaseField('employeeType', emp.employeeType);
+        fillBaseField('employmentStatus', emp.employmentStatus);
+        fillBaseField('empDepartment', emp.empDepartment);
+        fillBaseField('empDesignation', emp.empDesignation);
+        fillBaseField('division', emp.division);
+        fillBaseField('subDepartment', emp.subDepartment);
+        fillBaseField('gradeBandLevel', emp.gradeBandLevel);
+        fillBaseField('reportingManagerId', emp.reportingManagerId);
+        fillBaseField('workMode', emp.workMode);
+        fillBaseField('empWorkLoc', emp.empWorkLoc);
+        fillBaseField('empDateOfJoining', emp.empDateOfJoining);
+        fillBaseField('probationPeriodMonths', emp.probationPeriodMonths);
+        fillBaseField('confirmationDate', emp.confirmationDate);
+
+        fillBaseField('empCtc', emp.empCtc);
+        fillBaseField('grossSalaryMonthly', emp.grossSalaryMonthly);
+        fillBaseField('basicSalary', emp.basicSalary);
+        fillBaseField('hra', emp.hra);
+        fillBaseField('conveyanceAllowance', emp.conveyanceAllowance);
+        fillBaseField('medicalAllowance', emp.medicalAllowance);
+        fillBaseField('specialAllowance', emp.specialAllowance);
+        fillBaseField('performanceBonus', emp.performanceBonus);
+        fillBaseField('variablePay', emp.variablePay);
+        fillBaseField('overtimeEligible', emp.overtimeEligible ? 'true' : 'false');
+        fillBaseField('shiftAllowance', emp.shiftAllowance);
+        fillBaseField('pfDeduction', emp.pfDeduction);
+        fillBaseField('esiDeduction', emp.esiDeduction);
+        fillBaseField('professionalTax', emp.professionalTax);
+        fillBaseField('tdsDeduction', emp.tdsDeduction);
+        fillBaseField('netSalary', emp.netSalary);
+
+        fillBaseField('empAadhar', emp.empAadhar);
+        fillBaseField('empPan', emp.empPan);
+
+        setEducationRows(emp.educations || []);
+        setExperienceRows(emp.experiences || []);
+        setDocumentRows(emp.documents || []);
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function deleteEmployee(id) {
+      if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/v1/employees/' + id, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to delete employee');
+        }
+        window.location.reload();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      const viewBtn = e.target.closest('.view-employee-btn');
+      if (viewBtn) {
+        const id = viewBtn.getAttribute('data-id');
+        if (id) {
+          openViewEmployeeModal(id);
+        }
+        return;
+      }
+
+      const editBtn = e.target.closest('.edit-employee-btn');
+      if (editBtn) {
+        const id = editBtn.getAttribute('data-id');
+        if (id) {
+          openEditEmployeeModal(id);
+        }
+        return;
+      }
+
+      const deleteBtn = e.target.closest('.delete-employee-btn');
+      if (deleteBtn) {
+        const id = deleteBtn.getAttribute('data-id');
+        if (id) {
+          deleteEmployee(id);
+        }
+        return;
       }
     });
   })();
 </script>
-
-
-
-{{!-- <script>
-  (function () {
-    const steps = ['tab-basic', 'tab-job', 'tab-comp'];
-    let currentStep = 0;
-
-    const nextBtn = document.getElementById('wizardNextBtn');
-    const saveBtn = document.getElementById('wizardSaveBtn');
-    const tabsContainer = document.getElementById('addEmployeeTabs');
-    const modalEl = document.getElementById('addEmployeeModal');
-
-    function updateWizardButtons() {
-      if (currentStep === steps.length - 1) {
-        // Last step: hide Next, show Save
-        nextBtn.classList.add('d-none');
-        saveBtn.classList.remove('d-none');
-      } else {
-        // Not last step: show Next, hide Save
-        nextBtn.classList.remove('d-none');
-        saveBtn.classList.add('d-none');
-      }
-    }
-
-    function goToStep(index) {
-      if (index < 0 || index >= steps.length) return;
-      const targetId = steps[index];
-      const trigger = document.querySelector('[data-bs-target="#' + targetId + '"]');
-      if (trigger && window.bootstrap) {
-        const tab = new bootstrap.Tab(trigger);
-        tab.show();
-      }
-    }
-
-    // Handle Next button click
-    nextBtn.addEventListener('click', function () {
-      if (currentStep < steps.length - 1) {
-        currentStep += 1;
-        goToStep(currentStep);
-        updateWizardButtons();
-      }
-    });
-
-    // When tab changes (user clicks tab directly), sync currentStep + buttons
-    if (tabsContainer) {
-      tabsContainer.addEventListener('shown.bs.tab', function (event) {
-        const target = event.target.getAttribute('data-bs-target'); // e.g. "#tab-job"
-        if (!target) return;
-        const id = target.replace('#', '');
-        const idx = steps.indexOf(id);
-        if (idx !== -1) {
-          currentStep = idx;
-          updateWizardButtons();
-        }
-      });
-    }
-
-    // When modal opens, always reset to first step
-    if (modalEl) {
-      modalEl.addEventListener('shown.bs.modal', function () {
-        currentStep = 0;
-        goToStep(currentStep);
-        updateWizardButtons();
-      });
-    }
-
-    // Form submit logic (only from final step)
-    document.getElementById('addEmployeeForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const form = e.target;
-      const data = Object.fromEntries(new FormData(form).entries());
-
-      try {
-        const res = await fetch('/api/v1/employees', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to create employee');
-        }
-
-        window.location.reload();
-      } catch (err) {
-        alert(err.message);
-      }
-    });
-  })();
-</script> --}}

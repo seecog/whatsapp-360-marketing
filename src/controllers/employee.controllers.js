@@ -91,6 +91,40 @@ export const listEmployees = async (req, res, next) => {
 };
 
 /**
+ * GET /api/v1/employees/:id
+ * Get single employee with related details
+ */
+export const getEmployeeById = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        const id = req.params.id;
+
+        const where = { id };
+        if (userId) {
+            where.userId = userId;
+        }
+
+        const employee = await Employee.findOne({
+            where,
+            include: [
+                { model: EmployeeEducation, as: 'educations' },
+                { model: EmployeeExperience, as: 'experiences' },
+                { model: EmployeeDocument, as: 'documents' },
+            ],
+        });
+
+        if (!employee) {
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+
+        res.json(employee);
+    } catch (err) {
+        console.error('Error fetching employee by id:', err);
+        next(err);
+    }
+};
+
+/**
  * POST /api/v1/employees
  * Body:
  * {
@@ -190,12 +224,9 @@ export const createEmployee = async (req, res, next) => {
             tdsDeduction: req.body.tdsDeduction || null,
             netSalary: req.body.netSalary || null,
 
-            // KYC core (moved logically to "Documents" tab, still stored on employee for uniqueness)
+            // KYC core
             empAadhar: req.body.empAadhar,
             empPan: req.body.empPan,
-
-            // System & access / attendance / exit fields can stay null for now:
-            // No need to send them from UI for this phase.
         };
 
         // Optional manual empId; otherwise auto-generate in hook
@@ -315,6 +346,254 @@ export const createEmployee = async (req, res, next) => {
                 .status(400)
                 .json({ error: err.errors.map((e) => e.message).join(', ') });
         }
+        next(err);
+    }
+};
+
+/**
+ * PUT /api/v1/employees/:id
+ * Update employee + nested sections
+ */
+export const updateEmployee = async (req, res, next) => {
+    const t = await sequelize.transaction();
+    try {
+        const userId = req.user?.id;
+        const id = req.params.id;
+
+        const where = { id };
+        if (userId) where.userId = userId;
+
+        const employee = await Employee.findOne({ where, transaction: t, lock: t.LOCK.UPDATE });
+        if (!employee) {
+            await t.rollback();
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+
+        const payload = {
+            // keep userId as is
+            firstName: req.body.firstName,
+            middleName: req.body.middleName || null,
+            lastName: req.body.lastName,
+            empName: req.body.empName || employee.empName,
+
+            gender: req.body.gender || null,
+            maritalStatus: req.body.maritalStatus || null,
+            bloodGroup: req.body.bloodGroup || null,
+            nationality: req.body.nationality || null,
+            religion: req.body.religion || null,
+            casteCategory: req.body.casteCategory || null,
+            languagesKnown: req.body.languagesKnown || null,
+
+            empPhone: req.body.empPhone,
+            altPhone: req.body.altPhone || null,
+            empEmail: req.body.empEmail,
+
+            emergencyContactName: req.body.emergencyContactName || null,
+            emergencyContactRelation: req.body.emergencyContactRelation || null,
+            emergencyContactNumber: req.body.emergencyContactNumber || null,
+
+            presentAddressLine1: req.body.presentAddressLine1 || null,
+            presentAddressLine2: req.body.presentAddressLine2 || null,
+            presentCity: req.body.presentCity || null,
+            presentState: req.body.presentState || null,
+            presentZip: req.body.presentZip || null,
+            presentCountry: req.body.presentCountry || null,
+
+            permanentSameAsPresent: toBool(req.body.permanentSameAsPresent),
+            permanentAddressLine1: req.body.permanentAddressLine1 || null,
+            permanentAddressLine2: req.body.permanentAddressLine2 || null,
+            permanentCity: req.body.permanentCity || null,
+            permanentState: req.body.permanentState || null,
+            permanentZip: req.body.permanentZip || null,
+            permanentCountry: req.body.permanentCountry || null,
+
+            employeeType: req.body.employeeType || 'Permanent',
+            empDesignation: req.body.empDesignation,
+            empDepartment: req.body.empDepartment,
+            division: req.body.division || null,
+            subDepartment: req.body.subDepartment || null,
+            gradeBandLevel: req.body.gradeBandLevel || null,
+            reportingManagerId: req.body.reportingManagerId || null,
+            empWorkLoc: req.body.empWorkLoc,
+            empDateOfJoining: req.body.empDateOfJoining,
+            probationPeriodMonths: req.body.probationPeriodMonths || null,
+            confirmationDate: req.body.confirmationDate || null,
+            employmentStatus: req.body.employmentStatus || 'Active',
+            workMode: req.body.workMode || 'On-site',
+
+            empDob: req.body.empDob,
+
+            empCtc: req.body.empCtc,
+            grossSalaryMonthly: req.body.grossSalaryMonthly || null,
+            basicSalary: req.body.basicSalary || null,
+            hra: req.body.hra || null,
+            conveyanceAllowance: req.body.conveyanceAllowance || null,
+            medicalAllowance: req.body.medicalAllowance || null,
+            specialAllowance: req.body.specialAllowance || null,
+            performanceBonus: req.body.performanceBonus || null,
+            variablePay: req.body.variablePay || null,
+            overtimeEligible: toBool(req.body.overtimeEligible),
+            shiftAllowance: req.body.shiftAllowance || null,
+            pfDeduction: req.body.pfDeduction || null,
+            esiDeduction: req.body.esiDeduction || null,
+            professionalTax: req.body.professionalTax || null,
+            tdsDeduction: req.body.tdsDeduction || null,
+            netSalary: req.body.netSalary || null,
+
+            empAadhar: req.body.empAadhar,
+            empPan: req.body.empPan,
+        };
+
+        // Allow manual empId change if passed
+        if (req.body.empId && req.body.empId.trim() !== '') {
+            payload.empId = req.body.empId.trim();
+        }
+
+        await employee.update(payload, { transaction: t });
+
+        // Nested sections
+        const educations = Array.isArray(req.body.educations)
+            ? req.body.educations
+            : [];
+        const experiences = Array.isArray(req.body.experiences)
+            ? req.body.experiences
+            : [];
+        const documents = Array.isArray(req.body.documents)
+            ? req.body.documents
+            : [];
+
+        // Clear existing child rows then reinsert
+        await EmployeeEducation.destroy({ where: { employeeId: id }, transaction: t });
+        await EmployeeExperience.destroy({ where: { employeeId: id }, transaction: t });
+        await EmployeeDocument.destroy({ where: { employeeId: id }, transaction: t });
+
+        if (educations.length) {
+            await Promise.all(
+                educations.map((edu) =>
+                    EmployeeEducation.create(
+                        {
+                            employeeId: id,
+                            level: edu.level || 'Other',
+                            degree: edu.degree || null,
+                            specialization: edu.specialization || null,
+                            institutionName: edu.institutionName || null,
+                            board: edu.board || null,
+                            startYear: edu.startYear || null,
+                            endYear: edu.endYear || null,
+                            yearOfPassing: edu.yearOfPassing || null,
+                            percentageOrCgpa: edu.percentageOrCgpa || null,
+                            modeOfStudy: edu.modeOfStudy || null,
+                            educationType: edu.educationType || null,
+                            country: edu.country || null,
+                            city: edu.city || null,
+                            certificateUrl: edu.certificateUrl || null,
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        if (experiences.length) {
+            await Promise.all(
+                experiences.map((exp) =>
+                    EmployeeExperience.create(
+                        {
+                            employeeId: id,
+                            organizationName: exp.organizationName,
+                            jobTitle: exp.jobTitle,
+                            employmentType: exp.employmentType || null,
+                            department: exp.department || null,
+                            industryType: exp.industryType || null,
+                            companyLocationCity: exp.companyLocationCity || null,
+                            companyLocationCountry: exp.companyLocationCountry || null,
+                            startDate: exp.startDate || null,
+                            endDate: exp.endDate || null,
+                            isCurrent: toBool(exp.isCurrent),
+                            durationText: exp.durationText || null,
+                            jobLevel: exp.jobLevel || null,
+                            lastDrawnCtc: exp.lastDrawnCtc || null,
+                            reasonForLeaving: exp.reasonForLeaving || null,
+                            noticePeriodServed: toBool(exp.noticePeriodServed),
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        if (documents.length) {
+            await Promise.all(
+                documents.map((doc) =>
+                    EmployeeDocument.create(
+                        {
+                            employeeId: id,
+                            category: doc.category || 'KYC',
+                            documentType: doc.documentType,
+                            nameOnDocument: doc.nameOnDocument || null,
+                            documentNumber: doc.documentNumber || null,
+                            issueDate: doc.issueDate || null,
+                            expiryDate: doc.expiryDate || null,
+                            verificationStatus: doc.verificationStatus || 'Pending',
+                            verifiedBy: doc.verifiedBy || null,
+                            verifiedAt: doc.verifiedAt || null,
+                            fileUrl: doc.fileUrl || null,
+                            documentImageUrl: doc.documentImageUrl || null,
+                            notes: doc.notes || null,
+                        },
+                        { transaction: t }
+                    )
+                )
+            );
+        }
+
+        await t.commit();
+        console.log('Updated employee with id:', id);
+        return res.json(employee);
+    } catch (err) {
+        await t.rollback();
+        console.error('Error updating employee:', err);
+        if (err.name === 'SequelizeValidationError') {
+            return res
+                .status(400)
+                .json({ error: err.errors.map((e) => e.message).join(', ') });
+        }
+        next(err);
+    }
+};
+
+/**
+ * DELETE /api/v1/employees/:id
+ * Delete employee + nested rows
+ */
+export const deleteEmployee = async (req, res, next) => {
+    const t = await sequelize.transaction();
+    try {
+        const userId = req.user?.id;
+        const id = req.params.id;
+
+        const where = { id };
+        if (userId) {
+            where.userId = userId;
+        }
+
+        const employee = await Employee.findOne({ where, transaction: t, lock: t.LOCK.UPDATE });
+        if (!employee) {
+            await t.rollback();
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+
+        await EmployeeEducation.destroy({ where: { employeeId: id }, transaction: t });
+        await EmployeeExperience.destroy({ where: { employeeId: id }, transaction: t });
+        await EmployeeDocument.destroy({ where: { employeeId: id }, transaction: t });
+        await employee.destroy({ transaction: t });
+
+        await t.commit();
+        console.log('Deleted employee with id:', id);
+        return res.json({ success: true });
+    } catch (err) {
+        await t.rollback();
+        console.error('Error deleting employee:', err);
         next(err);
     }
 };
