@@ -5,6 +5,11 @@ import Employee from '../models/Employee.js';
 import EmployeeEducation from '../models/EmployeeEducation.js';
 import EmployeeExperience from '../models/EmployeeExperience.js';
 import EmployeeDocument from '../models/EmployeeDocument.js';
+import { Department } from '../models/Department.js';
+import { Designation } from '../models/Designation.js';
+import BusinessAddress from '../models/BusinessAddress.js';
+import Country from '../models/Country.js';
+import State from '../models/State.js';
 
 const toBool = (val) =>
     val === true || val === 'true' || val === '1' || val === 'on';
@@ -30,12 +35,39 @@ export const renderEmployeesPage = async (req, res, next) => {
             ];
         }
 
-        const employees = await Employee.findAll({
-            where,
-            order: [['empId', 'ASC']],
-        });
+        const [employees, departments, designations, business_addresses,countries,states] = await Promise.all([
+            Employee.findAll({
+                where,
+                order: [['empId', 'ASC']],
+            }),
+            Department.findAll({
+                where: { status: 'ACTIVE' },
+                order: [['name', 'ASC']],
+            }),
+            Designation.findAll({
+                where: { status: 'ACTIVE' },
+                order: [['name', 'ASC']],
+            }),
+            BusinessAddress.findAll({
+                where: { status: 'ACTIVE' },
+                order: [['addressName', 'ASC']],
+            }),
+            Country.findAll({
+                where: { status: 'ACTIVE' },
+                order: [['name', 'ASC']],
+            }),
+            State.findAll({
+                where: { status: 'ACTIVE' },
+                order: [['name', 'ASC']],
+            }),
+        ]);
 
         const employeesPlain = employees.map((e) => e.get({ plain: true }));
+        const departmentsPlain = departments.map((d) => d.get({ plain: true }));
+        const designationsPlain = designations.map((d) => d.get({ plain: true }));
+        const businessAddressesPlain = business_addresses.map((b) => b.get({ plain: true }));
+        const countriesPlain = countries.map((c) => c.get({ plain: true }));
+        const statesPlain = states.map((s) => s.get({ plain: true }));
 
         console.log('Employees fetched for page');
 
@@ -48,6 +80,11 @@ export const renderEmployeesPage = async (req, res, next) => {
             title: 'Employee Management',
             user,
             employees: employeesPlain,
+            departments: departmentsPlain,
+            designations: designationsPlain,
+            businessAddresses: businessAddressesPlain,
+            countries: countriesPlain,
+            states: statesPlain,
             search,
         });
     } catch (err) {

@@ -93,6 +93,9 @@ import { leaveRequestsRoutes } from './routes/leaveRequests.routes.js';
 import employeeRoutes from './routes/employee.routes.js';
 import documentRoutes from './routes/document.routes.js';
 import documentTypesRoutes from './routes/documentTypes.routes.js';
+import stateRoutes from './routes/state.routes.js';
+import countryRoutes from './routes/country.routes.js';
+import businessAddressRoutes from './routes/businessAddress.routes.js';
 
 // ---------- Frontend pages ----------
 app.get('/', (req, res) => res.redirect('/login'));
@@ -181,5 +184,8 @@ app.use('/api/leave-requests', leaveRequestsRoutes);
 app.use(employeeRoutes);
 app.use(documentRoutes);
 app.use(documentTypesRoutes);
+app.use('/api/v1/countries', countryRoutes);
+app.use('/api/v1/states', stateRoutes);
+app.use('/api/v1/business-addresses', businessAddressRoutes);
 
 export { app };
