@@ -5,6 +5,7 @@ import Employee from '../models/Employee.js';
 import EmployeeEducation from '../models/EmployeeEducation.js';
 import EmployeeExperience from '../models/EmployeeExperience.js';
 import EmployeeDocument from '../models/EmployeeDocument.js';
+import { Department } from '../models/Department.js';
 
 const toBool = (val) =>
     val === true || val === 'true' || val === '1' || val === 'on';
@@ -35,6 +36,11 @@ export const renderEmployeesPage = async (req, res, next) => {
             order: [['empId', 'ASC']],
         });
 
+        const departments = await Department.findAll();
+        console.log("departments data : ",departments)
+
+        console.log("employees data : ",employees)
+
         const employeesPlain = employees.map((e) => e.get({ plain: true }));
 
         console.log('Employees fetched for page');
@@ -43,11 +49,12 @@ export const renderEmployeesPage = async (req, res, next) => {
             ? { firstName: req.user.firstName, lastName: req.user.lastName }
             : {};
 
-        res.render('employees', {
+        res.render('employees', {//loading the employees.hbs
             layout: 'main',
             title: 'Employee Management',
             user,
             employees: employeesPlain,
+            departments : departments,
             search,
         });
     } catch (err) {
@@ -597,3 +604,4 @@ export const deleteEmployee = async (req, res, next) => {
         next(err);
     }
 };
+

@@ -536,13 +536,25 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label">Department <span class="text-danger">*</span></label>
+                  {{!-- <label class="form-label">Department <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     name="empDepartment"
                     class="form-control"
                     required
-                  />
+                  /> --}}
+
+<label for="departmentId">Department</label>
+<select name="departmentId" id="departmentId" class="form-control">
+  <option value="">-- Select Department --</option>
+
+  {{#each departments}}
+    <option value="{{id}}">
+      {{name}}
+    </option>
+  {{/each}}
+</select>
+
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Designation / Job Title <span class="text-danger">*</span></label>
@@ -887,7 +899,7 @@
                       <input type="text" class="form-control edu_city" />
                     </div>
                     <div class="col-md-4">
-                      <label class="form-label">Certificate / Marksheet URL</label>
+                      <label class="form-label">Google drive link : Certificate/Marksheet/Migration </label>
                       <input type="text" class="form-control edu_certificateUrl" placeholder="https://..." />
                     </div>
                     <div class="col-md-2 d-flex align-items-end justify-content-end">
@@ -948,7 +960,7 @@
                     </div>
                     <div class="col-md-2">
                       <label class="form-label">Country</label>
-                      <input type="text" class="form-control exp_companyLocationCountry" />
+                     <input type="text" value="India" disabled="true" />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Start Date</label>
