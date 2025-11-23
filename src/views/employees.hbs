@@ -6,8 +6,11 @@
       <div class="sidebar p-3">
         <div class="text-center mb-2">
           <h5 class="text-white">WhatsApp Manager</h5>
-          <small class="text-white-50">{{user.firstName}} {{user.lastName}}</small>
+          <small class="text-white-50">
+            {{user.firstName}} {{user.lastName}}
+          </small>
         </div>
+
         <nav class="nav flex-column">
           <div class="menu-toggle" onclick="toggleMenu('whatsapp-submenu')">
             <div class="nav-link">
@@ -16,11 +19,21 @@
             </div>
           </div>
           <div class="submenu show" id="whatsapp-submenu">
-            <a class="nav-link" href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a class="nav-link" href="/business"><i class="fas fa-building"></i> Business</a>
-            <a class="nav-link" href="/customers"><i class="fas fa-users"></i> Customers</a>
-            <a class="nav-link" href="/templates"><i class="fas fa-file-alt"></i> Templates</a>
-            <a class="nav-link" href="/campaigns"><i class="fas fa-bullhorn"></i> Campaigns</a>
+            <a class="nav-link" href="/dashboard">
+              <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link" href="/business">
+              <i class="fas fa-building"></i> Business
+            </a>
+            <a class="nav-link" href="/customers">
+              <i class="fas fa-users"></i> Customers
+            </a>
+            <a class="nav-link" href="/templates">
+              <i class="fas fa-file-alt"></i> Templates
+            </a>
+            <a class="nav-link" href="/campaigns">
+              <i class="fas fa-bullhorn"></i> Campaigns
+            </a>
           </div>
 
           <div class="menu-toggle mt-2" onclick="toggleMenu('hr-submenu')">
@@ -30,8 +43,12 @@
             </div>
           </div>
           <div class="submenu show" id="hr-submenu">
-            <a class="nav-link active" href="/employees"><i class="fas fa-user-tie"></i> Employees</a>
-            <a class="nav-link" href="/documents"><i class="fas fa-file-signature"></i> Documents</a>
+            <a class="nav-link active" href="/employees">
+              <i class="fas fa-user-tie"></i> Employees
+            </a>
+            <a class="nav-link" href="/documents">
+              <i class="fas fa-file-signature"></i> Documents
+            </a>
           </div>
 
           <div class="menu-toggle mt-2" onclick="toggleMenu('utilities-submenu')">
@@ -41,11 +58,15 @@
             </div>
           </div>
           <div class="submenu" id="utilities-submenu">
-            <a class="nav-link" href="/document-types"><i class="fas fa-layer-group"></i> Document Types</a>
+            <a class="nav-link" href="/document-types">
+              <i class="fas fa-layer-group"></i> Document Types
+            </a>
           </div>
 
           <hr class="text-white-50" />
-          <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          <a class="nav-link" href="#" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
         </nav>
       </div>
     </div>
@@ -76,12 +97,17 @@
             data-bs-target="#addEmployeeModal"
             id="openAddEmployeeModalBtn"
           >
-            <i class="fas fa-plus me-2"></i>Add Employee
+            <i class="fas fa-plus me-2"></i> Add Employee
           </button>
         </div>
 
         {{!-- Search form --}}
-        <form class="row mb-3" id="employeeSearchForm" method="GET" action="/employees">
+        <form
+          class="row mb-3"
+          id="employeeSearchForm"
+          method="GET"
+          action="/employees"
+        >
           <div class="col-md-4 mb-2">
             <input
               type="text"
@@ -94,13 +120,13 @@
           </div>
           <div class="col-md-2 mb-2">
             <button class="btn btn-outline-secondary w-100" type="submit">
-              <i class="fas fa-search me-1"></i>Search
+              <i class="fas fa-search me-1"></i> Search
             </button>
           </div>
           {{#if search}}
             <div class="col-md-2 mb-2">
               <a class="btn btn-outline-light w-100" href="/employees">
-                <i class="fas fa-times me-1"></i>Clear
+                <i class="fas fa-times me-1"></i> Clear
               </a>
             </div>
           {{/if}}
@@ -190,6 +216,7 @@
     <div class="modal-content">
       <form id="addEmployeeForm">
         <input type="hidden" name="id" id="employeeIdField" />
+
         <div class="modal-header">
           <h5 class="modal-title" id="addEmployeeModalTitle">Add Employee</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -274,16 +301,13 @@
 
           {{!-- Tabs content --}}
           <div class="tab-content pt-3" id="addEmployeeTabContent">
-
             {{!-- TAB 1: PERSONAL DETAILS --}}
-            <div
-              class="tab-pane fade show active"
-              id="tab-basic"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade show active" id="tab-basic" role="tabpanel">
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">First Name <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    First Name <span class="text-danger">*</span>
+                  </label>
                   <input type="text" name="firstName" class="form-control" required />
                 </div>
                 <div class="col-md-4">
@@ -291,7 +315,9 @@
                   <input type="text" name="middleName" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    Last Name <span class="text-danger">*</span>
+                  </label>
                   <input type="text" name="lastName" class="form-control" required />
                 </div>
 
@@ -317,7 +343,9 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    Date of Birth <span class="text-danger">*</span>
+                  </label>
                   <input type="date" name="empDob" class="form-control" required />
                 </div>
 
@@ -350,7 +378,9 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Primary Contact Number <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    Primary Contact Number <span class="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     name="empPhone"
@@ -369,13 +399,10 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Personal Email <span class="text-danger">*</span></label>
-                  <input
-                    type="email"
-                    name="empEmail"
-                    class="form-control"
-                    required
-                  />
+                  <label class="form-label">
+                    Personal Email <span class="text-danger">*</span>
+                  </label>
+                  <input type="email" name="empEmail" class="form-control" required />
                 </div>
 
                 <div class="col-12">
@@ -434,7 +461,12 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">State</label>
-                  <input type="text" name="presentState" class="form-control" />
+                  <select name="presentState" class="form-control" required>
+                        <option value="">Select State</option>
+                        {{#each states}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">ZIP</label>
@@ -442,7 +474,12 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">Country</label>
-                  <input type="text" name="presentCountry" class="form-control" />
+                  <select name="presentCountry" class="form-control" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
                 </div>
 
                 <div class="col-12">
@@ -485,7 +522,12 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">State</label>
-                  <input type="text" name="permanentState" class="form-control" />
+                  <select name="permanentState" class="form-control" required>
+                        <option value="">Select State</option>
+                        {{#each states}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">ZIP</label>
@@ -493,17 +535,18 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">Country</label>
-                  <input type="text" name="permanentCountry" class="form-control" />
+                  <select name="permanentCountry" class="form-control" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
                 </div>
               </div>
             </div>
 
             {{!-- TAB 2: PROFESSIONAL DETAILS --}}
-            <div
-              class="tab-pane fade"
-              id="tab-job"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade" id="tab-job" role="tabpanel">
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Employee Code / ID (optional)</label>
@@ -536,6 +579,7 @@
                 </div>
 
                 <div class="col-md-6">
+<<<<<<< HEAD
                   {{!-- <label class="form-label">Department <span class="text-danger">*</span></label>
                   <input
                     type="text"
@@ -555,50 +599,57 @@
   {{/each}}
 </select>
 
+=======
+                  <label class="form-label">
+                    Department <span class="text-danger">*</span>
+                  </label>
+                  <select name="empDepartment" class="form-select" required>
+                    <option value="">Select Department</option>
+                    {{#each departments}}
+                      <option value="{{name}}">{{name}}</option>
+                    {{/each}}
+                  </select>
+>>>>>>> 992fc5b52ab428768445b8ff90cec41b111d794b
                 </div>
+
                 <div class="col-md-6">
-                  <label class="form-label">Designation / Job Title <span class="text-danger">*</span></label>
-                  <input
-                    type="text"
-                    name="empDesignation"
-                    class="form-control"
-                    required
-                  />
+                  <label class="form-label">
+                    Designation / Job Title <span class="text-danger">*</span>
+                  </label>
+                  <select name="empDesignation" class="form-select" required>
+                    <option value="">Select Designation</option>
+                    {{#each designations}}
+                      <option value="{{name}}">{{name}}</option>
+                    {{/each}}
+                  </select>
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label">Division / Business Unit</label>
-                  <input
-                    type="text"
-                    name="division"
-                    class="form-control"
-                  />
+                  <input type="text" name="division" class="form-control" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Sub-Department / Team</label>
-                  <input
-                    type="text"
-                    name="subDepartment"
-                    class="form-control"
-                  />
+                  <input type="text" name="subDepartment" class="form-control" />
                 </div>
 
                 <div class="col-md-4">
                   <label class="form-label">Grade / Band / Level</label>
-                  <input
-                    type="text"
-                    name="gradeBandLevel"
-                    class="form-control"
-                  />
+                  <input type="text" name="gradeBandLevel" class="form-control" />
                 </div>
+
                 <div class="col-md-4">
-                  <label class="form-label">Reporting Manager (Employee ID / Ref)</label>
-                  <input
-                    type="text"
-                    name="reportingManagerId"
-                    class="form-control"
-                  />
+                  <label class="form-label">
+                    Reporting Manager (Employee ID / Ref)
+                  </label>
+                  <select name="reportingManagerId" class="form-select">
+                    <option value="">Select Manager</option>
+                    {{#each employees}}
+                      <option value="{{id}}">{{empName}}</option>
+                    {{/each}}
+                  </select>
                 </div>
+
                 <div class="col-md-4">
                   <label class="form-label">Work Mode</label>
                   <select name="workMode" class="form-select">
@@ -609,16 +660,21 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Work Location / Branch <span class="text-danger">*</span></label>
-                  <input
-                    type="text"
-                    name="empWorkLoc"
-                    class="form-control"
-                    required
-                  />
+                  <label class="form-label">
+                    Work Location / Branch <span class="text-danger">*</span>
+                  </label>
+                  {{!-- <input type="text" name="empWorkLoc" class="form-control" required /> --}}
+                  <select name="empWorkLoc" class="form-control" required>
+                        <option value="">Select Location</option>
+                        {{#each businessAddresses}}
+                        <option value="{{fullAddress}}">{{addressName}}</option>
+                        {{/each}}
+                  </select>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Joining Date <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    Joining Date <span class="text-danger">*</span>
+                  </label>
                   <input
                     type="date"
                     name="empDateOfJoining"
@@ -637,24 +693,18 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Confirmation Date</label>
-                  <input
-                    type="date"
-                    name="confirmationDate"
-                    class="form-control"
-                  />
+                  <input type="date" name="confirmationDate" class="form-control" />
                 </div>
               </div>
             </div>
 
             {{!-- TAB 3: COMPENSATION --}}
-            <div
-              class="tab-pane fade"
-              id="tab-comp"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade" id="tab-comp" role="tabpanel">
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">CTC (₹ - Annual) <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    CTC (₹ - Annual) <span class="text-danger">*</span>
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -746,7 +796,9 @@
                   </select>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Shift Allowance / Night Allowance</label>
+                  <label class="form-label">
+                    Shift Allowance / Night Allowance
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -810,19 +862,20 @@
             </div>
 
             {{!-- TAB 4: EDUCATION & QUALIFICATION --}}
-            <div
-              class="tab-pane fade"
-              id="tab-education"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade" id="tab-education" role="tabpanel">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Education Entries</h6>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="addEducationRowBtn">
-                  <i class="fas fa-plus me-1"></i>Add Education
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addEducationRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Education
                 </button>
               </div>
+
               <div id="educationRows" class="row g-3">
-                {{!-- one template row --}}
+                {{!-- One template row --}}
                 <div class="education-row border rounded p-3 mb-2">
                   <div class="row g-3">
                     <div class="col-md-3">
@@ -840,15 +893,25 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Degree / Course Name</label>
-                      <input type="text" class="form-control edu_degree" placeholder="e.g. B.Tech in CSE" />
+                      <input
+                        type="text"
+                        class="form-control edu_degree"
+                        placeholder="e.g. B.Tech in CSE"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Specialization / Major</label>
-                      <input type="text" class="form-control edu_specialization" />
+                      <input
+                        type="text"
+                        class="form-control edu_specialization"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Institution Name</label>
-                      <input type="text" class="form-control edu_institutionName" />
+                      <input
+                        type="text"
+                        class="form-control edu_institutionName"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Board (for school)</label>
@@ -864,11 +927,17 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Year of Passing</label>
-                      <input type="number" class="form-control edu_yearOfPassing" />
+                      <input
+                        type="number"
+                        class="form-control edu_yearOfPassing"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Percentage / CGPA</label>
-                      <input type="text" class="form-control edu_percentageOrCgpa" />
+                      <input
+                        type="text"
+                        class="form-control edu_percentageOrCgpa"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Mode of Study</label>
@@ -901,9 +970,20 @@
                     <div class="col-md-4">
                       <label class="form-label">Google drive link : Certificate/Marksheet/Migration </label>
                       <input type="text" class="form-control edu_certificateUrl" placeholder="https://..." />
+                      <label class="form-label">
+                        Certificate / Marksheet URL
+                      </label>
+                      <input
+                        type="text"
+                        class="form-control edu_certificateUrl"
+                        placeholder="https://..."
+                      />
                     </div>
                     <div class="col-md-2 d-flex align-items-end justify-content-end">
-                      <button type="button" class="btn btn-outline-danger btn-sm remove-education-row-btn">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm remove-education-row-btn"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -913,23 +993,27 @@
             </div>
 
             {{!-- TAB 5: EXPERIENCE --}}
-            <div
-              class="tab-pane fade"
-              id="tab-experience"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade" id="tab-experience" role="tabpanel">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Employment History</h6>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="addExperienceRowBtn">
-                  <i class="fas fa-plus me-1"></i>Add Experience
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addExperienceRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Experience
                 </button>
               </div>
+
               <div id="experienceRows" class="row g-3">
                 <div class="experience-row border rounded p-3 mb-2">
                   <div class="row g-3">
                     <div class="col-md-4">
                       <label class="form-label">Organization / Company Name</label>
-                      <input type="text" class="form-control exp_organizationName" />
+                      <input
+                        type="text"
+                        class="form-control exp_organizationName"
+                      />
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Designation / Job Title</label>
@@ -956,11 +1040,24 @@
                     </div>
                     <div class="col-md-2">
                       <label class="form-label">City</label>
-                      <input type="text" class="form-control exp_companyLocationCity" />
+                      <input
+                        type="text"
+                        class="form-control exp_companyLocationCity"
+                      />
                     </div>
+                    
                     <div class="col-md-2">
                       <label class="form-label">Country</label>
+<<<<<<< HEAD
                      <input type="text" value="India" disabled="true" />
+=======
+                      <select name="empCountry" class="form-select" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                      </select>
+>>>>>>> 992fc5b52ab428768445b8ff90cec41b111d794b
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Start Date</label>
@@ -976,16 +1073,27 @@
                           type="checkbox"
                           class="form-check-input exp_isCurrent"
                         />
-                        <label class="form-check-label">Present (currently working)</label>
+                        <label class="form-check-label">
+                          Present (currently working)
+                        </label>
                       </div>
                     </div>
                     <div class="col-md-3">
-                      <label class="form-label">Last Drawn Salary / CTC</label>
-                      <input type="number" step="0.01" class="form-control exp_lastDrawnCtc" />
+                      <label class="form-label">
+                        Last Drawn Salary / CTC
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        class="form-control exp_lastDrawnCtc"
+                      />
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Reason for Leaving</label>
-                      <input type="text" class="form-control exp_reasonForLeaving" />
+                      <input
+                        type="text"
+                        class="form-control exp_reasonForLeaving"
+                      />
                     </div>
                     <div class="col-md-3 d-flex align-items-center">
                       <div class="form-check mt-3">
@@ -993,11 +1101,16 @@
                           type="checkbox"
                           class="form-check-input exp_noticePeriodServed"
                         />
-                        <label class="form-check-label">Notice Period Served</label>
+                        <label class="form-check-label">
+                          Notice Period Served
+                        </label>
                       </div>
                     </div>
                     <div class="col-md-2 d-flex align-items-end justify-content-end">
-                      <button type="button" class="btn btn-outline-danger btn-sm remove-experience-row-btn">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm remove-experience-row-btn"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -1007,17 +1120,15 @@
             </div>
 
             {{!-- TAB 6: DOCUMENTS & KYC --}}
-            <div
-              class="tab-pane fade"
-              id="tab-documents"
-              role="tabpanel"
-            >
+            <div class="tab-pane fade" id="tab-documents" role="tabpanel">
               <div class="row g-3">
                 <div class="col-12">
                   <h6>KYC Core (for uniqueness)</h6>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Aadhaar Number <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    Aadhaar Number <span class="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     name="empAadhar"
@@ -1027,7 +1138,9 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">PAN Number <span class="text-danger">*</span></label>
+                  <label class="form-label">
+                    PAN Number <span class="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     name="empPan"
@@ -1042,8 +1155,12 @@
 
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Employee Documents</h6>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="addDocumentRowBtn">
-                  <i class="fas fa-plus me-1"></i>Add Document
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addDocumentRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Document
                 </button>
               </div>
 
@@ -1071,11 +1188,17 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Name as per Document</label>
-                      <input type="text" class="form-control doc_nameOnDocument" />
+                      <input
+                        type="text"
+                        class="form-control doc_nameOnDocument"
+                      />
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Document Number</label>
-                      <input type="text" class="form-control doc_documentNumber" />
+                      <input
+                        type="text"
+                        class="form-control doc_documentNumber"
+                      />
                     </div>
 
                     <div class="col-md-3">
@@ -1114,10 +1237,16 @@
 
                     <div class="col-md-10">
                       <label class="form-label">Notes</label>
-                      <textarea class="form-control doc_notes" rows="2"></textarea>
+                      <textarea
+                        class="form-control doc_notes"
+                        rows="2"
+                      ></textarea>
                     </div>
                     <div class="col-md-2 d-flex align-items-end justify-content-end">
-                      <button type="button" class="btn btn-outline-danger btn-sm remove-document-row-btn">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm remove-document-row-btn"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -1125,9 +1254,9 @@
                 </div>
               </div>
 
-            </div> {{!-- end tab-documents --}}
-          </div> {{!-- end tab-content --}}
-        </div> {{!-- end modal-body --}}
+            </div>{{!-- end tab-documents --}}
+          </div>{{!-- end tab-content --}}
+        </div>{{!-- end modal-body --}}
 
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
@@ -1135,11 +1264,7 @@
           </button>
 
           {{!-- Wizard buttons --}}
-          <button
-            class="btn btn-primary"
-            type="button"
-            id="wizardNextBtn"
-          >
+          <button class="btn btn-primary" type="button" id="wizardNextBtn">
             Next
           </button>
           <button
@@ -1166,8 +1291,10 @@
       <div class="modal-body">
         <h5 id="viewEmpName" class="mb-1"></h5>
         <p class="text-muted mb-3">
-          <span id="viewEmpId"></span> &middot;
-          <span id="viewEmpEmail"></span> &middot;
+          <span id="viewEmpId"></span>
+          &middot;
+          <span id="viewEmpEmail"></span>
+          &middot;
           <span id="viewEmpPhone"></span>
         </p>
 
@@ -1212,62 +1339,74 @@
 
 <script>
   (function () {
-    // --- Wizard steps (6 tabs) ---
+    // =========================
+    // Wizard: steps (6 tabs)
+    // =========================
     const steps = [
-      'tab-basic',
-      'tab-job',
-      'tab-comp',
-      'tab-education',
-      'tab-experience',
-      'tab-documents',
+      "tab-basic",
+      "tab-job",
+      "tab-comp",
+      "tab-education",
+      "tab-experience",
+      "tab-documents",
     ];
+
     let currentStep = 0;
+    const nextBtn = document.getElementById("wizardNextBtn");
+    const saveBtn = document.getElementById("wizardSaveBtn");
+    const tabsContainer = document.getElementById("addEmployeeTabs");
+    const modalEl = document.getElementById("addEmployeeModal");
+    const addEmployeeForm = document.getElementById("addEmployeeForm");
+    const employeeIdField = document.getElementById("employeeIdField");
+    const addEmployeeModalTitle = document.getElementById("addEmployeeModalTitle");
 
-    const nextBtn = document.getElementById('wizardNextBtn');
-    const saveBtn = document.getElementById('wizardSaveBtn');
-    const tabsContainer = document.getElementById('addEmployeeTabs');
-    const modalEl = document.getElementById('addEmployeeModal');
-    const addEmployeeForm = document.getElementById('addEmployeeForm');
-    const employeeIdField = document.getElementById('employeeIdField');
-    const addEmployeeModalTitle = document.getElementById('addEmployeeModalTitle');
-
-    let formMode = 'create'; // 'create' or 'edit'
+    let formMode = "create"; // 'create' or 'edit'
     let currentEditingId = null;
 
     function updateWizardButtons() {
+      if (!nextBtn || !saveBtn) return;
+
       if (currentStep === steps.length - 1) {
-        nextBtn.classList.add('d-none');
-        saveBtn.classList.remove('d-none');
+        nextBtn.classList.add("d-none");
+        saveBtn.classList.remove("d-none");
       } else {
-        nextBtn.classList.remove('d-none');
-        saveBtn.classList.add('d-none');
+        nextBtn.classList.remove("d-none");
+        saveBtn.classList.add("d-none");
       }
     }
 
     function goToStep(index) {
       if (index < 0 || index >= steps.length) return;
+
       const targetId = steps[index];
-      const trigger = document.querySelector('[data-bs-target="#' + targetId + '"]');
+      const trigger = document.querySelector(
+        '[data-bs-target="#' + targetId + '"]'
+      );
+
       if (trigger && window.bootstrap) {
         const tab = new bootstrap.Tab(trigger);
         tab.show();
       }
     }
 
-    nextBtn.addEventListener('click', function () {
-      if (currentStep < steps.length - 1) {
-        currentStep += 1;
-        goToStep(currentStep);
-        updateWizardButtons();
-      }
-    });
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function () {
+        if (currentStep < steps.length - 1) {
+          currentStep += 1;
+          goToStep(currentStep);
+          updateWizardButtons();
+        }
+      });
+    }
 
     if (tabsContainer) {
-      tabsContainer.addEventListener('shown.bs.tab', function (event) {
-        const target = event.target.getAttribute('data-bs-target'); // "#tab-job"
+      tabsContainer.addEventListener("shown.bs.tab", function (event) {
+        const target = event.target.getAttribute("data-bs-target");
         if (!target) return;
-        const id = target.replace('#', '');
+
+        const id = target.replace("#", "");
         const idx = steps.indexOf(id);
+
         if (idx !== -1) {
           currentStep = idx;
           updateWizardButtons();
@@ -1276,47 +1415,54 @@
     }
 
     if (modalEl) {
-      modalEl.addEventListener('shown.bs.modal', function () {
+      modalEl.addEventListener("shown.bs.modal", function () {
         currentStep = 0;
         goToStep(currentStep);
         updateWizardButtons();
       });
     }
 
-    // --- "Permanent same as present" helper ---
-    const sameAsPresentCheckbox = document.getElementById('sameAsPresent');
+    // =======================================
+    // "Permanent same as present" helper
+    // =======================================
+    const sameAsPresentCheckbox = document.getElementById("sameAsPresent");
+
     if (sameAsPresentCheckbox) {
-      sameAsPresentCheckbox.addEventListener('change', function () {
+      sameAsPresentCheckbox.addEventListener("change", function () {
         if (!this.checked) return;
+
         const copyField = (from, to) => {
           const f = document.querySelector('[name="' + from + '"]');
           const t = document.querySelector('[name="' + to + '"]');
           if (f && t) t.value = f.value;
         };
-        copyField('presentAddressLine1', 'permanentAddressLine1');
-        copyField('presentAddressLine2', 'permanentAddressLine2');
-        copyField('presentCity', 'permanentCity');
-        copyField('presentState', 'permanentState');
-        copyField('presentZip', 'permanentZip');
-        copyField('presentCountry', 'permanentCountry');
+
+        copyField("presentAddressLine1", "permanentAddressLine1");
+        copyField("presentAddressLine2", "permanentAddressLine2");
+        copyField("presentCity", "permanentCity");
+        copyField("presentState", "permanentState");
+        copyField("presentZip", "permanentZip");
+        copyField("presentCountry", "permanentCountry");
       });
     }
 
-    // --- Dynamic rows: Education, Experience, Documents ---
-    const educationContainer = document.getElementById('educationRows');
-    const experienceContainer = document.getElementById('experienceRows');
-    const documentContainer = document.getElementById('documentRows');
+    // =======================================
+    // Dynamic rows: Education, Experience, Documents
+    // =======================================
+    const educationContainer = document.getElementById("educationRows");
+    const experienceContainer = document.getElementById("experienceRows");
+    const documentContainer = document.getElementById("documentRows");
 
-    const addEducationRowBtn = document.getElementById('addEducationRowBtn');
-    const addExperienceRowBtn = document.getElementById('addExperienceRowBtn');
-    const addDocumentRowBtn = document.getElementById('addDocumentRowBtn');
+    const addEducationRowBtn = document.getElementById("addEducationRowBtn");
+    const addExperienceRowBtn = document.getElementById("addExperienceRowBtn");
+    const addDocumentRowBtn = document.getElementById("addDocumentRowBtn");
 
     function clearInputsInRow(row) {
-      row.querySelectorAll('input, select, textarea').forEach((el) => {
-        if (el.type === 'checkbox') {
+      row.querySelectorAll("input, select, textarea").forEach((el) => {
+        if (el.type === "checkbox") {
           el.checked = false;
         } else {
-          el.value = '';
+          el.value = "";
         }
       });
     }
@@ -1331,6 +1477,7 @@
 
     function resetDynamicSection(container, rowSelector) {
       if (!container) return;
+
       const rows = container.querySelectorAll(rowSelector);
       rows.forEach((row, idx) => {
         if (idx === 0) {
@@ -1341,46 +1488,57 @@
       });
     }
 
+    // Education dynamic
     if (addEducationRowBtn && educationContainer) {
-      addEducationRowBtn.addEventListener('click', function () {
-        cloneRow(educationContainer, '.education-row');
+      addEducationRowBtn.addEventListener("click", function () {
+        cloneRow(educationContainer, ".education-row");
       });
 
-      educationContainer.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-education-row-btn')) {
-          const row = e.target.closest('.education-row');
-          // Keep at least one row
-          if (educationContainer.querySelectorAll('.education-row').length > 1) {
+      educationContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-education-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".education-row");
+          if (
+            educationContainer.querySelectorAll(".education-row").length > 1 &&
+            row
+          ) {
             row.remove();
           }
         }
       });
     }
 
+    // Experience dynamic
     if (addExperienceRowBtn && experienceContainer) {
-      addExperienceRowBtn.addEventListener('click', function () {
-        cloneRow(experienceContainer, '.experience-row');
+      addExperienceRowBtn.addEventListener("click", function () {
+        cloneRow(experienceContainer, ".experience-row");
       });
 
-      experienceContainer.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-experience-row-btn')) {
-          const row = e.target.closest('.experience-row');
-          if (experienceContainer.querySelectorAll('.experience-row').length > 1) {
+      experienceContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-experience-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".experience-row");
+          if (
+            experienceContainer.querySelectorAll(".experience-row").length > 1 &&
+            row
+          ) {
             row.remove();
           }
         }
       });
     }
 
+    // Document dynamic
     if (addDocumentRowBtn && documentContainer) {
-      addDocumentRowBtn.addEventListener('click', function () {
-        cloneRow(documentContainer, '.document-row');
+      addDocumentRowBtn.addEventListener("click", function () {
+        cloneRow(documentContainer, ".document-row");
       });
 
-      documentContainer.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-document-row-btn')) {
-          const row = e.target.closest('.document-row');
-          if (documentContainer.querySelectorAll('.document-row').length > 1) {
+      documentContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-document-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".document-row");
+          if (documentContainer.querySelectorAll(".document-row").length > 1 && row) {
             row.remove();
           }
         }
@@ -1389,106 +1547,152 @@
 
     function collectEducationRows() {
       const rows = [];
-      document.querySelectorAll('.education-row').forEach((row) => {
+
+      document.querySelectorAll(".education-row").forEach((row) => {
         const obj = {
-          level: row.querySelector('.edu_level')?.value || '',
-          degree: row.querySelector('.edu_degree')?.value || '',
-          specialization: row.querySelector('.edu_specialization')?.value || '',
-          institutionName: row.querySelector('.edu_institutionName')?.value || '',
-          board: row.querySelector('.edu_board')?.value || '',
-          startYear: row.querySelector('.edu_startYear')?.value || '',
-          endYear: row.querySelector('.edu_endYear')?.value || '',
-          yearOfPassing: row.querySelector('.edu_yearOfPassing')?.value || '',
-          percentageOrCgpa: row.querySelector('.edu_percentageOrCgpa')?.value || '',
-          modeOfStudy: row.querySelector('.edu_modeOfStudy')?.value || '',
-          educationType: row.querySelector('.edu_educationType')?.value || '',
-          country: row.querySelector('.edu_country')?.value || '',
-          city: row.querySelector('.edu_city')?.value || '',
-          certificateUrl: row.querySelector('.edu_certificateUrl')?.value || '',
+          level: row.querySelector(".edu_level")?.value || "",
+          degree: row.querySelector(".edu_degree")?.value || "",
+          specialization: row.querySelector(".edu_specialization")?.value || "",
+          institutionName:
+            row.querySelector(".edu_institutionName")?.value || "",
+          board: row.querySelector(".edu_board")?.value || "",
+          startYear: row.querySelector(".edu_startYear")?.value || "",
+          endYear: row.querySelector(".edu_endYear")?.value || "",
+          yearOfPassing:
+            row.querySelector(".edu_yearOfPassing")?.value || "",
+          percentageOrCgpa:
+            row.querySelector(".edu_percentageOrCgpa")?.value || "",
+          modeOfStudy: row.querySelector(".edu_modeOfStudy")?.value || "",
+          educationType:
+            row.querySelector(".edu_educationType")?.value || "",
+          country: row.querySelector(".edu_country")?.value || "",
+          city: row.querySelector(".edu_city")?.value || "",
+          certificateUrl:
+            row.querySelector(".edu_certificateUrl")?.value || "",
         };
-        // Push only if some key fields present
+
+        // Push only if some key fields are present
         if (obj.level || obj.degree || obj.institutionName) {
           rows.push(obj);
         }
       });
+
       return rows;
     }
 
     function collectExperienceRows() {
       const rows = [];
-      document.querySelectorAll('.experience-row').forEach((row) => {
+
+      document.querySelectorAll(".experience-row").forEach((row) => {
         const obj = {
-          organizationName: row.querySelector('.exp_organizationName')?.value || '',
-          jobTitle: row.querySelector('.exp_jobTitle')?.value || '',
-          employmentType: row.querySelector('.exp_employmentType')?.value || '',
-          department: row.querySelector('.exp_department')?.value || '',
-          industryType: row.querySelector('.exp_industryType')?.value || '',
-          companyLocationCity: row.querySelector('.exp_companyLocationCity')?.value || '',
-          companyLocationCountry: row.querySelector('.exp_companyLocationCountry')?.value || '',
-          startDate: row.querySelector('.exp_startDate')?.value || '',
-          endDate: row.querySelector('.exp_endDate')?.value || '',
-          isCurrent: row.querySelector('.exp_isCurrent')?.checked || false,
-          lastDrawnCtc: row.querySelector('.exp_lastDrawnCtc')?.value || '',
-          reasonForLeaving: row.querySelector('.exp_reasonForLeaving')?.value || '',
-          noticePeriodServed: row.querySelector('.exp_noticePeriodServed')?.checked || false,
+          organizationName:
+            row.querySelector(".exp_organizationName")?.value || "",
+          jobTitle: row.querySelector(".exp_jobTitle")?.value || "",
+          employmentType:
+            row.querySelector(".exp_employmentType")?.value || "",
+          department: row.querySelector(".exp_department")?.value || "",
+          industryType: row.querySelector(".exp_industryType")?.value || "",
+          companyLocationCity:
+            row.querySelector(".exp_companyLocationCity")?.value || "",
+          companyLocationCountry:
+            row.querySelector(".exp_companyLocationCountry")?.value || "",
+          startDate: row.querySelector(".exp_startDate")?.value || "",
+          endDate: row.querySelector(".exp_endDate")?.value || "",
+          isCurrent: row.querySelector(".exp_isCurrent")?.checked || false,
+          lastDrawnCtc:
+            row.querySelector(".exp_lastDrawnCtc")?.value || "",
+          reasonForLeaving:
+            row.querySelector(".exp_reasonForLeaving")?.value || "",
+          noticePeriodServed:
+            row.querySelector(".exp_noticePeriodServed")?.checked || false,
         };
+
         if (obj.organizationName || obj.jobTitle) {
           rows.push(obj);
         }
       });
+
       return rows;
     }
 
     function collectDocumentRows() {
       const rows = [];
-      document.querySelectorAll('.document-row').forEach((row) => {
+
+      document.querySelectorAll(".document-row").forEach((row) => {
         const obj = {
-          category: row.querySelector('.doc_category')?.value || '',
-          documentType: row.querySelector('.doc_documentType')?.value || '',
-          nameOnDocument: row.querySelector('.doc_nameOnDocument')?.value || '',
-          documentNumber: row.querySelector('.doc_documentNumber')?.value || '',
-          issueDate: row.querySelector('.doc_issueDate')?.value || '',
-          expiryDate: row.querySelector('.doc_expiryDate')?.value || '',
-          verificationStatus: row.querySelector('.doc_verificationStatus')?.value || 'Pending',
-          fileUrl: row.querySelector('.doc_fileUrl')?.value || '',
-          documentImageUrl: row.querySelector('.doc_documentImageUrl')?.value || '',
-          notes: row.querySelector('.doc_notes')?.value || '',
+          category: row.querySelector(".doc_category")?.value || "",
+          documentType:
+            row.querySelector(".doc_documentType")?.value || "",
+          nameOnDocument:
+            row.querySelector(".doc_nameOnDocument")?.value || "",
+          documentNumber:
+            row.querySelector(".doc_documentNumber")?.value || "",
+          issueDate: row.querySelector(".doc_issueDate")?.value || "",
+          expiryDate: row.querySelector(".doc_expiryDate")?.value || "",
+          verificationStatus:
+            row.querySelector(".doc_verificationStatus")?.value ||
+            "Pending",
+          fileUrl: row.querySelector(".doc_fileUrl")?.value || "",
+          documentImageUrl:
+            row.querySelector(".doc_documentImageUrl")?.value || "",
+          notes: row.querySelector(".doc_notes")?.value || "",
         };
-        if (obj.documentType || obj.documentNumber || obj.fileUrl || obj.documentImageUrl) {
+
+        if (
+          obj.documentType ||
+          obj.documentNumber ||
+          obj.fileUrl ||
+          obj.documentImageUrl
+        ) {
           rows.push(obj);
         }
       });
+
       return rows;
     }
 
-    // --- Helper: reset entire form (for Add mode) ---
+    // =======================================
+    // Helper: reset entire form (for Add mode)
+    // =======================================
     function resetEmployeeForm() {
       if (!addEmployeeForm) return;
+
       addEmployeeForm.reset();
-      employeeIdField.value = '';
-      if (sameAsPresentCheckbox) sameAsPresentCheckbox.checked = false;
-      resetDynamicSection(educationContainer, '.education-row');
-      resetDynamicSection(experienceContainer, '.experience-row');
-      resetDynamicSection(documentContainer, '.document-row');
+      employeeIdField.value = "";
+
+      if (sameAsPresentCheckbox) {
+        sameAsPresentCheckbox.checked = false;
+      }
+
+      resetDynamicSection(educationContainer, ".education-row");
+      resetDynamicSection(experienceContainer, ".experience-row");
+      resetDynamicSection(documentContainer, ".document-row");
     }
 
-    // --- Helper: populate form from employee data (for Edit mode) ---
+    // =======================================
+    // Helper: populate form from employee data (Edit mode)
+    // =======================================
     function fillBaseField(name, value) {
+      if (!addEmployeeForm) return;
+
       const el = addEmployeeForm.elements[name];
       if (!el) return;
-      if (el.type === 'checkbox') {
+
+      if (el.type === "checkbox") {
         el.checked = !!value;
       } else {
-        el.value = value != null ? value : '';
+        el.value = value != null ? value : "";
       }
     }
 
     function setEducationRows(educations) {
-      resetDynamicSection(educationContainer, '.education-row');
+      resetDynamicSection(educationContainer, ".education-row");
       if (!educationContainer) return;
       if (!Array.isArray(educations) || educations.length === 0) return;
 
-      const firstRow = educationContainer.querySelector('.education-row');
+      const firstRow = educationContainer.querySelector(".education-row");
+      if (!firstRow) return;
+
       educations.forEach((edu, index) => {
         let row = firstRow;
         if (index > 0) {
@@ -1496,29 +1700,39 @@
           clearInputsInRow(row);
           educationContainer.appendChild(row);
         }
-        row.querySelector('.edu_level').value = edu.level || '';
-        row.querySelector('.edu_degree').value = edu.degree || '';
-        row.querySelector('.edu_specialization').value = edu.specialization || '';
-        row.querySelector('.edu_institutionName').value = edu.institutionName || '';
-        row.querySelector('.edu_board').value = edu.board || '';
-        row.querySelector('.edu_startYear').value = edu.startYear || '';
-        row.querySelector('.edu_endYear').value = edu.endYear || '';
-        row.querySelector('.edu_yearOfPassing').value = edu.yearOfPassing || '';
-        row.querySelector('.edu_percentageOrCgpa').value = edu.percentageOrCgpa || '';
-        row.querySelector('.edu_modeOfStudy').value = edu.modeOfStudy || '';
-        row.querySelector('.edu_educationType').value = edu.educationType || '';
-        row.querySelector('.edu_country').value = edu.country || '';
-        row.querySelector('.edu_city').value = edu.city || '';
-        row.querySelector('.edu_certificateUrl').value = edu.certificateUrl || '';
+
+        row.querySelector(".edu_level").value = edu.level || "";
+        row.querySelector(".edu_degree").value = edu.degree || "";
+        row.querySelector(".edu_specialization").value =
+          edu.specialization || "";
+        row.querySelector(".edu_institutionName").value =
+          edu.institutionName || "";
+        row.querySelector(".edu_board").value = edu.board || "";
+        row.querySelector(".edu_startYear").value = edu.startYear || "";
+        row.querySelector(".edu_endYear").value = edu.endYear || "";
+        row.querySelector(".edu_yearOfPassing").value =
+          edu.yearOfPassing || "";
+        row.querySelector(".edu_percentageOrCgpa").value =
+          edu.percentageOrCgpa || "";
+        row.querySelector(".edu_modeOfStudy").value =
+          edu.modeOfStudy || "";
+        row.querySelector(".edu_educationType").value =
+          edu.educationType || "";
+        row.querySelector(".edu_country").value = edu.country || "";
+        row.querySelector(".edu_city").value = edu.city || "";
+        row.querySelector(".edu_certificateUrl").value =
+          edu.certificateUrl || "";
       });
     }
 
     function setExperienceRows(experiences) {
-      resetDynamicSection(experienceContainer, '.experience-row');
+      resetDynamicSection(experienceContainer, ".experience-row");
       if (!experienceContainer) return;
       if (!Array.isArray(experiences) || experiences.length === 0) return;
 
-      const firstRow = experienceContainer.querySelector('.experience-row');
+      const firstRow = experienceContainer.querySelector(".experience-row");
+      if (!firstRow) return;
+
       experiences.forEach((exp, index) => {
         let row = firstRow;
         if (index > 0) {
@@ -1526,28 +1740,39 @@
           clearInputsInRow(row);
           experienceContainer.appendChild(row);
         }
-        row.querySelector('.exp_organizationName').value = exp.organizationName || '';
-        row.querySelector('.exp_jobTitle').value = exp.jobTitle || '';
-        row.querySelector('.exp_employmentType').value = exp.employmentType || '';
-        row.querySelector('.exp_department').value = exp.department || '';
-        row.querySelector('.exp_industryType').value = exp.industryType || '';
-        row.querySelector('.exp_companyLocationCity').value = exp.companyLocationCity || '';
-        row.querySelector('.exp_companyLocationCountry').value = exp.companyLocationCountry || '';
-        row.querySelector('.exp_startDate').value = exp.startDate || '';
-        row.querySelector('.exp_endDate').value = exp.endDate || '';
-        row.querySelector('.exp_isCurrent').checked = !!exp.isCurrent;
-        row.querySelector('.exp_lastDrawnCtc').value = exp.lastDrawnCtc || '';
-        row.querySelector('.exp_reasonForLeaving').value = exp.reasonForLeaving || '';
-        row.querySelector('.exp_noticePeriodServed').checked = !!exp.noticePeriodServed;
+
+        row.querySelector(".exp_organizationName").value =
+          exp.organizationName || "";
+        row.querySelector(".exp_jobTitle").value = exp.jobTitle || "";
+        row.querySelector(".exp_employmentType").value =
+          exp.employmentType || "";
+        row.querySelector(".exp_department").value = exp.department || "";
+        row.querySelector(".exp_industryType").value =
+          exp.industryType || "";
+        row.querySelector(".exp_companyLocationCity").value =
+          exp.companyLocationCity || "";
+        row.querySelector(".exp_companyLocationCountry").value =
+          exp.companyLocationCountry || "";
+        row.querySelector(".exp_startDate").value = exp.startDate || "";
+        row.querySelector(".exp_endDate").value = exp.endDate || "";
+        row.querySelector(".exp_isCurrent").checked = !!exp.isCurrent;
+        row.querySelector(".exp_lastDrawnCtc").value =
+          exp.lastDrawnCtc || "";
+        row.querySelector(".exp_reasonForLeaving").value =
+          exp.reasonForLeaving || "";
+        row.querySelector(".exp_noticePeriodServed").checked =
+          !!exp.noticePeriodServed;
       });
     }
 
     function setDocumentRows(documents) {
-      resetDynamicSection(documentContainer, '.document-row');
+      resetDynamicSection(documentContainer, ".document-row");
       if (!documentContainer) return;
       if (!Array.isArray(documents) || documents.length === 0) return;
 
-      const firstRow = documentContainer.querySelector('.document-row');
+      const firstRow = documentContainer.querySelector(".document-row");
+      if (!firstRow) return;
+
       documents.forEach((doc, index) => {
         let row = firstRow;
         if (index > 0) {
@@ -1555,107 +1780,136 @@
           clearInputsInRow(row);
           documentContainer.appendChild(row);
         }
-        row.querySelector('.doc_category').value = doc.category || 'KYC';
-        row.querySelector('.doc_documentType').value = doc.documentType || '';
-        row.querySelector('.doc_nameOnDocument').value = doc.nameOnDocument || '';
-        row.querySelector('.doc_documentNumber').value = doc.documentNumber || '';
-        row.querySelector('.doc_issueDate').value = doc.issueDate || '';
-        row.querySelector('.doc_expiryDate').value = doc.expiryDate || '';
-        row.querySelector('.doc_verificationStatus').value = doc.verificationStatus || 'Pending';
-        row.querySelector('.doc_fileUrl').value = doc.fileUrl || '';
-        row.querySelector('.doc_documentImageUrl').value = doc.documentImageUrl || '';
-        row.querySelector('.doc_notes').value = doc.notes || '';
+
+        row.querySelector(".doc_category").value = doc.category || "KYC";
+        row.querySelector(".doc_documentType").value =
+          doc.documentType || "";
+        row.querySelector(".doc_nameOnDocument").value =
+          doc.nameOnDocument || "";
+        row.querySelector(".doc_documentNumber").value =
+          doc.documentNumber || "";
+        row.querySelector(".doc_issueDate").value = doc.issueDate || "";
+        row.querySelector(".doc_expiryDate").value = doc.expiryDate || "";
+        row.querySelector(".doc_verificationStatus").value =
+          doc.verificationStatus || "Pending";
+        row.querySelector(".doc_fileUrl").value = doc.fileUrl || "";
+        row.querySelector(".doc_documentImageUrl").value =
+          doc.documentImageUrl || "";
+        row.querySelector(".doc_notes").value = doc.notes || "";
       });
     }
 
-    // --- Open Add Employee in Create mode ---
-    const openAddEmployeeModalBtn = document.getElementById('openAddEmployeeModalBtn');
+    // =======================================
+    // Open Add Employee in Create mode
+    // =======================================
+    const openAddEmployeeModalBtn = document.getElementById(
+      "openAddEmployeeModalBtn"
+    );
+
     if (openAddEmployeeModalBtn) {
-      openAddEmployeeModalBtn.addEventListener('click', function () {
-        formMode = 'create';
+      openAddEmployeeModalBtn.addEventListener("click", function () {
+        formMode = "create";
         currentEditingId = null;
+
         if (addEmployeeModalTitle) {
-          addEmployeeModalTitle.textContent = 'Add Employee';
+          addEmployeeModalTitle.textContent = "Add Employee";
         }
+
         resetEmployeeForm();
       });
     }
 
-    // --- Form submit logic (Create / Edit) ---
-    addEmployeeForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const form = e.target;
+    // =======================================
+    // Form submit logic (Create / Edit)
+    // =======================================
+    if (addEmployeeForm) {
+      addEmployeeForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-      // Base payload from simple fields
-      const formData = new FormData(form);
-      const base = Object.fromEntries(formData.entries());
+        const formData = new FormData(addEmployeeForm);
+        const base = Object.fromEntries(formData.entries());
 
-      // Remove id from base; for edit we use URL param
-      delete base.id;
+        // Remove id from base; for edit we use URL param
+        delete base.id;
 
-      // Attach nested sections
-      base.educations = collectEducationRows();
-      base.experiences = collectExperienceRows();
-      base.documents = collectDocumentRows();
+        base.educations = collectEducationRows();
+        base.experiences = collectExperienceRows();
+        base.documents = collectDocumentRows();
 
-      let url = '/api/v1/employees';
-      let method = 'POST';
+        let url = "/api/v1/employees";
+        let method = "POST";
 
-      if (formMode === 'edit' && currentEditingId) {
-        url = '/api/v1/employees/' + currentEditingId;
-        method = 'PUT';
-      }
-
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(base),
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to save employee');
+        if (formMode === "edit" && currentEditingId) {
+          url = "/api/v1/employees/" + currentEditingId;
+          method = "PUT";
         }
 
-        window.location.reload();
-      } catch (err) {
-        alert(err.message);
-      }
-    });
+        try {
+          const res = await fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(base),
+          });
 
-    // ========= VIEW / EDIT / DELETE BUTTON HANDLERS =========
+          if (!res.ok) {
+            let err;
+            try {
+              err = await res.json();
+            } catch (e) {
+              err = {};
+            }
+            throw new Error(err.error || "Failed to save employee");
+          }
+
+          window.location.reload();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+    }
+
+    // =======================================
+    // VIEW / EDIT / DELETE BUTTON HANDLERS
+    // =======================================
     function escapeHtml(str) {
-      if (str == null) return '';
+      if (str == null) return "";
       return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     function renderKeyValueList(containerId, entries) {
       const container = document.getElementById(containerId);
       if (!container) return;
-      container.innerHTML = '';
+
+      container.innerHTML = "";
       entries.forEach(([label, value]) => {
-        const val = value != null && value !== '' ? value : '-';
+        const val = value != null && value !== "" ? value : "-";
         container.insertAdjacentHTML(
-          'beforeend',
-          '<dt class="col-sm-4 text-muted">' + escapeHtml(label) + '</dt>' +
-          '<dd class="col-sm-8">' + escapeHtml(String(val)) + '</dd>'
+          "beforeend",
+          '<dt class="col-sm-4 text-muted">' +
+            escapeHtml(label) +
+            "</dt>" +
+            '<dd class="col-sm-8">' +
+            escapeHtml(String(val)) +
+            "</dd>"
         );
       });
     }
 
     async function fetchEmployee(id) {
-      const res = await fetch('/api/v1/employees/' + id);
+      const res = await fetch("/api/v1/employees/" + id);
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to fetch employee');
+        let err;
+        try {
+          err = await res.json();
+        } catch (e) {
+          err = {};
+        }
+        throw new Error(err.error || "Failed to fetch employee");
       }
       return res.json();
     }
@@ -1664,240 +1918,293 @@
       try {
         const emp = await fetchEmployee(id);
 
-        const viewEmpName = document.getElementById('viewEmpName');
-        const viewEmpId = document.getElementById('viewEmpId');
-        const viewEmpEmail = document.getElementById('viewEmpEmail');
-        const viewEmpPhone = document.getElementById('viewEmpPhone');
+        const viewEmpName = document.getElementById("viewEmpName");
+        const viewEmpId = document.getElementById("viewEmpId");
+        const viewEmpEmail = document.getElementById("viewEmpEmail");
+        const viewEmpPhone = document.getElementById("viewEmpPhone");
 
-        if (viewEmpName) viewEmpName.textContent = emp.empName || (emp.firstName + ' ' + (emp.lastName || ''));
-        if (viewEmpId) viewEmpId.textContent = 'Emp ID: ' + (emp.empId || '-');
-        if (viewEmpEmail) viewEmpEmail.textContent = emp.empEmail || '-';
-        if (viewEmpPhone) viewEmpPhone.textContent = emp.empPhone || '-';
+        if (viewEmpName) {
+          viewEmpName.textContent =
+            emp.empName || (emp.firstName + " " + (emp.lastName || ""));
+        }
+        if (viewEmpId) {
+          viewEmpId.textContent = "Emp ID: " + (emp.empId || "-");
+        }
+        if (viewEmpEmail) {
+          viewEmpEmail.textContent = emp.empEmail || "-";
+        }
+        if (viewEmpPhone) {
+          viewEmpPhone.textContent = emp.empPhone || "-";
+        }
 
-        renderKeyValueList('viewPersonalDetails', [
-          ['Gender', emp.gender],
-          ['Marital Status', emp.maritalStatus],
-          ['Date of Birth', emp.empDob],
-          ['Blood Group', emp.bloodGroup],
-          ['Nationality', emp.nationality],
-          ['Religion', emp.religion],
-          ['Category / Caste', emp.casteCategory],
-          ['Languages Known', emp.languagesKnown],
-          ['Emergency Contact Name', emp.emergencyContactName],
-          ['Emergency Contact Relation', emp.emergencyContactRelation],
-          ['Emergency Contact Number', emp.emergencyContactNumber],
-          ['Present Address Line 1', emp.presentAddressLine1],
-          ['Present Address Line 2', emp.presentAddressLine2],
-          ['Present City', emp.presentCity],
-          ['Present State', emp.presentState],
-          ['Present ZIP', emp.presentZip],
-          ['Present Country', emp.presentCountry],
-          ['Permanent Same As Present', emp.permanentSameAsPresent ? 'Yes' : 'No'],
-          ['Permanent Address Line 1', emp.permanentAddressLine1],
-          ['Permanent Address Line 2', emp.permanentAddressLine2],
-          ['Permanent City', emp.permanentCity],
-          ['Permanent State', emp.permanentState],
-          ['Permanent ZIP', emp.permanentZip],
-          ['Permanent Country', emp.permanentCountry],
+        renderKeyValueList("viewPersonalDetails", [
+          ["Gender", emp.gender],
+          ["Marital Status", emp.maritalStatus],
+          ["Date of Birth", emp.empDob],
+          ["Blood Group", emp.bloodGroup],
+          ["Nationality", emp.nationality],
+          ["Religion", emp.religion],
+          ["Category / Caste", emp.casteCategory],
+          ["Languages Known", emp.languagesKnown],
+          ["Emergency Contact Name", emp.emergencyContactName],
+          ["Emergency Contact Relation", emp.emergencyContactRelation],
+          ["Emergency Contact Number", emp.emergencyContactNumber],
+          ["Present Address Line 1", emp.presentAddressLine1],
+          ["Present Address Line 2", emp.presentAddressLine2],
+          ["Present City", emp.presentCity],
+          ["Present State", emp.presentState],
+          ["Present ZIP", emp.presentZip],
+          ["Present Country", emp.presentCountry],
+          [
+            "Permanent Same As Present",
+            emp.permanentSameAsPresent ? "Yes" : "No",
+          ],
+          ["Permanent Address Line 1", emp.permanentAddressLine1],
+          ["Permanent Address Line 2", emp.permanentAddressLine2],
+          ["Permanent City", emp.permanentCity],
+          ["Permanent State", emp.permanentState],
+          ["Permanent ZIP", emp.permanentZip],
+          ["Permanent Country", emp.permanentCountry],
         ]);
 
-        renderKeyValueList('viewProfessionalDetails', [
-          ['Employee Type', emp.employeeType],
-          ['Employment Status', emp.employmentStatus],
-          ['Department', emp.empDepartment],
-          ['Designation / Job Title', emp.empDesignation],
-          ['Division / Business Unit', emp.division],
-          ['Sub-Department / Team', emp.subDepartment],
-          ['Grade / Band / Level', emp.gradeBandLevel],
-          ['Reporting Manager ID', emp.reportingManagerId],
-          ['Work Mode', emp.workMode],
-          ['Work Location / Branch', emp.empWorkLoc],
-          ['Date of Joining', emp.empDateOfJoining],
-          ['Probation Period (months)', emp.probationPeriodMonths],
-          ['Confirmation Date', emp.confirmationDate],
+        renderKeyValueList("viewProfessionalDetails", [
+          ["Employee Type", emp.employeeType],
+          ["Employment Status", emp.employmentStatus],
+          ["Department", emp.empDepartment],
+          ["Designation / Job Title", emp.empDesignation],
+          ["Division / Business Unit", emp.division],
+          ["Sub-Department / Team", emp.subDepartment],
+          ["Grade / Band / Level", emp.gradeBandLevel],
+          ["Reporting Manager ID", emp.reportingManagerId],
+          ["Work Mode", emp.workMode],
+          ["Work Location / Branch", emp.empWorkLoc],
+          ["Date of Joining", emp.empDateOfJoining],
+          ["Probation Period (months)", emp.probationPeriodMonths],
+          ["Confirmation Date", emp.confirmationDate],
         ]);
 
-        renderKeyValueList('viewCompensationDetails', [
-          ['CTC (₹ - Annual)', emp.empCtc],
-          ['Gross Salary (Monthly)', emp.grossSalaryMonthly],
-          ['Basic Salary', emp.basicSalary],
-          ['HRA', emp.hra],
-          ['Conveyance Allowance', emp.conveyanceAllowance],
-          ['Medical Allowance', emp.medicalAllowance],
-          ['Special Allowance', emp.specialAllowance],
-          ['Performance Bonus', emp.performanceBonus],
-          ['Variable Pay', emp.variablePay],
-          ['Overtime Eligible', emp.overtimeEligible ? 'Yes' : 'No'],
-          ['Shift Allowance', emp.shiftAllowance],
-          ['PF Deduction', emp.pfDeduction],
-          ['ESI Deduction', emp.esiDeduction],
-          ['Professional Tax', emp.professionalTax],
-          ['TDS Deduction', emp.tdsDeduction],
-          ['Net Salary', emp.netSalary],
-          ['Aadhaar Number', emp.empAadhar],
-          ['PAN Number', emp.empPan],
+        renderKeyValueList("viewCompensationDetails", [
+          ["CTC (₹ - Annual)", emp.empCtc],
+          ["Gross Salary (Monthly)", emp.grossSalaryMonthly],
+          ["Basic Salary", emp.basicSalary],
+          ["HRA", emp.hra],
+          ["Conveyance Allowance", emp.conveyanceAllowance],
+          ["Medical Allowance", emp.medicalAllowance],
+          ["Special Allowance", emp.specialAllowance],
+          ["Performance Bonus", emp.performanceBonus],
+          ["Variable Pay", emp.variablePay],
+          ["Overtime Eligible", emp.overtimeEligible ? "Yes" : "No"],
+          ["Shift Allowance", emp.shiftAllowance],
+          ["PF Deduction", emp.pfDeduction],
+          ["ESI Deduction", emp.esiDeduction],
+          ["Professional Tax", emp.professionalTax],
+          ["TDS Deduction", emp.tdsDeduction],
+          ["Net Salary", emp.netSalary],
+          ["Aadhaar Number", emp.empAadhar],
+          ["PAN Number", emp.empPan],
         ]);
 
-        const eduContainer = document.getElementById('viewEducationList');
+        const eduContainer = document.getElementById("viewEducationList");
         if (eduContainer) {
-          eduContainer.innerHTML = '';
+          eduContainer.innerHTML = "";
           const edus = emp.educations || [];
+
           if (edus.length === 0) {
-            eduContainer.innerHTML = '<p class="text-muted mb-0">No education entries.</p>';
+            eduContainer.innerHTML =
+              '<p class="text-muted mb-0">No education entries.</p>';
           } else {
-            const list = document.createElement('div');
+            const list = document.createElement("div");
             edus.forEach((e) => {
-              const card = document.createElement('div');
-              card.className = 'border rounded p-2 mb-2';
-              card.innerHTML =
-                '<strong>' + escapeHtml(e.level || '') + '</strong> - ' +
-                escapeHtml(e.degree || '') +
-                '<br>' +
-                '<small>' +
-                escapeHtml(e.institutionName || '') +
-                (e.yearOfPassing ? ' &middot; Pass Year: ' + escapeHtml(e.yearOfPassing) : '') +
-                '</small>';
+              const card = document.createElement("div");
+              card.className = "border rounded p-2 mb-2";
+              card.innerHTML = `
+                <strong>${escapeHtml(e.level || "")}</strong> - ${escapeHtml(
+                e.degree || ""
+              )}<br/>
+                <small>${escapeHtml(e.institutionName || "")}${
+                e.yearOfPassing
+                  ? " · Pass Year: " + escapeHtml(e.yearOfPassing)
+                  : ""
+              }</small>
+              `;
               list.appendChild(card);
             });
             eduContainer.appendChild(list);
           }
         }
 
-        const expContainer = document.getElementById('viewExperienceList');
+        const expContainer = document.getElementById("viewExperienceList");
         if (expContainer) {
-          expContainer.innerHTML = '';
+          expContainer.innerHTML = "";
           const exps = emp.experiences || [];
+
           if (exps.length === 0) {
-            expContainer.innerHTML = '<p class="text-muted mb-0">No experience entries.</p>';
+            expContainer.innerHTML =
+              '<p class="text-muted mb-0">No experience entries.</p>';
           } else {
-            const list = document.createElement('div');
+            const list = document.createElement("div");
             exps.forEach((e) => {
-              const card = document.createElement('div');
-              card.className = 'border rounded p-2 mb-2';
-              card.innerHTML =
-                '<strong>' + escapeHtml(e.organizationName || '') + '</strong> - ' +
-                escapeHtml(e.jobTitle || '') +
-                '<br>' +
-                '<small>' +
-                (e.startDate || '-') + ' to ' + (e.isCurrent ? 'Present' : (e.endDate || '-')) +
-                '</small>';
+              const card = document.createElement("div");
+              card.className = "border rounded p-2 mb-2";
+              card.innerHTML = `
+                <strong>${escapeHtml(
+                  e.organizationName || ""
+                )}</strong> - ${escapeHtml(e.jobTitle || "")}<br/>
+                <small>${e.startDate || "-"} to ${
+                e.isCurrent ? "Present" : e.endDate || "-"
+              }</small>
+              `;
               list.appendChild(card);
             });
             expContainer.appendChild(list);
           }
         }
 
-        const docContainer = document.getElementById('viewDocumentList');
+        const docContainer = document.getElementById("viewDocumentList");
         if (docContainer) {
-          docContainer.innerHTML = '';
+          docContainer.innerHTML = "";
           const docs = emp.documents || [];
+
           if (docs.length === 0) {
-            docContainer.innerHTML = '<p class="text-muted mb-0">No documents.</p>';
+            docContainer.innerHTML =
+              '<p class="text-muted mb-0">No documents.</p>';
           } else {
-            const list = document.createElement('div');
+            const list = document.createElement("div");
             docs.forEach((d) => {
-              const card = document.createElement('div');
-              card.className = 'border rounded p-2 mb-2';
-              card.innerHTML =
-                '<strong>' + escapeHtml(d.category || '') + '</strong> - ' +
-                escapeHtml(d.documentType || '') +
-                '<br>' +
-                '<small>Status: ' + escapeHtml(d.verificationStatus || 'Pending') + '</small>';
+              const card = document.createElement("div");
+              card.className = "border rounded p-2 mb-2";
+              card.innerHTML = `
+                <strong>${escapeHtml(d.category || "")}</strong> - ${escapeHtml(
+                d.documentType || ""
+              )}<br/>
+                <small>Status: ${escapeHtml(
+                  d.verificationStatus || "Pending"
+                )}</small>
+              `;
               list.appendChild(card);
             });
             docContainer.appendChild(list);
           }
         }
 
-        const viewModalEl = document.getElementById('viewEmployeeModal');
-        const viewModal = bootstrap.Modal.getOrCreateInstance(viewModalEl);
+        const viewModalEl = document.getElementById("viewEmployeeModal");
+        const viewModal =
+          bootstrap.Modal.getOrCreateInstance(viewModalEl);
         viewModal.show();
-      } catch (err) {
-        alert(err.message);
+      } catch (error) {
+        alert(error.message);
       }
     }
 
     async function openEditEmployeeModal(id) {
       try {
         const emp = await fetchEmployee(id);
-        formMode = 'edit';
-        currentEditingId = id;
-        if (addEmployeeModalTitle) {
-          addEmployeeModalTitle.textContent = 'Edit Employee';
-        }
-        resetEmployeeForm();
 
+        formMode = "edit";
+        currentEditingId = id;
+
+        if (addEmployeeModalTitle) {
+          addEmployeeModalTitle.textContent = "Edit Employee";
+        }
+
+        resetEmployeeForm();
         employeeIdField.value = emp.id;
 
         // Base fields
-        fillBaseField('firstName', emp.firstName);
-        fillBaseField('middleName', emp.middleName);
-        fillBaseField('lastName', emp.lastName);
-        fillBaseField('gender', emp.gender);
-        fillBaseField('maritalStatus', emp.maritalStatus);
-        fillBaseField('empDob', emp.empDob);
-        fillBaseField('bloodGroup', emp.bloodGroup);
-        fillBaseField('nationality', emp.nationality);
-        fillBaseField('religion', emp.religion);
-        fillBaseField('casteCategory', emp.casteCategory);
-        fillBaseField('languagesKnown', emp.languagesKnown);
-        fillBaseField('empPhone', emp.empPhone);
-        fillBaseField('altPhone', emp.altPhone);
-        fillBaseField('empEmail', emp.empEmail);
-        fillBaseField('emergencyContactName', emp.emergencyContactName);
-        fillBaseField('emergencyContactRelation', emp.emergencyContactRelation);
-        fillBaseField('emergencyContactNumber', emp.emergencyContactNumber);
-        fillBaseField('presentAddressLine1', emp.presentAddressLine1);
-        fillBaseField('presentAddressLine2', emp.presentAddressLine2);
-        fillBaseField('presentCity', emp.presentCity);
-        fillBaseField('presentState', emp.presentState);
-        fillBaseField('presentZip', emp.presentZip);
-        fillBaseField('presentCountry', emp.presentCountry);
-        fillBaseField('permanentSameAsPresent', emp.permanentSameAsPresent);
+        fillBaseField("firstName", emp.firstName);
+        fillBaseField("middleName", emp.middleName);
+        fillBaseField("lastName", emp.lastName);
+        fillBaseField("gender", emp.gender);
+        fillBaseField("maritalStatus", emp.maritalStatus);
+        fillBaseField("empDob", emp.empDob);
+        fillBaseField("bloodGroup", emp.bloodGroup);
+        fillBaseField("nationality", emp.nationality);
+        fillBaseField("religion", emp.religion);
+        fillBaseField("casteCategory", emp.casteCategory);
+        fillBaseField("languagesKnown", emp.languagesKnown);
+        fillBaseField("empPhone", emp.empPhone);
+        fillBaseField("altPhone", emp.altPhone);
+        fillBaseField("empEmail", emp.empEmail);
+        fillBaseField("emergencyContactName", emp.emergencyContactName);
+        fillBaseField(
+          "emergencyContactRelation",
+          emp.emergencyContactRelation
+        );
+        fillBaseField(
+          "emergencyContactNumber",
+          emp.emergencyContactNumber
+        );
+
+        fillBaseField("presentAddressLine1", emp.presentAddressLine1);
+        fillBaseField("presentAddressLine2", emp.presentAddressLine2);
+        fillBaseField("presentCity", emp.presentCity);
+        fillBaseField("presentState", emp.presentState);
+        fillBaseField("presentZip", emp.presentZip);
+        fillBaseField("presentCountry", emp.presentCountry);
+
+        fillBaseField("permanentSameAsPresent", emp.permanentSameAsPresent);
         if (sameAsPresentCheckbox) {
           sameAsPresentCheckbox.checked = !!emp.permanentSameAsPresent;
         }
-        fillBaseField('permanentAddressLine1', emp.permanentAddressLine1);
-        fillBaseField('permanentAddressLine2', emp.permanentAddressLine2);
-        fillBaseField('permanentCity', emp.permanentCity);
-        fillBaseField('permanentState', emp.permanentState);
-        fillBaseField('permanentZip', emp.permanentZip);
-        fillBaseField('permanentCountry', emp.permanentCountry);
 
-        fillBaseField('empId', emp.empId);
-        fillBaseField('employeeType', emp.employeeType);
-        fillBaseField('employmentStatus', emp.employmentStatus);
-        fillBaseField('empDepartment', emp.empDepartment);
-        fillBaseField('empDesignation', emp.empDesignation);
-        fillBaseField('division', emp.division);
-        fillBaseField('subDepartment', emp.subDepartment);
-        fillBaseField('gradeBandLevel', emp.gradeBandLevel);
-        fillBaseField('reportingManagerId', emp.reportingManagerId);
-        fillBaseField('workMode', emp.workMode);
-        fillBaseField('empWorkLoc', emp.empWorkLoc);
-        fillBaseField('empDateOfJoining', emp.empDateOfJoining);
-        fillBaseField('probationPeriodMonths', emp.probationPeriodMonths);
-        fillBaseField('confirmationDate', emp.confirmationDate);
+        fillBaseField("permanentAddressLine1", emp.permanentAddressLine1);
+        fillBaseField("permanentAddressLine2", emp.permanentAddressLine2);
+        fillBaseField("permanentCity", emp.permanentCity);
+        fillBaseField("permanentState", emp.permanentState);
+        fillBaseField("permanentZip", emp.permanentZip);
+        fillBaseField("permanentCountry", emp.permanentCountry);
 
-        fillBaseField('empCtc', emp.empCtc);
-        fillBaseField('grossSalaryMonthly', emp.grossSalaryMonthly);
-        fillBaseField('basicSalary', emp.basicSalary);
-        fillBaseField('hra', emp.hra);
-        fillBaseField('conveyanceAllowance', emp.conveyanceAllowance);
-        fillBaseField('medicalAllowance', emp.medicalAllowance);
-        fillBaseField('specialAllowance', emp.specialAllowance);
-        fillBaseField('performanceBonus', emp.performanceBonus);
-        fillBaseField('variablePay', emp.variablePay);
-        fillBaseField('overtimeEligible', emp.overtimeEligible ? 'true' : 'false');
-        fillBaseField('shiftAllowance', emp.shiftAllowance);
-        fillBaseField('pfDeduction', emp.pfDeduction);
-        fillBaseField('esiDeduction', emp.esiDeduction);
-        fillBaseField('professionalTax', emp.professionalTax);
-        fillBaseField('tdsDeduction', emp.tdsDeduction);
-        fillBaseField('netSalary', emp.netSalary);
+        fillBaseField("empId", emp.empId);
+        fillBaseField("employeeType", emp.employeeType);
+        fillBaseField("employmentStatus", emp.employmentStatus);
+        fillBaseField("empDepartment", emp.empDepartment);
+        fillBaseField("empDesignation", emp.empDesignation);
+        fillBaseField("division", emp.division);
+        fillBaseField("subDepartment", emp.subDepartment);
+        fillBaseField("gradeBandLevel", emp.gradeBandLevel);
+        fillBaseField("reportingManagerId", emp.reportingManagerId);
+        fillBaseField("workMode", emp.workMode);
+        fillBaseField("empWorkLoc", emp.empWorkLoc);
+        fillBaseField("empDateOfJoining", emp.empDateOfJoining);
+        fillBaseField(
+          "probationPeriodMonths",
+          emp.probationPeriodMonths
+        );
+        fillBaseField("confirmationDate", emp.confirmationDate);
 
-        fillBaseField('empAadhar', emp.empAadhar);
-        fillBaseField('empPan', emp.empPan);
+        fillBaseField("empCtc", emp.empCtc);
+        fillBaseField("grossSalaryMonthly", emp.grossSalaryMonthly);
+        fillBaseField("basicSalary", emp.basicSalary);
+        fillBaseField("hra", emp.hra);
+        fillBaseField(
+          "conveyanceAllowance",
+          emp.conveyanceAllowance
+        );
+        fillBaseField(
+          "medicalAllowance",
+          emp.medicalAllowance
+        );
+        fillBaseField(
+          "specialAllowance",
+          emp.specialAllowance
+        );
+        fillBaseField(
+          "performanceBonus",
+          emp.performanceBonus
+        );
+        fillBaseField("variablePay", emp.variablePay);
+        fillBaseField(
+          "overtimeEligible",
+          emp.overtimeEligible ? "true" : "false"
+        );
+        fillBaseField("shiftAllowance", emp.shiftAllowance);
+        fillBaseField("pfDeduction", emp.pfDeduction);
+        fillBaseField("esiDeduction", emp.esiDeduction);
+        fillBaseField("professionalTax", emp.professionalTax);
+        fillBaseField("tdsDeduction", emp.tdsDeduction);
+        fillBaseField("netSalary", emp.netSalary);
+        fillBaseField("empAadhar", emp.empAadhar);
+        fillBaseField("empPan", emp.empPan);
 
         setEducationRows(emp.educations || []);
         setExperienceRows(emp.experiences || []);
@@ -1905,54 +2212,60 @@
 
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
-      } catch (err) {
-        alert(err.message);
+      } catch (error) {
+        alert(error.message);
       }
     }
 
     async function deleteEmployee(id) {
-      if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
-        return;
-      }
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this employee? This action cannot be undone."
+      );
+      if (!confirmed) return;
+
       try {
-        const res = await fetch('/api/v1/employees/' + id, {
-          method: 'DELETE',
+        const res = await fetch("/api/v1/employees/" + id, {
+          method: "DELETE",
         });
+
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to delete employee');
+          let err;
+          try {
+            err = await res.json();
+          } catch (e) {
+            err = {};
+          }
+          throw new Error(err.error || "Failed to delete employee");
         }
+
         window.location.reload();
-      } catch (err) {
-        alert(err.message);
+      } catch (error) {
+        alert(error.message);
       }
     }
 
-    document.addEventListener('click', function (e) {
-      const viewBtn = e.target.closest('.view-employee-btn');
+    // =======================================
+    // Global click delegation for View/Edit/Delete
+    // =======================================
+    document.addEventListener("click", function (e) {
+      const viewBtn = e.target.closest(".view-employee-btn");
       if (viewBtn) {
-        const id = viewBtn.getAttribute('data-id');
-        if (id) {
-          openViewEmployeeModal(id);
-        }
+        const id = viewBtn.getAttribute("data-id");
+        if (id) openViewEmployeeModal(id);
         return;
       }
 
-      const editBtn = e.target.closest('.edit-employee-btn');
+      const editBtn = e.target.closest(".edit-employee-btn");
       if (editBtn) {
-        const id = editBtn.getAttribute('data-id');
-        if (id) {
-          openEditEmployeeModal(id);
-        }
+        const id = editBtn.getAttribute("data-id");
+        if (id) openEditEmployeeModal(id);
         return;
       }
 
-      const deleteBtn = e.target.closest('.delete-employee-btn');
+      const deleteBtn = e.target.closest(".delete-employee-btn");
       if (deleteBtn) {
-        const id = deleteBtn.getAttribute('data-id');
-        if (id) {
-          deleteEmployee(id);
-        }
+        const id = deleteBtn.getAttribute("data-id");
+        if (id) deleteEmployee(id);
         return;
       }
     });
