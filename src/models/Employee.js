@@ -351,22 +351,7 @@ const Employee = sequelize.define(
       allowNull: true,
     },
 
-    // --- KYC / Compliance core ---
-    empAadhar: {
-      type: DataTypes.STRING(12),
-      allowNull: false,
-      validate: {
-        len: [12, 12],
-        isNumeric: true,
-      },
-    },
-    empPan: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-      validate: {
-        len: [1, 10],
-      },
-    },
+    // --- KYC / Compliance core (generic now, Aadhaar/PAN removed) ---
     idProofType: {
       type: DataTypes.ENUM('Aadhaar', 'PAN', 'Passport', 'Driving License', 'Voter ID', 'National ID', 'Other'),
       allowNull: true,
@@ -502,8 +487,7 @@ const Employee = sequelize.define(
       { unique: true, fields: ['userId', 'empId'] },
       { unique: true, fields: ['userId', 'empEmail'] },
       { unique: true, fields: ['userId', 'empPhone'] },
-      { unique: true, fields: ['userId', 'empAadhar'] },
-      { unique: true, fields: ['userId', 'empPan'] },
+      // Aadhaar/PAN unique indexes removed
       { fields: ['userId', 'isActive'] },
       { fields: ['empDepartment'] },
       { fields: ['empDesignation'] },
@@ -527,9 +511,6 @@ Employee.beforeValidate(async (employee) => {
       }${employee.lastName}`.trim();
   }
 
-  if (employee.empPan) {
-    employee.empPan = employee.empPan.toUpperCase();
-  }
   if (employee.empEmail) {
     employee.empEmail = employee.empEmail.toLowerCase();
   }
@@ -537,9 +518,6 @@ Employee.beforeValidate(async (employee) => {
 
 // Extra safety on every save
 Employee.beforeSave((employee) => {
-  if (employee.empPan) {
-    employee.empPan = employee.empPan.toUpperCase();
-  }
   if (employee.empEmail) {
     employee.empEmail = employee.empEmail.toLowerCase();
   }

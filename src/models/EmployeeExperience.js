@@ -78,6 +78,18 @@ const EmployeeExperience = sequelize.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+        relievingLetterUrl: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        salarySlipsUrl: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        bankStatementUrl: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
     },
     {
         tableName: 'employee_experiences',

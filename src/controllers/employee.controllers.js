@@ -262,8 +262,8 @@ export const createEmployee = async (req, res, next) => {
             netSalary: req.body.netSalary || null,
 
             // KYC core
-            empAadhar: req.body.empAadhar,
-            empPan: req.body.empPan,
+            // empAadhar: req.body.empAadhar,
+            // empPan: req.body.empPan,
         };
 
         // Optional manual empId; otherwise auto-generate in hook
@@ -338,6 +338,11 @@ export const createEmployee = async (req, res, next) => {
                             lastDrawnCtc: exp.lastDrawnCtc || null,
                             reasonForLeaving: exp.reasonForLeaving || null,
                             noticePeriodServed: toBool(exp.noticePeriodServed),
+
+                            // NEW: supporting document URLs
+                            relievingLetterUrl: exp.relievingLetterUrl || null,
+                            salarySlipsUrl: exp.salarySlipsUrl || null,
+                            bankStatementUrl: exp.bankStatementUrl || null,
                         },
                         { transaction: t }
                     )
@@ -394,6 +399,10 @@ export const createEmployee = async (req, res, next) => {
 export const updateEmployee = async (req, res, next) => {
     const t = await sequelize.transaction();
     try {
+        console.log('--- UPDATE EMPLOYEE CALLED ---');
+        console.log('Params id:', req.params.id);
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        console.log('User:', req.user?.id);
         const userId = req.user?.id;
         const id = req.params.id;
 
@@ -477,8 +486,8 @@ export const updateEmployee = async (req, res, next) => {
             tdsDeduction: req.body.tdsDeduction || null,
             netSalary: req.body.netSalary || null,
 
-            empAadhar: req.body.empAadhar,
-            empPan: req.body.empPan,
+            // empAadhar: req.body.empAadhar,
+            // empPan: req.body.empPan,
         };
 
         // Allow manual empId change if passed
@@ -552,12 +561,18 @@ export const updateEmployee = async (req, res, next) => {
                             lastDrawnCtc: exp.lastDrawnCtc || null,
                             reasonForLeaving: exp.reasonForLeaving || null,
                             noticePeriodServed: toBool(exp.noticePeriodServed),
+
+                            // NEW: supporting document URLs
+                            relievingLetterUrl: exp.relievingLetterUrl || null,
+                            salarySlipsUrl: exp.salarySlipsUrl || null,
+                            bankStatementUrl: exp.bankStatementUrl || null,
                         },
                         { transaction: t }
                     )
                 )
             );
         }
+
 
         if (documents.length) {
             await Promise.all(
