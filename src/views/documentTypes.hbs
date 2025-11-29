@@ -54,7 +54,13 @@
       <div class="main-content p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2>Document Types</h2>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#docTypeModal">
+          <button
+            class="btn btn-primary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#docTypeModal"
+            onclick="openDocTypeModal('add')"
+          >
             <i class="fas fa-plus me-2"></i>Add New Document Type
           </button>
         </div>
@@ -76,13 +82,25 @@
                     </div>
                     <p class="card-text flex-grow-1">{{description}}</p>
                     <div class="d-flex justify-content-between mt-2">
-                      <button class="btn btn-sm btn-outline-secondary" type="button" onclick="viewTemplate({{id}})">
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        type="button"
+                        onclick="viewTemplate({{id}})"
+                      >
                         View
                       </button>
-                      <button class="btn btn-sm btn-outline-primary" type="button" onclick="editDocType({{id}})">
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        type="button"
+                        onclick="editDocType({{id}})"
+                      >
                         Edit
                       </button>
-                      <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteDocType({{id}})">
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        type="button"
+                        onclick="deleteDocType({{id}})"
+                      >
                         Delete
                       </button>
                     </div>
@@ -121,15 +139,31 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Icon (Font Awesome)</label>
-              <input type="text" class="form-control" id="docTypeIcon" name="icon" placeholder="fas fa-file-alt" />
+              <input
+                type="text"
+                class="form-control"
+                id="docTypeIcon"
+                name="icon"
+                placeholder="fas fa-file-alt"
+              />
             </div>
             <div class="col-12">
               <label class="form-label">Description</label>
-              <textarea class="form-control" id="docTypeDescription" name="description" rows="3"></textarea>
+              <textarea
+                class="form-control"
+                id="docTypeDescription"
+                name="description"
+                rows="3"
+              ></textarea>
             </div>
             <div class="col-12">
-              <label class="form-label">Template HTML (optional)</label>
-              <textarea class="form-control" id="docTypeTemplateHtml" name="templateHtml" rows="5"></textarea>
+              <label class="form-label">Template HTML</label>
+              <textarea
+                class="form-control"
+                id="docTypeTemplateHtml"
+                name="templateHtml"
+                rows="5"
+              ></textarea>
             </div>
           </div>
         </div>
@@ -158,68 +192,177 @@
 </div>
 
 <script>
-  // safely parsed from server → JS
-  const docTypes = JSON.parse('{{{json documentTypes}}}');
-
-  function findDocType(id) {
-    return docTypes.find((t) => t.id === id);
+  // Small helper to avoid broken HTML when showing text fields inside preview
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
+  /**
+   * Fill and open Add/Edit modal
+   */
   function openDocTypeModal(mode, docType) {
-    document.getElementById('docTypeId').value = docType?.id || '';
-    document.getElementById('docTypeName').value = docType?.name || '';
-    document.getElementById('docTypeCode').value = docType?.code || '';
-    document.getElementById('docTypeIcon').value = docType?.icon || '';
-    document.getElementById('docTypeDescription').value = docType?.description || '';
-    document.getElementById('docTypeTemplateHtml').value = docType?.templateHtml || '';
-    document.getElementById('docTypeModalTitle').innerText =
-      mode === 'edit' ? 'Edit Document Type' : 'Add Document Type';
+    const idInput = document.getElementById('docTypeId');
+    const nameInput = document.getElementById('docTypeName');
+    const codeInput = document.getElementById('docTypeCode');
+    const iconInput = document.getElementById('docTypeIcon');
+    const descInput = document.getElementById('docTypeDescription');
+    const tplInput = document.getElementById('docTypeTemplateHtml');
+    const titleEl = document.getElementById('docTypeModalTitle');
+
+    if (mode === 'edit' && docType) {
+      idInput.value = docType.id || '';
+      nameInput.value = docType.name || '';
+      codeInput.value = docType.code || '';
+      iconInput.value = docType.icon || '';
+      descInput.value = docType.description || '';
+      tplInput.value = docType.templateHtml || '';
+      titleEl.innerText = 'Edit Document Type';
+    } else {
+      idInput.value = '';
+      nameInput.value = '';
+      codeInput.value = '';
+      iconInput.value = '';
+      descInput.value = '';
+      tplInput.value = '';
+      titleEl.innerText = 'Add Document Type';
+    }
 
     const modal = new bootstrap.Modal(document.getElementById('docTypeModal'));
     modal.show();
   }
 
-  function editDocType(id) {
-    const t = findDocType(id);
-    if (!t) return;
-    openDocTypeModal('edit', t);
+  /**
+   * Load a single DocumentType via API
+   */
+  async function fetchDocType(id) {
+    console.log('Fetching doc type', id);
+    const res = await fetch(`/api/v1/document-types/${id}`);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Failed to load document type', res.status, text);
+      throw new Error('Failed to load document type');
+    }
+    return res.json();
   }
 
-  function viewTemplate(id) {
-    const t = findDocType(id);
-    const container = document.getElementById('templatePreview');
-    container.innerHTML =
-      t && t.templateHtml
-        ? t.templateHtml
-        : '<p class="text-muted">No template HTML configured.</p>';
-
-    const modal = new bootstrap.Modal(document.getElementById('viewTemplateModal'));
-    modal.show();
+  /**
+   * Edit button → open modal with existing data
+   */
+  async function editDocType(id) {
+    try {
+      const docType = await fetchDocType(id);
+      openDocTypeModal('edit', docType);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load document type for editing');
+    }
   }
 
+  /**
+   * View button → open preview modal with ALL info
+   */
+  async function viewTemplate(id) {
+    try {
+      const docType = await fetchDocType(id);
+      const container = document.getElementById('templatePreview');
+
+      let html = `
+        <h5>${escapeHtml(docType.name)} <small class="text-muted">(${escapeHtml(
+        docType.code
+      )})</small></h5>
+        <p><strong>Icon:</strong> ${escapeHtml(docType.icon || '')}</p>
+        <p><strong>Description:</strong><br>${escapeHtml(
+          docType.description || ''
+        )}</p>
+        <hr />
+      `;
+
+      if (docType.templateHtml && docType.templateHtml.trim()) {
+        html += `<div>${docType.templateHtml}</div>`;
+      } else {
+        html += '<p class="text-muted">No template HTML configured.</p>';
+      }
+
+      container.innerHTML = html;
+
+      const modal = new bootstrap.Modal(
+        document.getElementById('viewTemplateModal')
+      );
+      modal.show();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load template for preview');
+    }
+  }
+
+  /**
+   * Delete button → soft delete then reload
+   */
   async function deleteDocType(id) {
     if (!confirm('Delete this document type?')) return;
-    const res = await fetch(`/api/v1/document-types/${id}`, { method: 'DELETE' });
-    if (res.ok) window.location.reload();
-    else alert('Failed to delete');
+    try {
+      const res = await fetch(`/api/v1/document-types/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const text = await res.text();
+        console.error('Delete failed', res.status, text);
+        alert('Failed to delete document type');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete document type');
+    }
   }
 
-  document.getElementById('docTypeForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = Object.fromEntries(new FormData(form).entries());
-    const id = data.id;
+  /**
+   * Form submit → create or update
+   */
+  document
+    .getElementById('docTypeForm')
+    .addEventListener('submit', async function (e) {
+      e.preventDefault();
 
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/v1/document-types/${id}` : '/api/v1/document-types`;
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      const id = data.id || null;
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `/api/v1/document-types/${id}`
+        : '/api/v1/document-types';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          const errText = await res.text();
+          console.error('Error saving document type:', res.status, errText);
+          alert('Failed to save document type');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save document type');
+      }
     });
 
-    if (res.ok) window.location.reload();
-    else alert('Failed to save document type');
-  });
+  // Make functions available on window for inline onclick attributes
+  window.openDocTypeModal = openDocTypeModal;
+  window.editDocType = editDocType;
+  window.viewTemplate = viewTemplate;
+  window.deleteDocType = deleteDocType;
 </script>

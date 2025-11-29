@@ -19,7 +19,7 @@ const EmployeeDocument = sequelize.define(
             },
         },
         category: {
-            type: DataTypes.ENUM('KYC', 'ADDRESS', 'EDUCATION', 'EXPERIENCE', 'HR', 'OTHER'),
+            type: DataTypes.ENUM('KYC','AADHAAAR', 'PAN', 'ADDRESS', 'EDUCATION', 'EXPERIENCE', 'HR', 'OTHER'),
             defaultValue: 'KYC',
         },
         documentType: {

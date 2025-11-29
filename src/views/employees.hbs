@@ -461,6 +461,7 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">State</label>
+                  {{!-- <input type="text" name="presentState" class="form-control" /> --}}
                   <select name="presentState" class="form-control" required>
                         <option value="">Select State</option>
                         {{#each states}}
@@ -474,6 +475,7 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">Country</label>
+                  {{!-- <input type="text" name="presentCountry" class="form-control" /> --}}
                   <select name="presentCountry" class="form-control" required>
                         <option value="">Select Country</option>
                         {{#each countries}}
@@ -522,6 +524,7 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">State</label>
+                  {{!-- <input type="text" name="permanentState" class="form-control" /> --}}
                   <select name="permanentState" class="form-control" required>
                         <option value="">Select State</option>
                         {{#each states}}
@@ -535,6 +538,7 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label">Country</label>
+                  {{!-- <input type="text" name="permanentCountry" class="form-control" /> --}}
                   <select name="permanentCountry" class="form-control" required>
                         <option value="">Select Country</option>
                         {{#each countries}}
@@ -961,7 +965,14 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Country</label>
-                      <input type="text" class="form-control edu_country" />
+                      {{!-- <input type="text" class="form-control edu_country" /> --}}
+                      <select name="edu_country" class="form-control edu_country" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">City</label>
@@ -1006,155 +1017,166 @@
               </div>
 
               <div id="experienceRows" class="row g-3">
-                <div class="experience-row border rounded p-3 mb-2">
-                  <div class="row g-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Organization / Company Name</label>
-                      <input
-                        type="text"
-                        class="form-control exp_organizationName"
-                      />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Designation / Job Title</label>
-                      <input type="text" class="form-control exp_jobTitle" />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Employment Type</label>
-                      <select class="form-select exp_employmentType">
-                        <option value="">Select</option>
-                        <option value="Full-Time">Full-Time</option>
-                        <option value="Part-Time">Part-Time</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Internship">Internship</option>
-                        <option value="Freelance">Freelance</option>
-                      </select>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Department / Division</label>
-                      <input type="text" class="form-control exp_department" />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Industry Type</label>
-                      <input type="text" class="form-control exp_industryType" />
-                    </div>
-                    <div class="col-md-2">
-                      <label class="form-label">City</label>
-                      <input
-                        type="text"
-                        class="form-control exp_companyLocationCity"
-                      />
-                    </div>
-                    
-                    <div class="col-md-2">
-                      <label class="form-label">Country</label>
-<<<<<<< HEAD
-                     <input type="text" value="India" disabled="true" />
-=======
-                      <select name="empCountry" class="form-select" required>
+    <div class="experience-row border rounded p-3 mb-2">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Organization / Company Name</label>
+        <input
+          type="text"
+          class="form-control exp_organizationName"
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Designation / Job Title</label>
+        <input type="text" class="form-control exp_jobTitle" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Employment Type</label>
+        <select class="form-select exp_employmentType">
+          <option value="">Select</option>
+          <option value="Full-Time">Full-Time</option>
+          <option value="Part-Time">Part-Time</option>
+          <option value="Contract">Contract</option>
+          <option value="Internship">Internship</option>
+          <option value="Freelance">Freelance</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Department / Division</label>
+        <input type="text" class="form-control exp_department" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Industry Type</label>
+        <input type="text" class="form-control exp_industryType" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">City</label>
+        <input
+          type="text"
+          class="form-control exp_companyLocationCity"
+        />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Country</label>
+        {{!-- <input
+          type="text"
+          class="form-control exp_companyLocationCountry"
+        /> --}}
+        <select name="exp_companyLocationCountry" class="form-control exp_companyLocationCountry" required>
                         <option value="">Select Country</option>
                         {{#each countries}}
                         <option value="{{name}}">{{name}}</option>
                         {{/each}}
                       </select>
->>>>>>> 992fc5b52ab428768445b8ff90cec41b111d794b
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Start Date</label>
-                      <input type="date" class="form-control exp_startDate" />
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">End Date</label>
-                      <input type="date" class="form-control exp_endDate" />
-                    </div>
-                    <div class="col-md-3 d-flex align-items-center">
-                      <div class="form-check mt-3">
-                        <input
-                          type="checkbox"
-                          class="form-check-input exp_isCurrent"
-                        />
-                        <label class="form-check-label">
-                          Present (currently working)
-                        </label>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">
-                        Last Drawn Salary / CTC
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        class="form-control exp_lastDrawnCtc"
-                      />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Reason for Leaving</label>
-                      <input
-                        type="text"
-                        class="form-control exp_reasonForLeaving"
-                      />
-                    </div>
-                    <div class="col-md-3 d-flex align-items-center">
-                      <div class="form-check mt-3">
-                        <input
-                          type="checkbox"
-                          class="form-check-input exp_noticePeriodServed"
-                        />
-                        <label class="form-check-label">
-                          Notice Period Served
-                        </label>
-                      </div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end justify-content-end">
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger btn-sm remove-experience-row-btn"
-                      >
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-control exp_startDate" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">End Date</label>
+        <input type="date" class="form-control exp_endDate" />
+      </div>
+      <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-3">
+          <input
+            type="checkbox"
+            class="form-check-input exp_isCurrent"
+          />
+          <label class="form-check-label">
+            Present (currently working)
+          </label>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">
+          Last Drawn Salary / CTC
+        </label>
+        <input
+          type="number"
+          step="0.01"
+          class="form-control exp_lastDrawnCtc"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Reason for Leaving</label>
+        {{!-- <input
+          type="text"
+          class="form-control exp_reasonForLeaving"
+        /> --}}
+        <textarea
+          class="form-control exp_reasonForLeaving"
+          rows="2"
+        ></textarea>
+      </div>
+      <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-3">
+          <input
+            type="checkbox"
+            class="form-check-input exp_noticePeriodServed"
+          />
+          <label class="form-check-label">
+            Notice Period Served
+          </label>
+        </div>
+      </div>
+
+      {{!-- NEW: Supporting document URLs --}}
+      <div class="col-12">
+        <hr />
+        <h6 class="mb-2">Supporting Documents (URLs)</h6>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Relieving Letter URL</label>
+        <input
+          type="text"
+          class="form-control exp_relievingLetterUrl"
+          placeholder="https://... (Relieving letter)"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Last 3 Months Salary Slips URL</label>
+        <input
+          type="text"
+          class="form-control exp_salarySlipsUrl"
+          placeholder="https://... (3 months salary slips)"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Bank Statement URL</label>
+        <input
+          type="text"
+          class="form-control exp_bankStatementUrl"
+          placeholder="https://... (Bank statement)"
+        />
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end justify-content-end">
+        <button
+          type="button"
+          class="btn btn-outline-danger btn-sm remove-experience-row-btn"
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    </div>
+</div>
+
             </div>
 
             {{!-- TAB 6: DOCUMENTS & KYC --}}
             <div class="tab-pane fade" id="tab-documents" role="tabpanel">
-              <div class="row g-3">
-                <div class="col-12">
-                  <h6>KYC Core (for uniqueness)</h6>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">
-                    Aadhaar Number <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="empAadhar"
-                    maxlength="12"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">
-                    PAN Number <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="empPan"
-                    maxlength="10"
-                    class="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <hr class="my-3" />
+              {{!-- Aadhaar / PAN removed from here (only via documents now) --}}
 
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0">Employee Documents</h6>
+                <h6 class="mb-0">Employee Documents &amp; KYC</h6>
                 <button
                   type="button"
                   class="btn btn-sm btn-outline-primary"
@@ -1171,6 +1193,8 @@
                       <label class="form-label">Category</label>
                       <select class="form-select doc_category">
                         <option value="KYC">KYC</option>
+                        <option value="AADHAAR">Aadhaar</option>
+                        <option value="PAN">PAN</option>
                         <option value="ADDRESS">Address Proof</option>
                         <option value="EDUCATION">Education</option>
                         <option value="EXPERIENCE">Experience</option>
@@ -1183,7 +1207,7 @@
                       <input
                         type="text"
                         class="form-control doc_documentType"
-                        placeholder="Aadhaar, PAN, Passport, 10th Marksheet, Offer Letter..."
+                        placeholder="Aadhaar Card, PAN Card, Passport, 10th Marksheet, Offer Letter..."
                       />
                     </div>
                     <div class="col-md-3">
@@ -1581,39 +1605,48 @@
     }
 
     function collectExperienceRows() {
-      const rows = [];
+  const rows = [];
 
-      document.querySelectorAll(".experience-row").forEach((row) => {
-        const obj = {
-          organizationName:
-            row.querySelector(".exp_organizationName")?.value || "",
-          jobTitle: row.querySelector(".exp_jobTitle")?.value || "",
-          employmentType:
-            row.querySelector(".exp_employmentType")?.value || "",
-          department: row.querySelector(".exp_department")?.value || "",
-          industryType: row.querySelector(".exp_industryType")?.value || "",
-          companyLocationCity:
-            row.querySelector(".exp_companyLocationCity")?.value || "",
-          companyLocationCountry:
-            row.querySelector(".exp_companyLocationCountry")?.value || "",
-          startDate: row.querySelector(".exp_startDate")?.value || "",
-          endDate: row.querySelector(".exp_endDate")?.value || "",
-          isCurrent: row.querySelector(".exp_isCurrent")?.checked || false,
-          lastDrawnCtc:
-            row.querySelector(".exp_lastDrawnCtc")?.value || "",
-          reasonForLeaving:
-            row.querySelector(".exp_reasonForLeaving")?.value || "",
-          noticePeriodServed:
-            row.querySelector(".exp_noticePeriodServed")?.checked || false,
-        };
+  document.querySelectorAll(".experience-row").forEach((row) => {
+    const obj = {
+      organizationName:
+        row.querySelector(".exp_organizationName")?.value || "",
+      jobTitle: row.querySelector(".exp_jobTitle")?.value || "",
+      employmentType:
+        row.querySelector(".exp_employmentType")?.value || "",
+      department: row.querySelector(".exp_department")?.value || "",
+      industryType: row.querySelector(".exp_industryType")?.value || "",
+      companyLocationCity:
+        row.querySelector(".exp_companyLocationCity")?.value || "",
+      companyLocationCountry:
+        row.querySelector(".exp_companyLocationCountry")?.value || "",
+      startDate: row.querySelector(".exp_startDate")?.value || "",
+      endDate: row.querySelector(".exp_endDate")?.value || "",
+      isCurrent: row.querySelector(".exp_isCurrent")?.checked || false,
+      lastDrawnCtc:
+        row.querySelector(".exp_lastDrawnCtc")?.value || "",
+      reasonForLeaving:
+        row.querySelector(".exp_reasonForLeaving")?.value || "",
+      noticePeriodServed:
+        row.querySelector(".exp_noticePeriodServed")?.checked || false,
 
-        if (obj.organizationName || obj.jobTitle) {
-          rows.push(obj);
-        }
-      });
+      // NEW: document URLs
+      relievingLetterUrl:
+        row.querySelector(".exp_relievingLetterUrl")?.value || "",
+      salarySlipsUrl:
+        row.querySelector(".exp_salarySlipsUrl")?.value || "",
+      bankStatementUrl:
+        row.querySelector(".exp_bankStatementUrl")?.value || "",
+    };
 
-      return rows;
+    // Keep same condition – row considered valid if some core fields present
+    if (obj.organizationName || obj.jobTitle) {
+      rows.push(obj);
     }
+  });
+
+  return rows;
+}
 
     function collectDocumentRows() {
       const rows = [];
@@ -1746,7 +1779,7 @@
         row.querySelector(".exp_jobTitle").value = exp.jobTitle || "";
         row.querySelector(".exp_employmentType").value =
           exp.employmentType || "";
-        row.querySelector(".exp_department").value = exp.department || "";
+        row.querySelector(".exp_department").value = exp.department ||    "";
         row.querySelector(".exp_industryType").value =
           exp.industryType || "";
         row.querySelector(".exp_companyLocationCity").value =
@@ -1762,6 +1795,14 @@
           exp.reasonForLeaving || "";
         row.querySelector(".exp_noticePeriodServed").checked =
           !!exp.noticePeriodServed;
+
+        // NEW: document URLs
+        row.querySelector(".exp_relievingLetterUrl").value =
+          exp.relievingLetterUrl || "";
+        row.querySelector(".exp_salarySlipsUrl").value =
+      exp.salarySlipsUrl || "";
+        row.querySelector(".exp_bankStatementUrl").value =
+      exp.bankStatementUrl || "";
       });
     }
 
@@ -2000,65 +2041,65 @@
           ["Professional Tax", emp.professionalTax],
           ["TDS Deduction", emp.tdsDeduction],
           ["Net Salary", emp.netSalary],
-          ["Aadhaar Number", emp.empAadhar],
-          ["PAN Number", emp.empPan],
         ]);
 
-        const eduContainer = document.getElementById("viewEducationList");
-        if (eduContainer) {
-          eduContainer.innerHTML = "";
-          const edus = emp.educations || [];
-
-          if (edus.length === 0) {
-            eduContainer.innerHTML =
-              '<p class="text-muted mb-0">No education entries.</p>';
-          } else {
-            const list = document.createElement("div");
-            edus.forEach((e) => {
-              const card = document.createElement("div");
-              card.className = "border rounded p-2 mb-2";
-              card.innerHTML = `
-                <strong>${escapeHtml(e.level || "")}</strong> - ${escapeHtml(
-                e.degree || ""
-              )}<br/>
-                <small>${escapeHtml(e.institutionName || "")}${
-                e.yearOfPassing
-                  ? " · Pass Year: " + escapeHtml(e.yearOfPassing)
-                  : ""
-              }</small>
-              `;
-              list.appendChild(card);
-            });
-            eduContainer.appendChild(list);
-          }
-        }
-
         const expContainer = document.getElementById("viewExperienceList");
-        if (expContainer) {
-          expContainer.innerHTML = "";
-          const exps = emp.experiences || [];
+if (expContainer) {
+  expContainer.innerHTML = "";
+  const exps = emp.experiences || [];
 
-          if (exps.length === 0) {
-            expContainer.innerHTML =
-              '<p class="text-muted mb-0">No experience entries.</p>';
-          } else {
-            const list = document.createElement("div");
-            exps.forEach((e) => {
-              const card = document.createElement("div");
-              card.className = "border rounded p-2 mb-2";
-              card.innerHTML = `
-                <strong>${escapeHtml(
-                  e.organizationName || ""
-                )}</strong> - ${escapeHtml(e.jobTitle || "")}<br/>
-                <small>${e.startDate || "-"} to ${
-                e.isCurrent ? "Present" : e.endDate || "-"
-              }</small>
-              `;
-              list.appendChild(card);
-            });
-            expContainer.appendChild(list);
-          }
-        }
+  if (exps.length === 0) {
+    expContainer.innerHTML =
+      '<p class="text-muted mb-0">No experience entries.</p>';
+  } else {
+    const list = document.createElement("div");
+    exps.forEach((e) => {
+      const card = document.createElement("div");
+      card.className = "border rounded p-2 mb-2";
+
+      const docs = [];
+      if (e.relievingLetterUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.relievingLetterUrl
+          )}" target="_blank" rel="noopener noreferrer">Relieving Letter</a>`
+        );
+      }
+      if (e.salarySlipsUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.salarySlipsUrl
+          )}" target="_blank" rel="noopener noreferrer">3 Months Salary Slips</a>`
+        );
+      }
+      if (e.bankStatementUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.bankStatementUrl
+          )}" target="_blank" rel="noopener noreferrer">Bank Statement</a>`
+        );
+      }
+
+      const docsHtml =
+        docs.length > 0
+          ? `<br/><small>Docs: ${docs.join(" | ")}</small>`
+          : "";
+
+      card.innerHTML = `
+        <strong>${escapeHtml(
+          e.organizationName || ""
+        )}</strong> - ${escapeHtml(e.jobTitle || "")}<br/>
+        <small>${e.startDate || "-"} to ${
+        e.isCurrent ? "Present" : e.endDate || "-"
+      }</small>
+        ${docsHtml}
+      `;
+      list.appendChild(card);
+    });
+    expContainer.appendChild(list);
+  }
+}
+
 
         const docContainer = document.getElementById("viewDocumentList");
         if (docContainer) {
@@ -2203,8 +2244,8 @@
         fillBaseField("professionalTax", emp.professionalTax);
         fillBaseField("tdsDeduction", emp.tdsDeduction);
         fillBaseField("netSalary", emp.netSalary);
-        fillBaseField("empAadhar", emp.empAadhar);
-        fillBaseField("empPan", emp.empPan);
+
+        // Aadhaar / PAN removed from form: they are now in documents only
 
         setEducationRows(emp.educations || []);
         setExperienceRows(emp.experiences || []);
