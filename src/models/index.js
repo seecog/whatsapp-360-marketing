@@ -1,3 +1,4 @@
+// src/models/index.js
 import { User } from './User.js';
 import { Business } from './Business.js';
 import { Customer } from './Customer.js';
@@ -10,6 +11,12 @@ import { Service } from './Service.js';
 import { Designation } from './Designation.js';
 import { LeaveType } from './LeaveType.js';
 import { LeaveRequest } from './LeaveRequest.js';
+import DocumentType from './DocumentType.js';
+
+// ✅ IMPORT CHILD TABLES FOR EMPLOYEE
+import EmployeeEducation from './EmployeeEducation.js';
+import EmployeeExperience from './EmployeeExperience.js';
+import EmployeeDocument from './EmployeeDocument.js';
 
 /**
  * IMPORTANT:
@@ -97,6 +104,42 @@ LeaveRequest.belongsTo(LeaveType, { foreignKey: 'leaveTypeId', as: 'leaveType' }
 User.hasMany(LeaveRequest, { foreignKey: 'approverId', as: 'approvedLeaves' });
 LeaveRequest.belongsTo(User, { foreignKey: 'approverId', as: 'approver' });
 
+/* ✅ NEW: Employee ⇄ EmployeeEducation */
+Employee.hasMany(EmployeeEducation, {
+  foreignKey: 'employeeId',
+  as: 'educations',
+  onDelete: 'CASCADE',
+  hooks: true,
+});
+EmployeeEducation.belongsTo(Employee, {
+  foreignKey: 'employeeId',
+  as: 'employee',
+});
+
+/* ✅ NEW: Employee ⇄ EmployeeExperience */
+Employee.hasMany(EmployeeExperience, {
+  foreignKey: 'employeeId',
+  as: 'experiences',
+  onDelete: 'CASCADE',
+  hooks: true,
+});
+EmployeeExperience.belongsTo(Employee, {
+  foreignKey: 'employeeId',
+  as: 'employee',
+});
+
+/* ✅ NEW: Employee ⇄ EmployeeDocument */
+Employee.hasMany(EmployeeDocument, {
+  foreignKey: 'employeeId',
+  as: 'documents',
+  onDelete: 'CASCADE',
+  hooks: true,
+});
+EmployeeDocument.belongsTo(Employee, {
+  foreignKey: 'employeeId',
+  as: 'employee',
+});
+
 export {
   User,
   Business,
@@ -109,4 +152,11 @@ export {
   Designation,
   LeaveType,
   LeaveRequest,
+  Employee,
+  DocumentType,
+
+  // ✅ export child models too (optional but handy)
+  EmployeeEducation,
+  EmployeeExperience,
+  EmployeeDocument,
 };

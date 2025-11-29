@@ -1,27 +1,25 @@
-import { Router } from 'express';
-import { verifyUser } from '../middleware/authMiddleware.js';
+// src/routes/employee.routes.js
+import express from 'express';
 import {
+    renderEmployeesPage,
+    listEmployees,
     createEmployee,
-    getAllEmployees,
     getEmployeeById,
     updateEmployee,
     deleteEmployee,
-    getEmployeeStats,
-    bulkImportEmployees
 } from '../controllers/employee.controllers.js';
+import { verifyUser } from '../middleware/authMiddleware.js';
 
-const router = Router();
+const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(verifyUser);
+// HTML page
+router.get('/employees', verifyUser, renderEmployeesPage);
 
-// Employee CRUD routes
-router.post('/', createEmployee);
-router.get('/', getAllEmployees);
-router.get('/stats', getEmployeeStats);
-router.get('/:id', getEmployeeById);
-router.put('/:id', updateEmployee);
-router.delete('/:id', deleteEmployee);
-router.post('/bulk-import', bulkImportEmployees);
+// JSON APIs
+router.get('/api/v1/employees', verifyUser, listEmployees);
+router.post('/api/v1/employees', verifyUser, createEmployee);
+router.get('/api/v1/employees/:id', verifyUser, getEmployeeById);
+router.put('/api/v1/employees/:id', verifyUser, updateEmployee);
+router.delete('/api/v1/employees/:id', verifyUser, deleteEmployee);
 
-export { router as employeeRouter };
+export default router;

@@ -1,0 +1,368 @@
+{{!-- views/documentTypes.hbs --}}
+<div class="container-fluid">
+  <div class="row">
+    {{!-- Sidebar --}}
+    <div class="col-md-3 col-lg-2 px-0">
+      <div class="sidebar p-3">
+        <div class="text-center mb-2">
+          <h5 class="text-white">WhatsApp Manager</h5>
+          <small class="text-white-50">{{user.firstName}} {{user.lastName}}</small>
+        </div>
+        <nav class="nav flex-column">
+          <div class="menu-toggle" onclick="toggleMenu('whatsapp-submenu')">
+            <div class="nav-link">
+              <i class="fab fa-whatsapp"></i> WhatsApp
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu show" id="whatsapp-submenu">
+            <a class="nav-link" href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a class="nav-link" href="/business"><i class="fas fa-building"></i> Business</a>
+            <a class="nav-link" href="/customers"><i class="fas fa-users"></i> Customers</a>
+            <a class="nav-link" href="/templates"><i class="fas fa-file-alt"></i> Templates</a>
+            <a class="nav-link" href="/campaigns"><i class="fas fa-bullhorn"></i> Campaigns</a>
+          </div>
+
+          <div class="menu-toggle mt-2" onclick="toggleMenu('hr-submenu')">
+            <div class="nav-link">
+              <i class="fas fa-users-cog"></i> HR Tools
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu" id="hr-submenu">
+            <a class="nav-link" href="/employees"><i class="fas fa-user-tie"></i> Employees</a>
+            <a class="nav-link" href="/documents"><i class="fas fa-file-signature"></i> Documents</a>
+          </div>
+
+          <div class="menu-toggle mt-2" onclick="toggleMenu('utilities-submenu')">
+            <div class="nav-link active">
+              <i class="fas fa-tools"></i> Utilities
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu show" id="utilities-submenu">
+            <a class="nav-link active" href="/document-types"><i class="fas fa-layer-group"></i> Document Types</a>
+          </div>
+
+          <hr class="text-white-50" />
+          <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="col-md-9 col-lg-10">
+      <div class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>Document Types</h2>
+          <button
+            class="btn btn-primary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#docTypeModal"
+            onclick="openDocTypeModal('add')"
+          >
+            <i class="fas fa-plus me-2"></i>Add New Document Type
+          </button>
+        </div>
+
+        <div class="row">
+          {{#if documentTypes.length}}
+            {{#each documentTypes}}
+              <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                      {{#if icon}}
+                        <i class="{{icon}} fa-lg me-2"></i>
+                      {{/if}}
+                      <div>
+                        <h5 class="card-title mb-0">{{name}}</h5>
+                        <small class="text-muted">{{code}}</small>
+                      </div>
+                    </div>
+                    <p class="card-text flex-grow-1">{{description}}</p>
+                    <div class="d-flex justify-content-between mt-2">
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        type="button"
+                        onclick="viewTemplate({{id}})"
+                      >
+                        View
+                      </button>
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        type="button"
+                        onclick="editDocType({{id}})"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        type="button"
+                        onclick="deleteDocType({{id}})"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          {{else}}
+            <p class="text-muted">No document types configured yet.</p>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Add/Edit Modal --}}
+<div class="modal fade" id="docTypeModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="docTypeForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="docTypeModalTitle">Add Document Type</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="docTypeId" name="id" />
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" id="docTypeName" name="name" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Code</label>
+              <input type="text" class="form-control" id="docTypeCode" name="code" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Icon (Font Awesome)</label>
+              <input
+                type="text"
+                class="form-control"
+                id="docTypeIcon"
+                name="icon"
+                placeholder="fas fa-file-alt"
+              />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                id="docTypeDescription"
+                name="description"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Template HTML</label>
+              <textarea
+                class="form-control"
+                id="docTypeTemplateHtml"
+                name="templateHtml"
+                rows="5"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{!-- Template Preview Modal --}}
+<div class="modal fade" id="viewTemplateModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Template Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="templatePreview" class="border p-3 bg-light"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Small helper to avoid broken HTML when showing text fields inside preview
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Fill and open Add/Edit modal
+   */
+  function openDocTypeModal(mode, docType) {
+    const idInput = document.getElementById('docTypeId');
+    const nameInput = document.getElementById('docTypeName');
+    const codeInput = document.getElementById('docTypeCode');
+    const iconInput = document.getElementById('docTypeIcon');
+    const descInput = document.getElementById('docTypeDescription');
+    const tplInput = document.getElementById('docTypeTemplateHtml');
+    const titleEl = document.getElementById('docTypeModalTitle');
+
+    if (mode === 'edit' && docType) {
+      idInput.value = docType.id || '';
+      nameInput.value = docType.name || '';
+      codeInput.value = docType.code || '';
+      iconInput.value = docType.icon || '';
+      descInput.value = docType.description || '';
+      tplInput.value = docType.templateHtml || '';
+      titleEl.innerText = 'Edit Document Type';
+    } else {
+      idInput.value = '';
+      nameInput.value = '';
+      codeInput.value = '';
+      iconInput.value = '';
+      descInput.value = '';
+      tplInput.value = '';
+      titleEl.innerText = 'Add Document Type';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('docTypeModal'));
+    modal.show();
+  }
+
+  /**
+   * Load a single DocumentType via API
+   */
+  async function fetchDocType(id) {
+    console.log('Fetching doc type', id);
+    const res = await fetch(`/api/v1/document-types/${id}`);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Failed to load document type', res.status, text);
+      throw new Error('Failed to load document type');
+    }
+    return res.json();
+  }
+
+  /**
+   * Edit button → open modal with existing data
+   */
+  async function editDocType(id) {
+    try {
+      const docType = await fetchDocType(id);
+      openDocTypeModal('edit', docType);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load document type for editing');
+    }
+  }
+
+  /**
+   * View button → open preview modal with ALL info
+   */
+  async function viewTemplate(id) {
+    try {
+      const docType = await fetchDocType(id);
+      const container = document.getElementById('templatePreview');
+
+      let html = `
+        <h5>${escapeHtml(docType.name)} <small class="text-muted">(${escapeHtml(
+        docType.code
+      )})</small></h5>
+        <p><strong>Icon:</strong> ${escapeHtml(docType.icon || '')}</p>
+        <p><strong>Description:</strong><br>${escapeHtml(
+          docType.description || ''
+        )}</p>
+        <hr />
+      `;
+
+      if (docType.templateHtml && docType.templateHtml.trim()) {
+        html += `<div>${docType.templateHtml}</div>`;
+      } else {
+        html += '<p class="text-muted">No template HTML configured.</p>';
+      }
+
+      container.innerHTML = html;
+
+      const modal = new bootstrap.Modal(
+        document.getElementById('viewTemplateModal')
+      );
+      modal.show();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load template for preview');
+    }
+  }
+
+  /**
+   * Delete button → soft delete then reload
+   */
+  async function deleteDocType(id) {
+    if (!confirm('Delete this document type?')) return;
+    try {
+      const res = await fetch(`/api/v1/document-types/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const text = await res.text();
+        console.error('Delete failed', res.status, text);
+        alert('Failed to delete document type');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete document type');
+    }
+  }
+
+  /**
+   * Form submit → create or update
+   */
+  document
+    .getElementById('docTypeForm')
+    .addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      const id = data.id || null;
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `/api/v1/document-types/${id}`
+        : '/api/v1/document-types';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          const errText = await res.text();
+          console.error('Error saving document type:', res.status, errText);
+          alert('Failed to save document type');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save document type');
+      }
+    });
+
+  // Make functions available on window for inline onclick attributes
+  window.openDocTypeModal = openDocTypeModal;
+  window.editDocType = editDocType;
+  window.viewTemplate = viewTemplate;
+  window.deleteDocType = deleteDocType;
+</script>

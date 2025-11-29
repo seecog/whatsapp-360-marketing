@@ -1,997 +1,2314 @@
+{{!-- views/employees.hbs --}}
 <div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 px-0">
-            <div class="sidebar p-3">
-                <div class="text-center mb-4">
-                    <h5 class="text-white">WhatsApp Manager</h5>
-                    <small class="text-white-50">{{user.firstName}} {{user.lastName}}</small>
-                </div>
-                
-                <nav class="nav flex-column">
-                    <!-- WhatsApp Menu -->
-                    <div class="menu-toggle" onclick="toggleMenu('whatsapp-submenu')">
-                        <div class="nav-link">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                            <i class="fas fa-chevron-down float-end"></i>
-                        </div>
-                    </div>
-                    <div class="submenu show" id="whatsapp-submenu">
-                        <a class="nav-link" href="/dashboard">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
-                        <a class="nav-link" href="/customers">
-                            <i class="fas fa-users"></i> Customers
-                        </a>
-                        <a class="nav-link" href="/templates">
-                            <i class="fas fa-file-alt"></i> Templates
-                        </a>
-                        <a class="nav-link" href="/campaigns">
-                            <i class="fas fa-bullhorn"></i> Campaigns
-                        </a>
-                        <a class="nav-link" href="/business">
-                            <i class="fas fa-building"></i> Business
-                        </a>
-                    </div>
-                    
-                    <!-- HR Tools Menu -->
-                    <div class="menu-toggle" onclick="toggleMenu('hr-submenu')">
-                        <div class="nav-link">
-                            <i class="fas fa-users-cog"></i> HR Tools
-                            <i class="fas fa-chevron-down float-end"></i>
-                        </div>
-                    </div>
-                    <div class="submenu show" id="hr-submenu">
-                        <a class="nav-link active" href="/employees">
-                            <i class="fas fa-user-tie"></i> Employee List
-                        </a>
-                    </div>
-                    
-                    <hr class="text-white-50">
-                    <a class="nav-link" href="#" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
+  <div class="row">
+    {{!-- Sidebar --}}
+    <div class="col-md-3 col-lg-2 px-0">
+      <div class="sidebar p-3">
+        <div class="text-center mb-2">
+          <h5 class="text-white">WhatsApp Manager</h5>
+          <small class="text-white-50">
+            {{user.firstName}} {{user.lastName}}
+          </small>
         </div>
 
-        <!-- Main Content -->
-        <div class="col-md-9 col-lg-10">
-            <div class="main-content p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-user-tie me-2"></i>Employee Management</h2>
-                    <div>
-                        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
-                            <i class="fas fa-upload me-1"></i>Bulk Import
-                        </button>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEmployeeModal">
-                            <i class="fas fa-plus me-1"></i>Add Employee
-                        </button>
-                    </div>
+        <nav class="nav flex-column">
+          <div class="menu-toggle" onclick="toggleMenu('whatsapp-submenu')">
+            <div class="nav-link">
+              <i class="fab fa-whatsapp"></i> WhatsApp
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu show" id="whatsapp-submenu">
+            <a class="nav-link" href="/dashboard">
+              <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link" href="/business">
+              <i class="fas fa-building"></i> Business
+            </a>
+            <a class="nav-link" href="/customers">
+              <i class="fas fa-users"></i> Customers
+            </a>
+            <a class="nav-link" href="/templates">
+              <i class="fas fa-file-alt"></i> Templates
+            </a>
+            <a class="nav-link" href="/campaigns">
+              <i class="fas fa-bullhorn"></i> Campaigns
+            </a>
+          </div>
+
+          <div class="menu-toggle mt-2" onclick="toggleMenu('hr-submenu')">
+            <div class="nav-link active">
+              <i class="fas fa-users-cog"></i> HR Tools
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu show" id="hr-submenu">
+            <a class="nav-link active" href="/employees">
+              <i class="fas fa-user-tie"></i> Employees
+            </a>
+            <a class="nav-link" href="/documents">
+              <i class="fas fa-file-signature"></i> Documents
+            </a>
+          </div>
+
+          <div class="menu-toggle mt-2" onclick="toggleMenu('utilities-submenu')">
+            <div class="nav-link">
+              <i class="fas fa-tools"></i> Utilities
+              <i class="fas fa-chevron-down float-end"></i>
+            </div>
+          </div>
+          <div class="submenu" id="utilities-submenu">
+            <a class="nav-link" href="/document-types">
+              <i class="fas fa-layer-group"></i> Document Types
+            </a>
+          </div>
+
+          <hr class="text-white-50" />
+          <a class="nav-link" href="#" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    {{!-- Main content --}}
+    <div class="col-md-9 col-lg-10">
+      <div class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="mb-0">Employees</h2>
+
+            {{!-- info about filter / count --}}
+            {{#if search}}
+              <small class="text-muted">
+                Showing results for: "<strong>{{search}}</strong>"
+              </small>
+            {{else}}
+              <small class="text-muted">
+                Total employees:
+                {{#if employees.length}}{{employees.length}}{{else}}0{{/if}}
+              </small>
+            {{/if}}
+          </div>
+
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addEmployeeModal"
+            id="openAddEmployeeModalBtn"
+          >
+            <i class="fas fa-plus me-2"></i> Add Employee
+          </button>
+        </div>
+
+        {{!-- Search form --}}
+        <form
+          class="row mb-3"
+          id="employeeSearchForm"
+          method="GET"
+          action="/employees"
+        >
+          <div class="col-md-4 mb-2">
+            <input
+              type="text"
+              id="employeeSearchInput"
+              name="search"
+              class="form-control"
+              placeholder="Search by name, email, ID"
+              value="{{search}}"
+            />
+          </div>
+          <div class="col-md-2 mb-2">
+            <button class="btn btn-outline-secondary w-100" type="submit">
+              <i class="fas fa-search me-1"></i> Search
+            </button>
+          </div>
+          {{#if search}}
+            <div class="col-md-2 mb-2">
+              <a class="btn btn-outline-light w-100" href="/employees">
+                <i class="fas fa-times me-1"></i> Clear
+              </a>
+            </div>
+          {{/if}}
+        </form>
+
+        {{!-- Employees table --}}
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-striped mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Emp ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Designation</th>
+                    <th>Department</th>
+                    <th>DOJ</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#if employees.length}}
+                    {{#each employees}}
+                      <tr>
+                        <td>{{inc @index}}</td>
+                        <td>{{empId}}</td>
+                        <td>{{empName}}</td>
+                        <td>{{empEmail}}</td>
+                        <td>{{empPhone}}</td>
+                        <td>{{empDesignation}}</td>
+                        <td>{{empDepartment}}</td>
+                        <td>{{empDateOfJoining}}</td>
+                        <td>
+                          <div class="btn-group btn-group-sm" role="group">
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary view-employee-btn"
+                              data-id="{{id}}"
+                              title="View Employee"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-primary edit-employee-btn"
+                              data-id="{{id}}"
+                              title="Edit Employee"
+                            >
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger delete-employee-btn"
+                              data-id="{{id}}"
+                              title="Delete Employee"
+                            >
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    {{/each}}
+                  {{else}}
+                    <tr>
+                      <td colspan="9" class="text-center py-3">
+                        No employees found.
+                      </td>
+                    </tr>
+                  {{/if}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Add / Edit Employee Modal --}}
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <form id="addEmployeeForm">
+        <input type="hidden" name="id" id="employeeIdField" />
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="addEmployeeModalTitle">Add Employee</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          {{!-- Tabs header (6 sections) --}}
+          <ul class="nav nav-tabs" id="addEmployeeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="basic-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-basic"
+                type="button"
+                role="tab"
+              >
+                1) Personal Details
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="job-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-job"
+                type="button"
+                role="tab"
+              >
+                2) Professional Details
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="comp-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-comp"
+                type="button"
+                role="tab"
+              >
+                3) Compensation
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="edu-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-education"
+                type="button"
+                role="tab"
+              >
+                4) Education &amp; Qualification
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="exp-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-experience"
+                type="button"
+                role="tab"
+              >
+                5) Experience / Employment History
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="docs-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-documents"
+                type="button"
+                role="tab"
+              >
+                6) Documents &amp; KYC
+              </button>
+            </li>
+          </ul>
+
+          {{!-- Tabs content --}}
+          <div class="tab-content pt-3" id="addEmployeeTabContent">
+            {{!-- TAB 1: PERSONAL DETAILS --}}
+            <div class="tab-pane fade show active" id="tab-basic" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">
+                    First Name <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" name="firstName" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Middle Name</label>
+                  <input type="text" name="middleName" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Last Name <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" name="lastName" class="form-control" required />
                 </div>
 
-                <!-- Statistics Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 id="totalEmployees">0</h4>
-                                        <p class="mb-0">Total Employees</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-users fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 id="activeEmployees">0</h4>
-                                        <p class="mb-0">Active Employees</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-user-check fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 id="inactiveEmployees">0</h4>
-                                        <p class="mb-0">Inactive Employees</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-user-times fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 id="avgCTC">₹0</h4>
-                                        <p class="mb-0">Average CTC</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-rupee-sign fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                  <label class="form-label">Gender</label>
+                  <select name="gender" class="form-select">
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
                 </div>
 
-                <!-- Search and Filter -->
-                <div class="row mb-4">
+                <div class="col-md-4">
+                  <label class="form-label">Marital Status</label>
+                  <select name="maritalStatus" class="form-select">
+                    <option value="">Select</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Date of Birth <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" name="empDob" class="form-control" required />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Blood Group</label>
+                  <input type="text" name="bloodGroup" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Nationality</label>
+                  <input type="text" name="nationality" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Religion</label>
+                  <input type="text" name="religion" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Category / Caste</label>
+                  <input type="text" name="casteCategory" class="form-control" />
+                </div>
+
+                <div class="col-md-8">
+                  <label class="form-label">Languages Known</label>
+                  <input
+                    type="text"
+                    name="languagesKnown"
+                    class="form-control"
+                    placeholder="e.g. English, Hindi, Bengali"
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Primary Contact Number <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="empPhone"
+                    maxlength="10"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Alternate Contact Number</label>
+                  <input
+                    type="text"
+                    name="altPhone"
+                    maxlength="10"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Personal Email <span class="text-danger">*</span>
+                  </label>
+                  <input type="email" name="empEmail" class="form-control" required />
+                </div>
+
+                <div class="col-12">
+                  <hr />
+                  <h6>Emergency Contact</h6>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Name</label>
+                  <input
+                    type="text"
+                    name="emergencyContactName"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Relation</label>
+                  <input
+                    type="text"
+                    name="emergencyContactRelation"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Contact Number</label>
+                  <input
+                    type="text"
+                    name="emergencyContactNumber"
+                    maxlength="10"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-12">
+                  <hr />
+                  <h6>Present Address</h6>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Address Line 1</label>
+                  <input
+                    type="text"
+                    name="presentAddressLine1"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Address Line 2</label>
+                  <input
+                    type="text"
+                    name="presentAddressLine2"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">City</label>
+                  <input type="text" name="presentCity" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">State</label>
+                  {{!-- <input type="text" name="presentState" class="form-control" /> --}}
+                  <select name="presentState" class="form-control" required>
+                        <option value="">Select State</option>
+                        {{#each states}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">ZIP</label>
+                  <input type="text" name="presentZip" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Country</label>
+                  {{!-- <input type="text" name="presentCountry" class="form-control" /> --}}
+                  <select name="presentCountry" class="form-control" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-check mt-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="sameAsPresent"
+                      name="permanentSameAsPresent"
+                    />
+                    <label class="form-check-label" for="sameAsPresent">
+                      Permanent address same as present
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <hr />
+                  <h6>Permanent Address</h6>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Address Line 1</label>
+                  <input
+                    type="text"
+                    name="permanentAddressLine1"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Address Line 2</label>
+                  <input
+                    type="text"
+                    name="permanentAddressLine2"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">City</label>
+                  <input type="text" name="permanentCity" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">State</label>
+                  {{!-- <input type="text" name="permanentState" class="form-control" /> --}}
+                  <select name="permanentState" class="form-control" required>
+                        <option value="">Select State</option>
+                        {{#each states}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">ZIP</label>
+                  <input type="text" name="permanentZip" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Country</label>
+                  {{!-- <input type="text" name="permanentCountry" class="form-control" /> --}}
+                  <select name="permanentCountry" class="form-control" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 2: PROFESSIONAL DETAILS --}}
+            <div class="tab-pane fade" id="tab-job" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Employee Code / ID (optional)</label>
+                  <input type="text" name="empId" class="form-control" />
+                  <small class="text-muted">
+                    Leave blank to autogenerate (EMP0001…)
+                  </small>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Employee Type</label>
+                  <select name="employeeType" class="form-select" required>
+                    <option value="Permanent">Permanent</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Intern">Intern</option>
+                    <option value="Consultant">Consultant</option>
+                    <option value="Trainee">Trainee</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Employment Status</label>
+                  <select name="employmentStatus" class="form-select">
+                    <option value="Active">Active</option>
+                    <option value="On Leave">On Leave</option>
+                    <option value="Resigned">Resigned</option>
+                    <option value="Terminated">Terminated</option>
+                    <option value="Retired">Retired</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+<<<<<<< HEAD
+                  {{!-- <label class="form-label">Department <span class="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    name="empDepartment"
+                    class="form-control"
+                    required
+                  /> --}}
+
+<label for="departmentId">Department</label>
+<select name="departmentId" id="departmentId" class="form-control">
+  <option value="">-- Select Department --</option>
+
+  {{#each departments}}
+    <option value="{{id}}">
+      {{name}}
+    </option>
+  {{/each}}
+</select>
+
+=======
+                  <label class="form-label">
+                    Department <span class="text-danger">*</span>
+                  </label>
+                  <select name="empDepartment" class="form-select" required>
+                    <option value="">Select Department</option>
+                    {{#each departments}}
+                      <option value="{{name}}">{{name}}</option>
+                    {{/each}}
+                  </select>
+>>>>>>> 992fc5b52ab428768445b8ff90cec41b111d794b
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">
+                    Designation / Job Title <span class="text-danger">*</span>
+                  </label>
+                  <select name="empDesignation" class="form-select" required>
+                    <option value="">Select Designation</option>
+                    {{#each designations}}
+                      <option value="{{name}}">{{name}}</option>
+                    {{/each}}
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Division / Business Unit</label>
+                  <input type="text" name="division" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Sub-Department / Team</label>
+                  <input type="text" name="subDepartment" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Grade / Band / Level</label>
+                  <input type="text" name="gradeBandLevel" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Reporting Manager (Employee ID / Ref)
+                  </label>
+                  <select name="reportingManagerId" class="form-select">
+                    <option value="">Select Manager</option>
+                    {{#each employees}}
+                      <option value="{{id}}">{{empName}}</option>
+                    {{/each}}
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Work Mode</label>
+                  <select name="workMode" class="form-select">
+                    <option value="On-site">On-site</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Remote">Remote</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Work Location / Branch <span class="text-danger">*</span>
+                  </label>
+                  {{!-- <input type="text" name="empWorkLoc" class="form-control" required /> --}}
+                  <select name="empWorkLoc" class="form-control" required>
+                        <option value="">Select Location</option>
+                        {{#each businessAddresses}}
+                        <option value="{{fullAddress}}">{{addressName}}</option>
+                        {{/each}}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Joining Date <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="empDateOfJoining"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Probation Period (months)</label>
+                  <input
+                    type="number"
+                    name="probationPeriodMonths"
+                    class="form-control"
+                    min="0"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Confirmation Date</label>
+                  <input type="date" name="confirmationDate" class="form-control" />
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 3: COMPENSATION --}}
+            <div class="tab-pane fade" id="tab-comp" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">
+                    CTC (₹ - Annual) <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="empCtc"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Gross Salary (Monthly)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="grossSalaryMonthly"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Basic Salary</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="basicSalary"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">House Rent Allowance (HRA)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="hra"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Conveyance Allowance</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="conveyanceAllowance"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Medical Allowance</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="medicalAllowance"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Special Allowance / Other</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="specialAllowance"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Performance Bonus</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="performanceBonus"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Variable Pay</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="variablePay"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Overtime Eligibility</label>
+                  <select name="overtimeEligible" class="form-select">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Shift Allowance / Night Allowance
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="shiftAllowance"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-12">
+                  <hr />
+                  <h6>Deductions</h6>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label">PF</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="pfDeduction"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">ESI</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="esiDeduction"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Professional Tax</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="professionalTax"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">TDS</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="tdsDeduction"
+                    class="form-control"
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Net Salary (In-hand)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="netSalary"
+                    class="form-control"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 4: EDUCATION & QUALIFICATION --}}
+            <div class="tab-pane fade" id="tab-education" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Education Entries</h6>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addEducationRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Education
+                </button>
+              </div>
+
+              <div id="educationRows" class="row g-3">
+                {{!-- One template row --}}
+                <div class="education-row border rounded p-3 mb-2">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Highest Qualification</label>
+                      <select class="form-select edu_level">
+                        <option value="">Select</option>
+                        <option value="10th">10th</option>
+                        <option value="12th">12th</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="Masters">Masters</option>
+                        <option value="Doctorate">Doctorate</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Degree / Course Name</label>
+                      <input
+                        type="text"
+                        class="form-control edu_degree"
+                        placeholder="e.g. B.Tech in CSE"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Specialization / Major</label>
+                      <input
+                        type="text"
+                        class="form-control edu_specialization"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Institution Name</label>
+                      <input
+                        type="text"
+                        class="form-control edu_institutionName"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Board (for school)</label>
+                      <input type="text" class="form-control edu_board" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Start Year</label>
+                      <input type="number" class="form-control edu_startYear" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">End Year</label>
+                      <input type="number" class="form-control edu_endYear" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Year of Passing</label>
+                      <input
+                        type="number"
+                        class="form-control edu_yearOfPassing"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Percentage / CGPA</label>
+                      <input
+                        type="text"
+                        class="form-control edu_percentageOrCgpa"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Mode of Study</label>
+                      <select class="form-select edu_modeOfStudy">
+                        <option value="">Select</option>
+                        <option value="Full-Time">Full-Time</option>
+                        <option value="Part-Time">Part-Time</option>
+                        <option value="Distance">Distance</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Education Type</label>
+                      <select class="form-select edu_educationType">
+                        <option value="">Select</option>
+                        <option value="School">School</option>
+                        <option value="College">College</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Country</label>
+                      {{!-- <input type="text" class="form-control edu_country" /> --}}
+                      <select name="edu_country" class="form-control edu_country" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                  </select>
+
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">City</label>
+                      <input type="text" class="form-control edu_city" />
+                    </div>
                     <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchEmployees" placeholder="Search employees...">
-                        </div>
+                      <label class="form-label">Google drive link : Certificate/Marksheet/Migration </label>
+                      <input type="text" class="form-control edu_certificateUrl" placeholder="https://..." />
+                      <label class="form-label">
+                        Certificate / Marksheet URL
+                      </label>
+                      <input
+                        type="text"
+                        class="form-control edu_certificateUrl"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end justify-content-end">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm remove-education-row-btn"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{!-- TAB 5: EXPERIENCE --}}
+            <div class="tab-pane fade" id="tab-experience" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Employment History</h6>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addExperienceRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Experience
+                </button>
+              </div>
+
+              <div id="experienceRows" class="row g-3">
+    <div class="experience-row border rounded p-3 mb-2">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Organization / Company Name</label>
+        <input
+          type="text"
+          class="form-control exp_organizationName"
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Designation / Job Title</label>
+        <input type="text" class="form-control exp_jobTitle" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Employment Type</label>
+        <select class="form-select exp_employmentType">
+          <option value="">Select</option>
+          <option value="Full-Time">Full-Time</option>
+          <option value="Part-Time">Part-Time</option>
+          <option value="Contract">Contract</option>
+          <option value="Internship">Internship</option>
+          <option value="Freelance">Freelance</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Department / Division</label>
+        <input type="text" class="form-control exp_department" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Industry Type</label>
+        <input type="text" class="form-control exp_industryType" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">City</label>
+        <input
+          type="text"
+          class="form-control exp_companyLocationCity"
+        />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Country</label>
+        {{!-- <input
+          type="text"
+          class="form-control exp_companyLocationCountry"
+        /> --}}
+        <select name="exp_companyLocationCountry" class="form-control exp_companyLocationCountry" required>
+                        <option value="">Select Country</option>
+                        {{#each countries}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/each}}
+                      </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-control exp_startDate" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">End Date</label>
+        <input type="date" class="form-control exp_endDate" />
+      </div>
+      <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-3">
+          <input
+            type="checkbox"
+            class="form-check-input exp_isCurrent"
+          />
+          <label class="form-check-label">
+            Present (currently working)
+          </label>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">
+          Last Drawn Salary / CTC
+        </label>
+        <input
+          type="number"
+          step="0.01"
+          class="form-control exp_lastDrawnCtc"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Reason for Leaving</label>
+        {{!-- <input
+          type="text"
+          class="form-control exp_reasonForLeaving"
+        /> --}}
+        <textarea
+          class="form-control exp_reasonForLeaving"
+          rows="2"
+        ></textarea>
+      </div>
+      <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-3">
+          <input
+            type="checkbox"
+            class="form-check-input exp_noticePeriodServed"
+          />
+          <label class="form-check-label">
+            Notice Period Served
+          </label>
+        </div>
+      </div>
+
+      {{!-- NEW: Supporting document URLs --}}
+      <div class="col-12">
+        <hr />
+        <h6 class="mb-2">Supporting Documents (URLs)</h6>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Relieving Letter URL</label>
+        <input
+          type="text"
+          class="form-control exp_relievingLetterUrl"
+          placeholder="https://... (Relieving letter)"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Last 3 Months Salary Slips URL</label>
+        <input
+          type="text"
+          class="form-control exp_salarySlipsUrl"
+          placeholder="https://... (3 months salary slips)"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Bank Statement URL</label>
+        <input
+          type="text"
+          class="form-control exp_bankStatementUrl"
+          placeholder="https://... (Bank statement)"
+        />
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end justify-content-end">
+        <button
+          type="button"
+          class="btn btn-outline-danger btn-sm remove-experience-row-btn"
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    </div>
+</div>
+
+            </div>
+
+            {{!-- TAB 6: DOCUMENTS & KYC --}}
+            <div class="tab-pane fade" id="tab-documents" role="tabpanel">
+              {{!-- Aadhaar / PAN removed from here (only via documents now) --}}
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Employee Documents &amp; KYC</h6>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  id="addDocumentRowBtn"
+                >
+                  <i class="fas fa-plus me-1"></i> Add Document
+                </button>
+              </div>
+
+              <div id="documentRows" class="row g-3">
+                <div class="document-row border rounded p-3 mb-2">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Category</label>
+                      <select class="form-select doc_category">
+                        <option value="KYC">KYC</option>
+                        <option value="AADHAAR">Aadhaar</option>
+                        <option value="PAN">PAN</option>
+                        <option value="ADDRESS">Address Proof</option>
+                        <option value="EDUCATION">Education</option>
+                        <option value="EXPERIENCE">Experience</option>
+                        <option value="HR">HR Letters</option>
+                        <option value="OTHER">Other</option>
+                      </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="departmentFilter">
-                            <option value="">All Departments</option>
-                        </select>
+                      <label class="form-label">Document Type</label>
+                      <input
+                        type="text"
+                        class="form-control doc_documentType"
+                        placeholder="Aadhaar Card, PAN Card, Passport, 10th Marksheet, Offer Letter..."
+                      />
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="designationFilter">
-                            <option value="">All Designations</option>
-                        </select>
+                      <label class="form-label">Name as per Document</label>
+                      <input
+                        type="text"
+                        class="form-control doc_nameOnDocument"
+                      />
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
+                    <div class="col-md-3">
+                      <label class="form-label">Document Number</label>
+                      <input
+                        type="text"
+                        class="form-control doc_documentNumber"
+                      />
                     </div>
-                </div>
 
-                <!-- Employees Table -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Emp ID</th>
-                                        <th>Name</th>
-                                        <th>Designation</th>
-                                        <th>Department</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th>CTC</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="employeesTableBody">
-                                    <!-- Employees will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Pagination -->
-                        <nav aria-label="Employee pagination">
-                            <ul class="pagination justify-content-center" id="pagination">
-                                <!-- Pagination will be generated here -->
-                            </ul>
-                        </nav>
+                    <div class="col-md-3">
+                      <label class="form-label">Issue Date</label>
+                      <input type="date" class="form-control doc_issueDate" />
                     </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Expiry Date</label>
+                      <input type="date" class="form-control doc_expiryDate" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Verification Status</label>
+                      <select class="form-select doc_verificationStatus">
+                        <option value="Pending">Pending</option>
+                        <option value="Verified">Verified</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">File URL (PDF / Doc)</label>
+                      <input
+                        type="text"
+                        class="form-control doc_fileUrl"
+                        placeholder="/uploads/documents/... or https://..."
+                      />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Document Image URL</label>
+                      <input
+                        type="text"
+                        class="form-control doc_documentImageUrl"
+                        placeholder="Scanned image URL/path"
+                      />
+                    </div>
+
+                    <div class="col-md-10">
+                      <label class="form-label">Notes</label>
+                      <textarea
+                        class="form-control doc_notes"
+                        rows="2"
+                      ></textarea>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end justify-content-end">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm remove-document-row-btn"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-            </div>
+              </div>
+
+            </div>{{!-- end tab-documents --}}
+          </div>{{!-- end tab-content --}}
+        </div>{{!-- end modal-body --}}
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+            Cancel
+          </button>
+
+          {{!-- Wizard buttons --}}
+          <button class="btn btn-primary" type="button" id="wizardNextBtn">
+            Next
+          </button>
+          <button
+            class="btn btn-primary d-none"
+            type="submit"
+            id="wizardSaveBtn"
+          >
+            Save Employee
+          </button>
         </div>
+      </form>
     </div>
+  </div>
 </div>
 
-<!-- Create Employee Modal -->
-<div class="modal fade" id="createEmployeeModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Employee</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="createEmployeeForm">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Employee Name *</label>
-                                <input type="text" class="form-control" name="empName" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Designation *</label>
-                                <input type="text" class="form-control" name="empDesignation" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Department *</label>
-                                <input type="text" class="form-control" name="empDepartment" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Work Location *</label>
-                                <input type="text" class="form-control" name="empWorkLoc" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3 fancy-datepicker">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar-plus"></i>Date of Joining *
-                                </label>
-                                <input type="text" class="form-control" name="empDateOfJoining" id="empDateOfJoining" placeholder="Select joining date" required readonly>
-                                <i class="fas fa-calendar-alt date-icon"></i>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3 fancy-datepicker">
-                                <label class="form-label">
-                                    <i class="fas fa-birthday-cake"></i>Date of Birth *
-                                </label>
-                                <input type="text" class="form-control" name="empDob" id="empDob" placeholder="Select birth date" required readonly>
-                                <i class="fas fa-calendar-alt date-icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">CTC (Annual) *</label>
-                                <input type="number" class="form-control" name="empCtc" step="0.01" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Aadhar Number *</label>
-                                <input type="text" class="form-control" name="empAadhar" pattern="[0-9]{12}" maxlength="12" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">PAN Number *</label>
-                                <input type="text" class="form-control" name="empPan" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10" style="text-transform: uppercase;" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email *</label>
-                                <input type="email" class="form-control" name="empEmail" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number *</label>
-                                <input type="tel" class="form-control" name="empPhone" pattern="[0-9]{10}" maxlength="10" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Employee</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Employee Modal -->
-<div class="modal fade" id="editEmployeeModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Employee</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editEmployeeForm">
-                <div class="modal-body">
-                    <input type="hidden" name="employeeId" id="editEmployeeId">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Employee Name *</label>
-                                <input type="text" class="form-control" name="emp_name" id="editEmpName" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Designation *</label>
-                                <input type="text" class="form-control" name="empDesignation" id="editEmpDesignation" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Department *</label>
-                                <input type="text" class="form-control" name="empDepartment" id="editEmpDepartment" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Work Location *</label>
-                                <input type="text" class="form-control" name="empWorkLoc" id="editEmpWorkLoc" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3 fancy-datepicker">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar-plus"></i>Date of Joining *
-                                </label>
-                                <input type="text" class="form-control" name="empDateOfJoining" id="editEmpDateOfJoining" placeholder="Select joining date" required readonly>
-                                <i class="fas fa-calendar-alt date-icon"></i>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3 fancy-datepicker">
-                                <label class="form-label">
-                                    <i class="fas fa-birthday-cake"></i>Date of Birth *
-                                </label>
-                                <input type="text" class="form-control" name="empDob" id="editEmpDob" placeholder="Select birth date" required readonly>
-                                <i class="fas fa-calendar-alt date-icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">CTC (Annual) *</label>
-                                <input type="number" class="form-control" name="empCtc" id="editEmpCtc" step="0.01" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Aadhar Number *</label>
-                                <input type="text" class="form-control" name="empAadhar" id="editEmpAadhar" pattern="[0-9]{12}" maxlength="12" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">PAN Number *</label>
-                                <input type="text" class="form-control" name="empPan" id="editEmpPan" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10" style="text-transform: uppercase;" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email *</label>
-                                <input type="email" class="form-control" name="empEmail" id="editEmpEmail" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number *</label>
-                                <input type="tel" class="form-control" name="empPhone" id="editEmpPhone" pattern="[0-9]{10}" maxlength="10" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select class="form-select" name="is_active" id="editIsActive">
-                                    <option value="true">Active</option>
-                                    <option value="false">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Employee</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Bulk Import Modal -->
-<div class="modal fade" id="bulkImportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bulk Import Employees</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Instructions:</strong> Upload a CSV file with the following columns:
-                    emp_name, emp_designation, emp_department, emp_work_loc, emp_date_of_joining (YYYY-MM-DD), 
-                    emp_dob (YYYY-MM-DD), emp_ctc, emp_aadhar, emp_pan, emp_email, emp_phone
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Select CSV File</label>
-                    <input type="file" class="form-control" id="csvFile" accept=".csv">
-                </div>
-                <div id="importPreview" class="d-none">
-                    <h6>Preview (First 5 rows):</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead id="previewHeader"></thead>
-                            <tbody id="previewBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="importEmployees" disabled>Import Employees</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- View Employee Modal -->
+{{!-- View Employee Modal --}}
 <div class="modal fade" id="viewEmployeeModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Employee Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="employeeDetails">
-                <!-- Employee details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Employee Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <h5 id="viewEmpName" class="mb-1"></h5>
+        <p class="text-muted mb-3">
+          <span id="viewEmpId"></span>
+          &middot;
+          <span id="viewEmpEmail"></span>
+          &middot;
+          <span id="viewEmpPhone"></span>
+        </p>
+
+        <hr />
+
+        <h6>Personal Details</h6>
+        <dl class="row" id="viewPersonalDetails"></dl>
+
+        <hr />
+
+        <h6>Professional Details</h6>
+        <dl class="row" id="viewProfessionalDetails"></dl>
+
+        <hr />
+
+        <h6>Compensation</h6>
+        <dl class="row" id="viewCompensationDetails"></dl>
+
+        <hr />
+
+        <h6>Education &amp; Qualification</h6>
+        <div id="viewEducationList"></div>
+
+        <hr />
+
+        <h6>Experience / Employment History</h6>
+        <div id="viewExperienceList"></div>
+
+        <hr />
+
+        <h6>Documents &amp; KYC</h6>
+        <div id="viewDocumentList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-let currentPage = 1;
-let totalPages = 1;
-let employeesData = [];
+  (function () {
+    // =========================
+    // Wizard: steps (6 tabs)
+    // =========================
+    const steps = [
+      "tab-basic",
+      "tab-job",
+      "tab-comp",
+      "tab-education",
+      "tab-experience",
+      "tab-documents",
+    ];
 
-// Load employees on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Only load data if we're on the employees page and user is authenticated
-    const currentPath = window.location.pathname;
-    const token = localStorage.getItem('accessToken');
-    
-    if (currentPath === '/employees' && token) {
-        loadEmployees();
-        loadEmployeeStats();
-        setupEventListeners();
-        initializeFancyCalendars();
-    } else if (currentPath === '/employees' && !token) {
-        // Redirect to login if no token
-        window.location.replace('/login');
+    let currentStep = 0;
+    const nextBtn = document.getElementById("wizardNextBtn");
+    const saveBtn = document.getElementById("wizardSaveBtn");
+    const tabsContainer = document.getElementById("addEmployeeTabs");
+    const modalEl = document.getElementById("addEmployeeModal");
+    const addEmployeeForm = document.getElementById("addEmployeeForm");
+    const employeeIdField = document.getElementById("employeeIdField");
+    const addEmployeeModalTitle = document.getElementById("addEmployeeModalTitle");
+
+    let formMode = "create"; // 'create' or 'edit'
+    let currentEditingId = null;
+
+    function updateWizardButtons() {
+      if (!nextBtn || !saveBtn) return;
+
+      if (currentStep === steps.length - 1) {
+        nextBtn.classList.add("d-none");
+        saveBtn.classList.remove("d-none");
+      } else {
+        nextBtn.classList.remove("d-none");
+        saveBtn.classList.add("d-none");
+      }
     }
-});
 
-function initializeFancyCalendars() {
-    // Initialize Date of Joining calendar
-    flatpickr("#empDateOfJoining", {
-        dateFormat: "Y-m-d",
-        maxDate: "today",
-        defaultDate: null,
-        placeholder: "Select joining date",
-        theme: "material_blue",
-        allowInput: false,
-        clickOpens: true,
-        onChange: function(selectedDates, dateStr, instance) {
-            // Add visual feedback
-            instance.input.style.borderColor = "#ffd700";
-            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
-        }
-    });
+    function goToStep(index) {
+      if (index < 0 || index >= steps.length) return;
 
-    // Initialize Date of Birth calendar
-    flatpickr("#empDob", {
-        dateFormat: "Y-m-d",
-        maxDate: "today",
-        defaultDate: null,
-        placeholder: "Select birth date",
-        theme: "material_blue",
-        allowInput: false,
-        clickOpens: true,
-        onChange: function(selectedDates, dateStr, instance) {
-            // Add visual feedback
-            instance.input.style.borderColor = "#ffd700";
-            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
-        }
-    });
+      const targetId = steps[index];
+      const trigger = document.querySelector(
+        '[data-bs-target="#' + targetId + '"]'
+      );
 
-    // Initialize Edit modal calendars
-    flatpickr("#editEmpDateOfJoining", {
-        dateFormat: "Y-m-d",
-        maxDate: "today",
-        defaultDate: null,
-        placeholder: "Select joining date",
-        theme: "material_blue",
-        allowInput: false,
-        clickOpens: true,
-        onChange: function(selectedDates, dateStr, instance) {
-            instance.input.style.borderColor = "#ffd700";
-            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
-        }
-    });
-
-    flatpickr("#editEmpDob", {
-        dateFormat: "Y-m-d",
-        maxDate: "today",
-        defaultDate: null,
-        placeholder: "Select birth date",
-        theme: "material_blue",
-        allowInput: false,
-        clickOpens: true,
-        onChange: function(selectedDates, dateStr, instance) {
-            instance.input.style.borderColor = "#ffd700";
-            instance.input.style.boxShadow = "0 0 0 0.2rem rgba(255, 215, 0, 0.25)";
-        }
-    });
-}
-
-function setupEventListeners() {
-    // Search functionality
-    document.getElementById('searchEmployees').addEventListener('input', debounce(loadEmployees, 300));
-    
-    // Filter functionality
-    document.getElementById('departmentFilter').addEventListener('change', loadEmployees);
-    document.getElementById('designationFilter').addEventListener('change', loadEmployees);
-    document.getElementById('statusFilter').addEventListener('change', loadEmployees);
-    
-    // Form submissions
-    document.getElementById('createEmployeeForm').addEventListener('submit', handleCreateEmployee);
-    document.getElementById('editEmployeeForm').addEventListener('submit', handleUpdateEmployee);
-    
-    // CSV import
-    document.getElementById('csvFile').addEventListener('change', handleCSVFile);
-    document.getElementById('importEmployees').addEventListener('click', handleBulkImport);
-}
-
-async function loadEmployees() {
-    try {
-        // Check if we're still on the employees page
-        if (window.location.pathname !== '/employees') {
-            return;
-        }
-        
-        const search = document.getElementById('searchEmployees').value;
-        const department = document.getElementById('departmentFilter').value;
-        const designation = document.getElementById('designationFilter').value;
-        const status = document.getElementById('statusFilter').value;
-        
-        const params = new URLSearchParams({
-            page: currentPage,
-            limit: 10
-        });
-        
-        if (search) params.append('search', search);
-        if (department) params.append('department', department);
-        if (designation) params.append('designation', designation);
-        if (status) params.append('is_active', status);
-        
-        const response = await apiCall(`/employees?${params}`);
-        
-        if (response && response.success) {
-            employeesData = response.data.employees;
-            displayEmployees(employeesData);
-            updatePagination(response.data.pagination);
-            updateFilters(response.data.employees);
-        }
-    } catch (error) {
-        console.error('Error loading employees:', error);
-        // Don't show alert for authentication errors as they're handled by apiCall
-        if (!error.message || !error.message.includes('Authentication failed')) {
-            showAlert('Error loading employees: ' + error.message, 'danger');
-        }
+      if (trigger && window.bootstrap) {
+        const tab = new bootstrap.Tab(trigger);
+        tab.show();
+      }
     }
-}
 
-async function loadEmployeeStats() {
-    try {
-        // Check if we're still on the employees page
-        if (window.location.pathname !== '/employees') {
-            return;
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function () {
+        if (currentStep < steps.length - 1) {
+          currentStep += 1;
+          goToStep(currentStep);
+          updateWizardButtons();
         }
-        
-        const response = await apiCall('/employees/stats');
-        
-        if (response && response.success) {
-            const stats = response.data.overview;
-            document.getElementById('totalEmployees').textContent = stats.totalEmployees || 0;
-            document.getElementById('activeEmployees').textContent = stats.activeEmployees || 0;
-            document.getElementById('inactiveEmployees').textContent = stats.inactiveEmployees || 0;
-            document.getElementById('avgCTC').textContent = '₹' + (stats.avgCTC ? stats.avgCTC.toLocaleString() : '0');
+      });
+    }
+
+    if (tabsContainer) {
+      tabsContainer.addEventListener("shown.bs.tab", function (event) {
+        const target = event.target.getAttribute("data-bs-target");
+        if (!target) return;
+
+        const id = target.replace("#", "");
+        const idx = steps.indexOf(id);
+
+        if (idx !== -1) {
+          currentStep = idx;
+          updateWizardButtons();
         }
-    } catch (error) {
-        console.error('Error loading stats:', error);
-        // Don't show alert for authentication errors as they're handled by apiCall
+      });
     }
-}
 
-function displayEmployees(employees) {
-    const tbody = document.getElementById('employeesTableBody');
-    
-    if (employees.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No employees found</td></tr>';
-        return;
+    if (modalEl) {
+      modalEl.addEventListener("shown.bs.modal", function () {
+        currentStep = 0;
+        goToStep(currentStep);
+        updateWizardButtons();
+      });
     }
-    
-    tbody.innerHTML = employees.map(emp => `
-        <tr>
-            <td><strong>${emp.empId}</strong></td>
-            <td>${emp.empName}</td>
-            <td>${emp.empDesignation}</td>
-            <td>${emp.empDepartment}</td>
-            <td>${emp.empEmail}</td>
-            <td>${emp.empPhone}</td>
-            <td>₹${emp.empCtc.toLocaleString()}</td>
-            <td>
-                <span class="badge ${emp.isActive ? 'bg-success' : 'bg-danger'}">
-                    ${emp.isActive ? 'Active' : 'Inactive'}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-info me-1" onclick="viewEmployee('${emp.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-warning me-1" onclick="editEmployee('${emp.id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${emp.id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
 
-function updatePagination(pagination) {
-    const paginationContainer = document.getElementById('pagination');
-    totalPages = pagination.totalPages;
-    
-    let paginationHTML = '';
-    
-    // Previous button
-    paginationHTML += `
-        <li class="page-item ${pagination.hasPrev ? '' : 'disabled'}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
-        </li>
-    `;
-    
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-        paginationHTML += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
-            </li>
-        `;
-    }
-    
-    // Next button
-    paginationHTML += `
-        <li class="page-item ${pagination.hasNext ? '' : 'disabled'}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
-        </li>
-    `;
-    
-    paginationContainer.innerHTML = paginationHTML;
-}
+    // =======================================
+    // "Permanent same as present" helper
+    // =======================================
+    const sameAsPresentCheckbox = document.getElementById("sameAsPresent");
 
-function updateFilters(employees) {
-    // Update department filter
-    const departments = [...new Set(employees.map(emp => emp.empDepartment))];
-    const departmentFilter = document.getElementById('departmentFilter');
-    const currentDept = departmentFilter.value;
-    
-    departmentFilter.innerHTML = '<option value="">All Departments</option>' +
-        departments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
-    departmentFilter.value = currentDept;
-    
-    // Update designation filter
-    const designations = [...new Set(employees.map(emp => emp.empDesignation))];
-    const designationFilter = document.getElementById('designationFilter');
-    const currentDesig = designationFilter.value;
-    
-    designationFilter.innerHTML = '<option value="">All Designations</option>' +
-        designations.map(desig => `<option value="${desig}">${desig}</option>`).join('');
-    designationFilter.value = currentDesig;
-}
+    if (sameAsPresentCheckbox) {
+      sameAsPresentCheckbox.addEventListener("change", function () {
+        if (!this.checked) return;
 
-function changePage(page) {
-    if (page >= 1 && page <= totalPages) {
-        currentPage = page;
-        loadEmployees();
-    }
-}
-
-async function handleCreateEmployee(e) {
-    e.preventDefault();
-    
-    try {
-        const formData = new FormData(e.target);
-        const employeeData = Object.fromEntries(formData.entries());
-        
-        const response = await apiCall('/employees', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(employeeData)
-        });
-        
-        if (response.success) {
-            showAlert('Employee created successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('createEmployeeModal')).hide();
-            e.target.reset();
-            loadEmployees();
-            loadEmployeeStats();
-        }
-    } catch (error) {
-        showAlert('Error creating employee: ' + error.message, 'danger');
-    }
-}
-
-async function viewEmployee(id) {
-    try {
-        const response = await apiCall(`/employees/${id}`);
-        
-        if (response.success) {
-            const emp = response.data;
-            const detailsHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Personal Information</h6>
-                        <p><strong>Employee ID:</strong> ${emp.empId}</p>
-                        <p><strong>Name:</strong> ${emp.empName}</p>
-                        <p><strong>Email:</strong> ${emp.empEmail}</p>
-                        <p><strong>Phone:</strong> ${emp.empPhone}</p>
-                        <p><strong>Date of Birth:</strong> ${new Date(emp.empDob).toLocaleDateString()}</p>
-                        <p><strong>Age:</strong> ${emp.getAge ? emp.getAge() : 'N/A'} years</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Professional Information</h6>
-                        <p><strong>Designation:</strong> ${emp.empDesignation}</p>
-                        <p><strong>Department:</strong> ${emp.empDepartment}</p>
-                        <p><strong>Work Location:</strong> ${emp.empWorkLoc}</p>
-                        <p><strong>Date of Joining:</strong> ${new Date(emp.empDateOfJoining).toLocaleDateString()}</p>
-                        <p><strong>Experience:</strong> ${emp.getExperience ? emp.getExperience() : 'N/A'} years</p>
-                        <p><strong>CTC:</strong> ₹${emp.empCtc.toLocaleString()}</p>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h6>Document Information</h6>
-                        <p><strong>Aadhar:</strong> ${emp.empAadhar}</p>
-                        <p><strong>PAN:</strong> ${emp.empPan}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Status</h6>
-                        <p><strong>Status:</strong> 
-                            <span class="badge ${emp.isActive ? 'bg-success' : 'bg-danger'}">
-                                ${emp.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                        </p>
-                        <p><strong>Created:</strong> ${new Date(emp.createdAt).toLocaleDateString()}</p>
-                        <p><strong>Updated:</strong> ${new Date(emp.updatedAt).toLocaleDateString()}</p>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('employeeDetails').innerHTML = detailsHTML;
-            new bootstrap.Modal(document.getElementById('viewEmployeeModal')).show();
-        }
-    } catch (error) {
-        showAlert('Error loading employee details: ' + error.message, 'danger');
-    }
-}
-
-async function editEmployee(id) {
-    try {
-        const response = await apiCall(`/employees/${id}`);
-        
-        if (response.success) {
-            const emp = response.data;
-            
-            // Populate form fields
-            document.getElementById('editEmployeeId').value = emp.id;
-            document.getElementById('editEmpName').value = emp.empName;
-            document.getElementById('editEmpDesignation').value = emp.empDesignation;
-            document.getElementById('editEmpDepartment').value = emp.empDepartment;
-            document.getElementById('editEmpWorkLoc').value = emp.empWorkLoc;
-            
-            // Set date values for fancy calendars
-            const joiningDate = emp.empDateOfJoining ? emp.empDateOfJoining.split('T')[0] : '';
-            const birthDate = emp.empDob ? emp.empDob.split('T')[0] : '';
-            
-            // Update flatpickr instances
-            const joiningCalendar = document.getElementById('editEmpDateOfJoining')._flatpickr;
-            const birthCalendar = document.getElementById('editEmpDob')._flatpickr;
-            
-            if (joiningCalendar) {
-                joiningCalendar.setDate(joiningDate);
-            }
-            if (birthCalendar) {
-                birthCalendar.setDate(birthDate);
-            }
-            
-            document.getElementById('editEmpCtc').value = emp.empCtc;
-            document.getElementById('editEmpAadhar').value = emp.empAadhar;
-            document.getElementById('editEmpPan').value = emp.empPan;
-            document.getElementById('editEmpEmail').value = emp.empEmail;
-            document.getElementById('editEmpPhone').value = emp.empPhone;
-            document.getElementById('editIsActive').value = emp.isActive;
-            
-            new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
-        }
-    } catch (error) {
-        showAlert('Error loading employee for edit: ' + error.message, 'danger');
-    }
-}
-
-async function handleUpdateEmployee(e) {
-    e.preventDefault();
-    
-    try {
-        const formData = new FormData(e.target);
-        const employeeId = formData.get('employeeId');
-        const employeeData = Object.fromEntries(formData.entries());
-        delete employeeData.employeeId;
-        
-        const response = await apiCall(`/employees/${employeeId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(employeeData)
-        });
-        
-        if (response.success) {
-            showAlert('Employee updated successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
-            loadEmployees();
-            loadEmployeeStats();
-        }
-    } catch (error) {
-        showAlert('Error updating employee: ' + error.message, 'danger');
-    }
-}
-
-async function deleteEmployee(id) {
-    if (!confirm('Are you sure you want to delete this employee?')) {
-        return;
-    }
-    
-    try {
-        const response = await apiCall(`/employees/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.success) {
-            showAlert('Employee deleted successfully!', 'success');
-            loadEmployees();
-            loadEmployeeStats();
-        }
-    } catch (error) {
-        showAlert('Error deleting employee: ' + error.message, 'danger');
-    }
-}
-
-function handleCSVFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const csv = e.target.result;
-        const lines = csv.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-        
-        // Show preview
-        const previewDiv = document.getElementById('importPreview');
-        const previewHeader = document.getElementById('previewHeader');
-        const previewBody = document.getElementById('previewBody');
-        
-        previewHeader.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
-        previewBody.innerHTML = lines.slice(1, 6).map(line => {
-            const values = line.split(',').map(v => v.trim());
-            return `<tr>${values.map(v => `<td>${v}</td>`).join('')}</tr>`;
-        }).join('');
-        
-        previewDiv.classList.remove('d-none');
-        document.getElementById('importEmployees').disabled = false;
-        
-        // Store CSV data for import
-        window.csvData = { headers, lines: lines.slice(1) };
-    };
-    reader.readAsText(file);
-}
-
-async function handleBulkImport() {
-    if (!window.csvData) return;
-    
-    try {
-        const employees = window.csvData.lines
-            .filter(line => line.trim())
-            .map(line => {
-                const values = line.split(',').map(v => v.trim());
-                const employee = {};
-                window.csvData.headers.forEach((header, index) => {
-                    employee[header] = values[index] || '';
-                });
-                return employee;
-            });
-        
-        const response = await apiCall('/employees/bulk-import', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ employees })
-        });
-        
-        if (response.success) {
-            const result = response.data;
-            showAlert(`Bulk import completed! ${result.success.length} successful, ${result.errors.length} errors`, 
-                     result.errors.length > 0 ? 'warning' : 'success');
-            
-            if (result.errors.length > 0) {
-                console.log('Import errors:', result.errors);
-            }
-            
-            bootstrap.Modal.getInstance(document.getElementById('bulkImportModal')).hide();
-            loadEmployees();
-            loadEmployeeStats();
-        }
-    } catch (error) {
-        showAlert('Error importing employees: ' + error.message, 'danger');
-    }
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
+        const copyField = (from, to) => {
+          const f = document.querySelector('[name="' + from + '"]');
+          const t = document.querySelector('[name="' + to + '"]');
+          if (f && t) t.value = f.value;
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+
+        copyField("presentAddressLine1", "permanentAddressLine1");
+        copyField("presentAddressLine2", "permanentAddressLine2");
+        copyField("presentCity", "permanentCity");
+        copyField("presentState", "permanentState");
+        copyField("presentZip", "permanentZip");
+        copyField("presentCountry", "permanentCountry");
+      });
+    }
+
+    // =======================================
+    // Dynamic rows: Education, Experience, Documents
+    // =======================================
+    const educationContainer = document.getElementById("educationRows");
+    const experienceContainer = document.getElementById("experienceRows");
+    const documentContainer = document.getElementById("documentRows");
+
+    const addEducationRowBtn = document.getElementById("addEducationRowBtn");
+    const addExperienceRowBtn = document.getElementById("addExperienceRowBtn");
+    const addDocumentRowBtn = document.getElementById("addDocumentRowBtn");
+
+    function clearInputsInRow(row) {
+      row.querySelectorAll("input, select, textarea").forEach((el) => {
+        if (el.type === "checkbox") {
+          el.checked = false;
+        } else {
+          el.value = "";
+        }
+      });
+    }
+
+    function cloneRow(container, rowSelector) {
+      const firstRow = container.querySelector(rowSelector);
+      if (!firstRow) return;
+      const clone = firstRow.cloneNode(true);
+      clearInputsInRow(clone);
+      container.appendChild(clone);
+    }
+
+    function resetDynamicSection(container, rowSelector) {
+      if (!container) return;
+
+      const rows = container.querySelectorAll(rowSelector);
+      rows.forEach((row, idx) => {
+        if (idx === 0) {
+          clearInputsInRow(row);
+        } else {
+          row.remove();
+        }
+      });
+    }
+
+    // Education dynamic
+    if (addEducationRowBtn && educationContainer) {
+      addEducationRowBtn.addEventListener("click", function () {
+        cloneRow(educationContainer, ".education-row");
+      });
+
+      educationContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-education-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".education-row");
+          if (
+            educationContainer.querySelectorAll(".education-row").length > 1 &&
+            row
+          ) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    // Experience dynamic
+    if (addExperienceRowBtn && experienceContainer) {
+      addExperienceRowBtn.addEventListener("click", function () {
+        cloneRow(experienceContainer, ".experience-row");
+      });
+
+      experienceContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-experience-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".experience-row");
+          if (
+            experienceContainer.querySelectorAll(".experience-row").length > 1 &&
+            row
+          ) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    // Document dynamic
+    if (addDocumentRowBtn && documentContainer) {
+      addDocumentRowBtn.addEventListener("click", function () {
+        cloneRow(documentContainer, ".document-row");
+      });
+
+      documentContainer.addEventListener("click", function (e) {
+        const removeBtn = e.target.closest(".remove-document-row-btn");
+        if (removeBtn) {
+          const row = e.target.closest(".document-row");
+          if (documentContainer.querySelectorAll(".document-row").length > 1 && row) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    function collectEducationRows() {
+      const rows = [];
+
+      document.querySelectorAll(".education-row").forEach((row) => {
+        const obj = {
+          level: row.querySelector(".edu_level")?.value || "",
+          degree: row.querySelector(".edu_degree")?.value || "",
+          specialization: row.querySelector(".edu_specialization")?.value || "",
+          institutionName:
+            row.querySelector(".edu_institutionName")?.value || "",
+          board: row.querySelector(".edu_board")?.value || "",
+          startYear: row.querySelector(".edu_startYear")?.value || "",
+          endYear: row.querySelector(".edu_endYear")?.value || "",
+          yearOfPassing:
+            row.querySelector(".edu_yearOfPassing")?.value || "",
+          percentageOrCgpa:
+            row.querySelector(".edu_percentageOrCgpa")?.value || "",
+          modeOfStudy: row.querySelector(".edu_modeOfStudy")?.value || "",
+          educationType:
+            row.querySelector(".edu_educationType")?.value || "",
+          country: row.querySelector(".edu_country")?.value || "",
+          city: row.querySelector(".edu_city")?.value || "",
+          certificateUrl:
+            row.querySelector(".edu_certificateUrl")?.value || "",
+        };
+
+        // Push only if some key fields are present
+        if (obj.level || obj.degree || obj.institutionName) {
+          rows.push(obj);
+        }
+      });
+
+      return rows;
+    }
+
+    function collectExperienceRows() {
+  const rows = [];
+
+  document.querySelectorAll(".experience-row").forEach((row) => {
+    const obj = {
+      organizationName:
+        row.querySelector(".exp_organizationName")?.value || "",
+      jobTitle: row.querySelector(".exp_jobTitle")?.value || "",
+      employmentType:
+        row.querySelector(".exp_employmentType")?.value || "",
+      department: row.querySelector(".exp_department")?.value || "",
+      industryType: row.querySelector(".exp_industryType")?.value || "",
+      companyLocationCity:
+        row.querySelector(".exp_companyLocationCity")?.value || "",
+      companyLocationCountry:
+        row.querySelector(".exp_companyLocationCountry")?.value || "",
+      startDate: row.querySelector(".exp_startDate")?.value || "",
+      endDate: row.querySelector(".exp_endDate")?.value || "",
+      isCurrent: row.querySelector(".exp_isCurrent")?.checked || false,
+      lastDrawnCtc:
+        row.querySelector(".exp_lastDrawnCtc")?.value || "",
+      reasonForLeaving:
+        row.querySelector(".exp_reasonForLeaving")?.value || "",
+      noticePeriodServed:
+        row.querySelector(".exp_noticePeriodServed")?.checked || false,
+
+      // NEW: document URLs
+      relievingLetterUrl:
+        row.querySelector(".exp_relievingLetterUrl")?.value || "",
+      salarySlipsUrl:
+        row.querySelector(".exp_salarySlipsUrl")?.value || "",
+      bankStatementUrl:
+        row.querySelector(".exp_bankStatementUrl")?.value || "",
     };
+
+    // Keep same condition – row considered valid if some core fields present
+    if (obj.organizationName || obj.jobTitle) {
+      rows.push(obj);
+    }
+  });
+
+  return rows;
 }
 
-function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.main-content').firstChild);
-    
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
+    function collectDocumentRows() {
+      const rows = [];
+
+      document.querySelectorAll(".document-row").forEach((row) => {
+        const obj = {
+          category: row.querySelector(".doc_category")?.value || "",
+          documentType:
+            row.querySelector(".doc_documentType")?.value || "",
+          nameOnDocument:
+            row.querySelector(".doc_nameOnDocument")?.value || "",
+          documentNumber:
+            row.querySelector(".doc_documentNumber")?.value || "",
+          issueDate: row.querySelector(".doc_issueDate")?.value || "",
+          expiryDate: row.querySelector(".doc_expiryDate")?.value || "",
+          verificationStatus:
+            row.querySelector(".doc_verificationStatus")?.value ||
+            "Pending",
+          fileUrl: row.querySelector(".doc_fileUrl")?.value || "",
+          documentImageUrl:
+            row.querySelector(".doc_documentImageUrl")?.value || "",
+          notes: row.querySelector(".doc_notes")?.value || "",
+        };
+
+        if (
+          obj.documentType ||
+          obj.documentNumber ||
+          obj.fileUrl ||
+          obj.documentImageUrl
+        ) {
+          rows.push(obj);
+        }
+      });
+
+      return rows;
+    }
+
+    // =======================================
+    // Helper: reset entire form (for Add mode)
+    // =======================================
+    function resetEmployeeForm() {
+      if (!addEmployeeForm) return;
+
+      addEmployeeForm.reset();
+      employeeIdField.value = "";
+
+      if (sameAsPresentCheckbox) {
+        sameAsPresentCheckbox.checked = false;
+      }
+
+      resetDynamicSection(educationContainer, ".education-row");
+      resetDynamicSection(experienceContainer, ".experience-row");
+      resetDynamicSection(documentContainer, ".document-row");
+    }
+
+    // =======================================
+    // Helper: populate form from employee data (Edit mode)
+    // =======================================
+    function fillBaseField(name, value) {
+      if (!addEmployeeForm) return;
+
+      const el = addEmployeeForm.elements[name];
+      if (!el) return;
+
+      if (el.type === "checkbox") {
+        el.checked = !!value;
+      } else {
+        el.value = value != null ? value : "";
+      }
+    }
+
+    function setEducationRows(educations) {
+      resetDynamicSection(educationContainer, ".education-row");
+      if (!educationContainer) return;
+      if (!Array.isArray(educations) || educations.length === 0) return;
+
+      const firstRow = educationContainer.querySelector(".education-row");
+      if (!firstRow) return;
+
+      educations.forEach((edu, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          educationContainer.appendChild(row);
+        }
+
+        row.querySelector(".edu_level").value = edu.level || "";
+        row.querySelector(".edu_degree").value = edu.degree || "";
+        row.querySelector(".edu_specialization").value =
+          edu.specialization || "";
+        row.querySelector(".edu_institutionName").value =
+          edu.institutionName || "";
+        row.querySelector(".edu_board").value = edu.board || "";
+        row.querySelector(".edu_startYear").value = edu.startYear || "";
+        row.querySelector(".edu_endYear").value = edu.endYear || "";
+        row.querySelector(".edu_yearOfPassing").value =
+          edu.yearOfPassing || "";
+        row.querySelector(".edu_percentageOrCgpa").value =
+          edu.percentageOrCgpa || "";
+        row.querySelector(".edu_modeOfStudy").value =
+          edu.modeOfStudy || "";
+        row.querySelector(".edu_educationType").value =
+          edu.educationType || "";
+        row.querySelector(".edu_country").value = edu.country || "";
+        row.querySelector(".edu_city").value = edu.city || "";
+        row.querySelector(".edu_certificateUrl").value =
+          edu.certificateUrl || "";
+      });
+    }
+
+    function setExperienceRows(experiences) {
+      resetDynamicSection(experienceContainer, ".experience-row");
+      if (!experienceContainer) return;
+      if (!Array.isArray(experiences) || experiences.length === 0) return;
+
+      const firstRow = experienceContainer.querySelector(".experience-row");
+      if (!firstRow) return;
+
+      experiences.forEach((exp, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          experienceContainer.appendChild(row);
+        }
+
+        row.querySelector(".exp_organizationName").value =
+          exp.organizationName || "";
+        row.querySelector(".exp_jobTitle").value = exp.jobTitle || "";
+        row.querySelector(".exp_employmentType").value =
+          exp.employmentType || "";
+        row.querySelector(".exp_department").value = exp.department ||    "";
+        row.querySelector(".exp_industryType").value =
+          exp.industryType || "";
+        row.querySelector(".exp_companyLocationCity").value =
+          exp.companyLocationCity || "";
+        row.querySelector(".exp_companyLocationCountry").value =
+          exp.companyLocationCountry || "";
+        row.querySelector(".exp_startDate").value = exp.startDate || "";
+        row.querySelector(".exp_endDate").value = exp.endDate || "";
+        row.querySelector(".exp_isCurrent").checked = !!exp.isCurrent;
+        row.querySelector(".exp_lastDrawnCtc").value =
+          exp.lastDrawnCtc || "";
+        row.querySelector(".exp_reasonForLeaving").value =
+          exp.reasonForLeaving || "";
+        row.querySelector(".exp_noticePeriodServed").checked =
+          !!exp.noticePeriodServed;
+
+        // NEW: document URLs
+        row.querySelector(".exp_relievingLetterUrl").value =
+          exp.relievingLetterUrl || "";
+        row.querySelector(".exp_salarySlipsUrl").value =
+      exp.salarySlipsUrl || "";
+        row.querySelector(".exp_bankStatementUrl").value =
+      exp.bankStatementUrl || "";
+      });
+    }
+
+    function setDocumentRows(documents) {
+      resetDynamicSection(documentContainer, ".document-row");
+      if (!documentContainer) return;
+      if (!Array.isArray(documents) || documents.length === 0) return;
+
+      const firstRow = documentContainer.querySelector(".document-row");
+      if (!firstRow) return;
+
+      documents.forEach((doc, index) => {
+        let row = firstRow;
+        if (index > 0) {
+          row = firstRow.cloneNode(true);
+          clearInputsInRow(row);
+          documentContainer.appendChild(row);
+        }
+
+        row.querySelector(".doc_category").value = doc.category || "KYC";
+        row.querySelector(".doc_documentType").value =
+          doc.documentType || "";
+        row.querySelector(".doc_nameOnDocument").value =
+          doc.nameOnDocument || "";
+        row.querySelector(".doc_documentNumber").value =
+          doc.documentNumber || "";
+        row.querySelector(".doc_issueDate").value = doc.issueDate || "";
+        row.querySelector(".doc_expiryDate").value = doc.expiryDate || "";
+        row.querySelector(".doc_verificationStatus").value =
+          doc.verificationStatus || "Pending";
+        row.querySelector(".doc_fileUrl").value = doc.fileUrl || "";
+        row.querySelector(".doc_documentImageUrl").value =
+          doc.documentImageUrl || "";
+        row.querySelector(".doc_notes").value = doc.notes || "";
+      });
+    }
+
+    // =======================================
+    // Open Add Employee in Create mode
+    // =======================================
+    const openAddEmployeeModalBtn = document.getElementById(
+      "openAddEmployeeModalBtn"
+    );
+
+    if (openAddEmployeeModalBtn) {
+      openAddEmployeeModalBtn.addEventListener("click", function () {
+        formMode = "create";
+        currentEditingId = null;
+
+        if (addEmployeeModalTitle) {
+          addEmployeeModalTitle.textContent = "Add Employee";
+        }
+
+        resetEmployeeForm();
+      });
+    }
+
+    // =======================================
+    // Form submit logic (Create / Edit)
+    // =======================================
+    if (addEmployeeForm) {
+      addEmployeeForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(addEmployeeForm);
+        const base = Object.fromEntries(formData.entries());
+
+        // Remove id from base; for edit we use URL param
+        delete base.id;
+
+        base.educations = collectEducationRows();
+        base.experiences = collectExperienceRows();
+        base.documents = collectDocumentRows();
+
+        let url = "/api/v1/employees";
+        let method = "POST";
+
+        if (formMode === "edit" && currentEditingId) {
+          url = "/api/v1/employees/" + currentEditingId;
+          method = "PUT";
+        }
+
+        try {
+          const res = await fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(base),
+          });
+
+          if (!res.ok) {
+            let err;
+            try {
+              err = await res.json();
+            } catch (e) {
+              err = {};
+            }
+            throw new Error(err.error || "Failed to save employee");
+          }
+
+          window.location.reload();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+    }
+
+    // =======================================
+    // VIEW / EDIT / DELETE BUTTON HANDLERS
+    // =======================================
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderKeyValueList(containerId, entries) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      container.innerHTML = "";
+      entries.forEach(([label, value]) => {
+        const val = value != null && value !== "" ? value : "-";
+        container.insertAdjacentHTML(
+          "beforeend",
+          '<dt class="col-sm-4 text-muted">' +
+            escapeHtml(label) +
+            "</dt>" +
+            '<dd class="col-sm-8">' +
+            escapeHtml(String(val)) +
+            "</dd>"
+        );
+      });
+    }
+
+    async function fetchEmployee(id) {
+      const res = await fetch("/api/v1/employees/" + id);
+      if (!res.ok) {
+        let err;
+        try {
+          err = await res.json();
+        } catch (e) {
+          err = {};
+        }
+        throw new Error(err.error || "Failed to fetch employee");
+      }
+      return res.json();
+    }
+
+    async function openViewEmployeeModal(id) {
+      try {
+        const emp = await fetchEmployee(id);
+
+        const viewEmpName = document.getElementById("viewEmpName");
+        const viewEmpId = document.getElementById("viewEmpId");
+        const viewEmpEmail = document.getElementById("viewEmpEmail");
+        const viewEmpPhone = document.getElementById("viewEmpPhone");
+
+        if (viewEmpName) {
+          viewEmpName.textContent =
+            emp.empName || (emp.firstName + " " + (emp.lastName || ""));
+        }
+        if (viewEmpId) {
+          viewEmpId.textContent = "Emp ID: " + (emp.empId || "-");
+        }
+        if (viewEmpEmail) {
+          viewEmpEmail.textContent = emp.empEmail || "-";
+        }
+        if (viewEmpPhone) {
+          viewEmpPhone.textContent = emp.empPhone || "-";
+        }
+
+        renderKeyValueList("viewPersonalDetails", [
+          ["Gender", emp.gender],
+          ["Marital Status", emp.maritalStatus],
+          ["Date of Birth", emp.empDob],
+          ["Blood Group", emp.bloodGroup],
+          ["Nationality", emp.nationality],
+          ["Religion", emp.religion],
+          ["Category / Caste", emp.casteCategory],
+          ["Languages Known", emp.languagesKnown],
+          ["Emergency Contact Name", emp.emergencyContactName],
+          ["Emergency Contact Relation", emp.emergencyContactRelation],
+          ["Emergency Contact Number", emp.emergencyContactNumber],
+          ["Present Address Line 1", emp.presentAddressLine1],
+          ["Present Address Line 2", emp.presentAddressLine2],
+          ["Present City", emp.presentCity],
+          ["Present State", emp.presentState],
+          ["Present ZIP", emp.presentZip],
+          ["Present Country", emp.presentCountry],
+          [
+            "Permanent Same As Present",
+            emp.permanentSameAsPresent ? "Yes" : "No",
+          ],
+          ["Permanent Address Line 1", emp.permanentAddressLine1],
+          ["Permanent Address Line 2", emp.permanentAddressLine2],
+          ["Permanent City", emp.permanentCity],
+          ["Permanent State", emp.permanentState],
+          ["Permanent ZIP", emp.permanentZip],
+          ["Permanent Country", emp.permanentCountry],
+        ]);
+
+        renderKeyValueList("viewProfessionalDetails", [
+          ["Employee Type", emp.employeeType],
+          ["Employment Status", emp.employmentStatus],
+          ["Department", emp.empDepartment],
+          ["Designation / Job Title", emp.empDesignation],
+          ["Division / Business Unit", emp.division],
+          ["Sub-Department / Team", emp.subDepartment],
+          ["Grade / Band / Level", emp.gradeBandLevel],
+          ["Reporting Manager ID", emp.reportingManagerId],
+          ["Work Mode", emp.workMode],
+          ["Work Location / Branch", emp.empWorkLoc],
+          ["Date of Joining", emp.empDateOfJoining],
+          ["Probation Period (months)", emp.probationPeriodMonths],
+          ["Confirmation Date", emp.confirmationDate],
+        ]);
+
+        renderKeyValueList("viewCompensationDetails", [
+          ["CTC (₹ - Annual)", emp.empCtc],
+          ["Gross Salary (Monthly)", emp.grossSalaryMonthly],
+          ["Basic Salary", emp.basicSalary],
+          ["HRA", emp.hra],
+          ["Conveyance Allowance", emp.conveyanceAllowance],
+          ["Medical Allowance", emp.medicalAllowance],
+          ["Special Allowance", emp.specialAllowance],
+          ["Performance Bonus", emp.performanceBonus],
+          ["Variable Pay", emp.variablePay],
+          ["Overtime Eligible", emp.overtimeEligible ? "Yes" : "No"],
+          ["Shift Allowance", emp.shiftAllowance],
+          ["PF Deduction", emp.pfDeduction],
+          ["ESI Deduction", emp.esiDeduction],
+          ["Professional Tax", emp.professionalTax],
+          ["TDS Deduction", emp.tdsDeduction],
+          ["Net Salary", emp.netSalary],
+        ]);
+
+        const expContainer = document.getElementById("viewExperienceList");
+if (expContainer) {
+  expContainer.innerHTML = "";
+  const exps = emp.experiences || [];
+
+  if (exps.length === 0) {
+    expContainer.innerHTML =
+      '<p class="text-muted mb-0">No experience entries.</p>';
+  } else {
+    const list = document.createElement("div");
+    exps.forEach((e) => {
+      const card = document.createElement("div");
+      card.className = "border rounded p-2 mb-2";
+
+      const docs = [];
+      if (e.relievingLetterUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.relievingLetterUrl
+          )}" target="_blank" rel="noopener noreferrer">Relieving Letter</a>`
+        );
+      }
+      if (e.salarySlipsUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.salarySlipsUrl
+          )}" target="_blank" rel="noopener noreferrer">3 Months Salary Slips</a>`
+        );
+      }
+      if (e.bankStatementUrl) {
+        docs.push(
+          `<a href="${escapeHtml(
+            e.bankStatementUrl
+          )}" target="_blank" rel="noopener noreferrer">Bank Statement</a>`
+        );
+      }
+
+      const docsHtml =
+        docs.length > 0
+          ? `<br/><small>Docs: ${docs.join(" | ")}</small>`
+          : "";
+
+      card.innerHTML = `
+        <strong>${escapeHtml(
+          e.organizationName || ""
+        )}</strong> - ${escapeHtml(e.jobTitle || "")}<br/>
+        <small>${e.startDate || "-"} to ${
+        e.isCurrent ? "Present" : e.endDate || "-"
+      }</small>
+        ${docsHtml}
+      `;
+      list.appendChild(card);
+    });
+    expContainer.appendChild(list);
+  }
 }
+
+
+        const docContainer = document.getElementById("viewDocumentList");
+        if (docContainer) {
+          docContainer.innerHTML = "";
+          const docs = emp.documents || [];
+
+          if (docs.length === 0) {
+            docContainer.innerHTML =
+              '<p class="text-muted mb-0">No documents.</p>';
+          } else {
+            const list = document.createElement("div");
+            docs.forEach((d) => {
+              const card = document.createElement("div");
+              card.className = "border rounded p-2 mb-2";
+              card.innerHTML = `
+                <strong>${escapeHtml(d.category || "")}</strong> - ${escapeHtml(
+                d.documentType || ""
+              )}<br/>
+                <small>Status: ${escapeHtml(
+                  d.verificationStatus || "Pending"
+                )}</small>
+              `;
+              list.appendChild(card);
+            });
+            docContainer.appendChild(list);
+          }
+        }
+
+        const viewModalEl = document.getElementById("viewEmployeeModal");
+        const viewModal =
+          bootstrap.Modal.getOrCreateInstance(viewModalEl);
+        viewModal.show();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function openEditEmployeeModal(id) {
+      try {
+        const emp = await fetchEmployee(id);
+
+        formMode = "edit";
+        currentEditingId = id;
+
+        if (addEmployeeModalTitle) {
+          addEmployeeModalTitle.textContent = "Edit Employee";
+        }
+
+        resetEmployeeForm();
+        employeeIdField.value = emp.id;
+
+        // Base fields
+        fillBaseField("firstName", emp.firstName);
+        fillBaseField("middleName", emp.middleName);
+        fillBaseField("lastName", emp.lastName);
+        fillBaseField("gender", emp.gender);
+        fillBaseField("maritalStatus", emp.maritalStatus);
+        fillBaseField("empDob", emp.empDob);
+        fillBaseField("bloodGroup", emp.bloodGroup);
+        fillBaseField("nationality", emp.nationality);
+        fillBaseField("religion", emp.religion);
+        fillBaseField("casteCategory", emp.casteCategory);
+        fillBaseField("languagesKnown", emp.languagesKnown);
+        fillBaseField("empPhone", emp.empPhone);
+        fillBaseField("altPhone", emp.altPhone);
+        fillBaseField("empEmail", emp.empEmail);
+        fillBaseField("emergencyContactName", emp.emergencyContactName);
+        fillBaseField(
+          "emergencyContactRelation",
+          emp.emergencyContactRelation
+        );
+        fillBaseField(
+          "emergencyContactNumber",
+          emp.emergencyContactNumber
+        );
+
+        fillBaseField("presentAddressLine1", emp.presentAddressLine1);
+        fillBaseField("presentAddressLine2", emp.presentAddressLine2);
+        fillBaseField("presentCity", emp.presentCity);
+        fillBaseField("presentState", emp.presentState);
+        fillBaseField("presentZip", emp.presentZip);
+        fillBaseField("presentCountry", emp.presentCountry);
+
+        fillBaseField("permanentSameAsPresent", emp.permanentSameAsPresent);
+        if (sameAsPresentCheckbox) {
+          sameAsPresentCheckbox.checked = !!emp.permanentSameAsPresent;
+        }
+
+        fillBaseField("permanentAddressLine1", emp.permanentAddressLine1);
+        fillBaseField("permanentAddressLine2", emp.permanentAddressLine2);
+        fillBaseField("permanentCity", emp.permanentCity);
+        fillBaseField("permanentState", emp.permanentState);
+        fillBaseField("permanentZip", emp.permanentZip);
+        fillBaseField("permanentCountry", emp.permanentCountry);
+
+        fillBaseField("empId", emp.empId);
+        fillBaseField("employeeType", emp.employeeType);
+        fillBaseField("employmentStatus", emp.employmentStatus);
+        fillBaseField("empDepartment", emp.empDepartment);
+        fillBaseField("empDesignation", emp.empDesignation);
+        fillBaseField("division", emp.division);
+        fillBaseField("subDepartment", emp.subDepartment);
+        fillBaseField("gradeBandLevel", emp.gradeBandLevel);
+        fillBaseField("reportingManagerId", emp.reportingManagerId);
+        fillBaseField("workMode", emp.workMode);
+        fillBaseField("empWorkLoc", emp.empWorkLoc);
+        fillBaseField("empDateOfJoining", emp.empDateOfJoining);
+        fillBaseField(
+          "probationPeriodMonths",
+          emp.probationPeriodMonths
+        );
+        fillBaseField("confirmationDate", emp.confirmationDate);
+
+        fillBaseField("empCtc", emp.empCtc);
+        fillBaseField("grossSalaryMonthly", emp.grossSalaryMonthly);
+        fillBaseField("basicSalary", emp.basicSalary);
+        fillBaseField("hra", emp.hra);
+        fillBaseField(
+          "conveyanceAllowance",
+          emp.conveyanceAllowance
+        );
+        fillBaseField(
+          "medicalAllowance",
+          emp.medicalAllowance
+        );
+        fillBaseField(
+          "specialAllowance",
+          emp.specialAllowance
+        );
+        fillBaseField(
+          "performanceBonus",
+          emp.performanceBonus
+        );
+        fillBaseField("variablePay", emp.variablePay);
+        fillBaseField(
+          "overtimeEligible",
+          emp.overtimeEligible ? "true" : "false"
+        );
+        fillBaseField("shiftAllowance", emp.shiftAllowance);
+        fillBaseField("pfDeduction", emp.pfDeduction);
+        fillBaseField("esiDeduction", emp.esiDeduction);
+        fillBaseField("professionalTax", emp.professionalTax);
+        fillBaseField("tdsDeduction", emp.tdsDeduction);
+        fillBaseField("netSalary", emp.netSalary);
+
+        // Aadhaar / PAN removed from form: they are now in documents only
+
+        setEducationRows(emp.educations || []);
+        setExperienceRows(emp.experiences || []);
+        setDocumentRows(emp.documents || []);
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function deleteEmployee(id) {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this employee? This action cannot be undone."
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch("/api/v1/employees/" + id, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) {
+          let err;
+          try {
+            err = await res.json();
+          } catch (e) {
+            err = {};
+          }
+          throw new Error(err.error || "Failed to delete employee");
+        }
+
+        window.location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    // =======================================
+    // Global click delegation for View/Edit/Delete
+    // =======================================
+    document.addEventListener("click", function (e) {
+      const viewBtn = e.target.closest(".view-employee-btn");
+      if (viewBtn) {
+        const id = viewBtn.getAttribute("data-id");
+        if (id) openViewEmployeeModal(id);
+        return;
+      }
+
+      const editBtn = e.target.closest(".edit-employee-btn");
+      if (editBtn) {
+        const id = editBtn.getAttribute("data-id");
+        if (id) openEditEmployeeModal(id);
+        return;
+      }
+
+      const deleteBtn = e.target.closest(".delete-employee-btn");
+      if (deleteBtn) {
+        const id = deleteBtn.getAttribute("data-id");
+        if (id) deleteEmployee(id);
+        return;
+      }
+    });
+  })();
 </script>
