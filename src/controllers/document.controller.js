@@ -1,7 +1,22 @@
 // src/controllers/document.controller.js
-import PDFDocument from 'pdfkit';
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
+import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
+
+function formatDate(value) {
+    if (!value) return '';
+
+    if (value instanceof Date) {
+        return value.toISOString().slice(0, 10);
+    }
+
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+    }
+
+    return String(value);
+}
 
 export const renderDocumentsPage = async (req, res, next) => {
     try {
@@ -14,8 +29,8 @@ export const renderDocumentsPage = async (req, res, next) => {
             order: [['name', 'ASC']],
         });
 
-        const employeesPlain = employees.map(e => e.get({ plain: true }));
-        const documentTypesPlain = documentTypes.map(d => d.get({ plain: true }));
+        const employeesPlain = employees.map((e) => e.get({ plain: true }));
+        const documentTypesPlain = documentTypes.map((d) => d.get({ plain: true }));
 
         const user = req.user
             ? { firstName: req.user.firstName, lastName: req.user.lastName }
@@ -44,63 +59,82 @@ export const generateDocument = async (req, res, next) => {
             return res.status(400).send('Invalid employee or document type');
         }
 
-        const pdf = new PDFDocument({ size: 'A4', margin: 50 });
-        const fileName = `${docType.code}-${employee.empId || employee.id}.pdf`;
+        if (!docType.templateHtml) {
+            return res
+                .status(400)
+                .send('No template HTML configured for this document type');
+        }
+
+        // Base data available for ALL templates
+        const baseData = {
+            EMP_NAME: employee.empName,
+            EMP_ID: employee.empId || employee.id,
+            EMP_EMAIL: employee.empEmail || '',
+            DESIGNATION: employee.empDesignation || '',
+            DEPARTMENT: employee.empDepartment || '',
+            LOCATION: employee.empWorkLoc || '',
+        };
+
+        const code = (docType.code || '').toUpperCase();
+        let templateData = { ...baseData };
+
+        if (code === 'INTERNSHIP_CERT') {
+            templateData = {
+                ...templateData,
+                DOJ: formatDate(employee.empDoj || employee.empDateOfJoining),
+            };
+        } else if (code === 'SALARY_SLIP') {
+            // Safely coerce to numbers
+            const basic = Number(employee.basicSalary || 0);
+            const hra = Number(employee.hra || 0);
+            const special = Number(employee.specialAllowance || 0);
+            const pf = Number(employee.pfDeduction || 0);
+            const esi = Number(employee.esiDeduction || 0);
+            const tds = Number(employee.tdsDeduction || 0);
+
+            const totalEarnings = basic + hra + special;
+            const totalDeductions = pf + esi + tds;
+            const netSalary = totalEarnings - totalDeductions;
+
+            templateData = {
+                ...templateData,
+                Month: 'November 2025', // TODO: make dynamic / from UI
+                EMP_CODE: employee.empId || employee.id,
+                DOB: formatDate(employee.empDob),
+                DOJ: formatDate(employee.empDateOfJoining),
+                PAN: employee.empPan || '',
+                DAYS_PAID: employee.daysPaid || 30,
+                WORK_DAYS: employee.workDays || 30,
+                BASIC: basic.toFixed(2),
+                HRA: hra.toFixed(2),
+                SPECIAL: special.toFixed(2),
+                PF: pf.toFixed(2),
+                ESI: esi.toFixed(2),
+                TDS: tds.toFixed(2),
+                TOTAL_EARNINGS: totalEarnings.toFixed(2),
+                TOTAL_DEDUCTIONS: totalDeductions.toFixed(2),
+                NET_SALARY: netSalary.toFixed(2),
+            };
+        }
+
+        // ⭐ IMPORTANT: await the async PDF generator
+        const pdfBuffer = await generatePdfFromTemplate(
+            docType.templateHtml,
+            templateData
+        );
+
+        const fileName = `${docType.code}-${baseData.EMP_ID}.pdf`;
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
             `attachment; filename="${fileName}"`
         );
+        res.setHeader('Content-Length', pdfBuffer.length);
 
-        pdf.pipe(res);
-
-        // Header
-        pdf.fontSize(20).text(docType.name, { align: 'center' }).moveDown(2);
-
-        // Employee details
-        pdf
-            .fontSize(12)
-            .text(`Employee Name: ${employee.empName}`, { lineGap: 4 })
-            .text(`Employee ID: ${employee.empId}`, { lineGap: 4 })
-            .text(`Email: ${employee.empEmail}`, { lineGap: 4 })
-            .text(`Designation: ${employee.empDesignation}`, { lineGap: 4 })
-            .moveDown(1);
-
-        const code = (docType.code || '').toUpperCase();
-
-        if (code === 'INTERNSHIP_CERT') {
-            pdf
-                .moveDown(1)
-                .fontSize(12)
-                .text(
-                    `This is to certify that ${employee.empName} (Employee ID: ${employee.empId}) ` +
-                    `has successfully completed their internship with our organisation.`,
-                    { align: 'justify', lineGap: 6 }
-                );
-        } else if (code === 'SALARY_SLIP') {
-            pdf
-                .moveDown(1)
-                .fontSize(12)
-                .text(
-                    `Salary slip for ${employee.empName} (Employee ID: ${employee.empId}).`,
-                    { lineGap: 6 }
-                )
-                .text(`CTC: ₹${employee.empCtc}`, { lineGap: 6 });
-        } else {
-            pdf
-                .moveDown(1)
-                .fontSize(12)
-                .text(
-                    `This document has been generated for ${employee.empName}.`,
-                    { lineGap: 6 }
-                );
-        }
-
-        pdf.moveDown(4).text('Authorised Signatory', { align: 'right' });
-
-        pdf.end();
+        return res.send(pdfBuffer);
     } catch (err) {
-        next(err);
+        console.error('Error generating document PDF:', err);
+        return next(err);
     }
 };
