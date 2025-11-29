@@ -460,7 +460,7 @@
                   <input type="text" name="presentCity" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">State</label>
+                  <label class="form-label">State<span class="text-danger">*</span></label>
                   {{!-- <input type="text" name="presentState" class="form-control" /> --}}
                   <select name="presentState" class="form-control" required>
                         <option value="">Select State</option>
@@ -474,7 +474,7 @@
                   <input type="text" name="presentZip" class="form-control" />
                 </div>
                 <div class="col-md-2">
-                  <label class="form-label">Country</label>
+                  <label class="form-label">Country<span class="text-danger">*</span></label>
                   {{!-- <input type="text" name="presentCountry" class="form-control" /> --}}
                   <select name="presentCountry" class="form-control" required>
                         <option value="">Select Country</option>
@@ -523,7 +523,7 @@
                   <input type="text" name="permanentCity" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">State</label>
+                  <label class="form-label">State<span class="text-danger">*</span></label>
                   {{!-- <input type="text" name="permanentState" class="form-control" /> --}}
                   <select name="permanentState" class="form-control" required>
                         <option value="">Select State</option>
@@ -537,7 +537,7 @@
                   <input type="text" name="permanentZip" class="form-control" />
                 </div>
                 <div class="col-md-2">
-                  <label class="form-label">Country</label>
+                  <label class="form-label">Country<span class="text-danger">*</span></label>
                   {{!-- <input type="text" name="permanentCountry" class="form-control" /> --}}
                   <select name="permanentCountry" class="form-control" required>
                         <option value="">Select Country</option>
@@ -561,7 +561,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Employee Type</label>
+                  <label class="form-label">Employee Type<span class="text-danger">*</span></label>
                   <select name="employeeType" class="form-select" required>
                     <option value="Permanent">Permanent</option>
                     <option value="Contract">Contract</option>
@@ -644,7 +644,7 @@
 
                 <div class="col-md-4">
                   <label class="form-label">
-                    Reporting Manager (Employee ID / Ref)
+                    Reporting Manager (Employee ID / Ref)<span class="text-danger">*</span>
                   </label>
                   <select name="reportingManagerId" class="form-select">
                     <option value="">Select Manager</option>
@@ -655,7 +655,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Work Mode</label>
+                  <label class="form-label">Work Mode<span class="text-danger">*</span></label>
                   <select name="workMode" class="form-select">
                     <option value="On-site">On-site</option>
                     <option value="Hybrid">Hybrid</option>
@@ -966,7 +966,7 @@
                     <div class="col-md-3">
                       <label class="form-label">Country</label>
                       {{!-- <input type="text" class="form-control edu_country" /> --}}
-                      <select name="edu_country" class="form-control edu_country" required>
+                      <select name="edu_country" class="form-control edu_country">
                         <option value="">Select Country</option>
                         {{#each countries}}
                         <option value="{{name}}">{{name}}</option>
@@ -1063,7 +1063,7 @@
           type="text"
           class="form-control exp_companyLocationCountry"
         /> --}}
-        <select name="exp_companyLocationCountry" class="form-control exp_companyLocationCountry" required>
+        <select name="exp_companyLocationCountry" class="form-control exp_companyLocationCountry">
                         <option value="">Select Country</option>
                         {{#each countries}}
                         <option value="{{name}}">{{name}}</option>
