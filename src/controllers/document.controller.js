@@ -1,7 +1,14 @@
 // src/controllers/document.controller.js
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
 import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function formatDate(value) {
     if (!value) return '';
@@ -65,6 +72,26 @@ export const generateDocument = async (req, res, next) => {
                 .send('No template HTML configured for this document type');
         }
 
+        // 🔹 Build base64 image data for assets in src/assets
+        const assetDir = path.join(__dirname, '..', 'assets');
+
+        const logoPath = path.join(assetDir, 'logo.jpg');
+        const stampPath = path.join(assetDir, 'stamp.png');
+
+        const LOGO_SRC = fs.existsSync(logoPath)
+            ? `data:image/jpeg;base64,${fs.readFileSync(logoPath).toString('base64')}`
+            : '';
+
+        const STAMP_SRC = fs.existsSync(stampPath)
+            ? `data:image/png;base64,${fs.readFileSync(stampPath).toString('base64')}`
+            : '';
+
+        // If you later add a signature image, just drop it in src/assets
+        const signaturePath = path.join(assetDir, 'signature.png');
+        const SIGNATURE_SRC = fs.existsSync(signaturePath)
+            ? `data:image/png;base64,${fs.readFileSync(signaturePath).toString('base64')}`
+            : '';
+
         // Base data available for ALL templates
         const baseData = {
             EMP_NAME: employee.empName,
@@ -73,6 +100,11 @@ export const generateDocument = async (req, res, next) => {
             DESIGNATION: employee.empDesignation || '',
             DEPARTMENT: employee.empDepartment || '',
             LOCATION: employee.empWorkLoc || '',
+
+            // make logo/stamp/signature available for all templates
+            LOGO_SRC,
+            STAMP_SRC,
+            SIGNATURE_SRC,
         };
 
         const code = (docType.code || '').toUpperCase();
@@ -114,6 +146,63 @@ export const generateDocument = async (req, res, next) => {
                 TOTAL_EARNINGS: totalEarnings.toFixed(2),
                 TOTAL_DEDUCTIONS: totalDeductions.toFixed(2),
                 NET_SALARY: netSalary.toFixed(2),
+            };
+        } else if (code === 'OFFER_LETTER') {
+            // 🔹 Offer Letter specific data
+            const ctcAnnual = Number(
+                employee.ctcAnnual ||
+                employee.ctc ||
+                0
+            );
+
+            // If you already store breakdown, you can use that.
+            // Otherwise, fall back to a simple split or 0s.
+            const basic = Number(employee.basicSalary || 0);
+            const hra = Number(employee.hra || 0);
+            const special = Number(employee.specialAllowance || 0);
+
+            const grossAnnual =
+                basic && hra && special
+                    ? (basic + hra + special) * 12
+                    : ctcAnnual;
+
+            const grossMonth = grossAnnual / 12 || 0;
+            const gross = basic + hra + special;
+
+            templateData = {
+                ...templateData,
+
+                // keep old keys if you ever use them elsewhere
+                OFFER_DATE: formatDate(new Date()),
+                JOINING_DATE: formatDate(employee.empDoj || employee.empDateOfJoining),
+                CTC: ctcAnnual.toFixed(2),
+                CTC_IN_WORDS: employee.ctcAnnualInWords || '',
+                BASIC_MONTH: basic.toFixed(2),
+                BASIC_ANNUAL: (basic * 12).toFixed(2),
+                HRA_MONTH: hra.toFixed(2),
+                HRA_ANNUAL: (hra * 12).toFixed(2),
+                SPECIAL_ALLOWANCE_MONTH: special.toFixed(2),
+                SPECIAL_ALLOWANCE_ANNUAL: (special * 12).toFixed(2),
+                GROSS_MONTH: grossMonth.toFixed(2),
+                GROSS_ANNUAL: grossAnnual.toFixed(2),
+                NET_PAY: grossMonth.toFixed(2),
+
+                // 👇 keys that your current HTML template expects
+                offerDate: formatDate(new Date()),
+                joiningDate: formatDate(employee.empDoj || employee.empDateOfJoining),
+                fullName: employee.empName,
+                designation: employee.empDesignation || '',
+                ctc: ctcAnnual.toFixed(2),
+                ctcInWords: employee.ctcAnnualInWords || '',
+                basicMonth: basic.toFixed(2),
+                basicAnnual: (basic * 12).toFixed(2),
+                hraMonth: hra.toFixed(2),
+                hraAnnual: (hra * 12).toFixed(2),
+                specialAllowanceMonth: special.toFixed(2),
+                specialAllowanceAnnual: (special * 12).toFixed(2),
+                grossMonth: gross.toFixed(2),
+                grossAnnual: (gross * 12).toFixed(2),
+                netPay: gross.toFixed(2),
             };
         }
 

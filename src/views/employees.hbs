@@ -563,6 +563,7 @@
                 <div class="col-md-4">
                   <label class="form-label">Employee Type<span class="text-danger">*</span></label>
                   <select name="employeeType" class="form-select" required>
+                    <option value="New Candidate">New Candidate</option>
                     <option value="Permanent">Permanent</option>
                     <option value="Contract">Contract</option>
                     <option value="Intern">Intern</option>
@@ -583,27 +584,6 @@
                 </div>
 
                 <div class="col-md-6">
-<<<<<<< HEAD
-                  {{!-- <label class="form-label">Department <span class="text-danger">*</span></label>
-                  <input
-                    type="text"
-                    name="empDepartment"
-                    class="form-control"
-                    required
-                  /> --}}
-
-<label for="departmentId">Department</label>
-<select name="departmentId" id="departmentId" class="form-control">
-  <option value="">-- Select Department --</option>
-
-  {{#each departments}}
-    <option value="{{id}}">
-      {{name}}
-    </option>
-  {{/each}}
-</select>
-
-=======
                   <label class="form-label">
                     Department <span class="text-danger">*</span>
                   </label>
@@ -613,7 +593,6 @@
                       <option value="{{name}}">{{name}}</option>
                     {{/each}}
                   </select>
->>>>>>> 992fc5b52ab428768445b8ff90cec41b111d794b
                 </div>
 
                 <div class="col-md-6">
@@ -1193,6 +1172,7 @@
                       <label class="form-label">Category</label>
                       <select class="form-select doc_category">
                         <option value="KYC">KYC</option>
+                        <option value="RESUME">Resume</option>
                         <option value="AADHAAR">Aadhaar</option>
                         <option value="PAN">PAN</option>
                         <option value="ADDRESS">Address Proof</option>
@@ -1200,6 +1180,7 @@
                         <option value="EXPERIENCE">Experience</option>
                         <option value="HR">HR Letters</option>
                         <option value="OTHER">Other</option>
+                        
                       </select>
                     </div>
                     <div class="col-md-3">
