@@ -1,4 +1,33 @@
 {{!-- views/documentTypes.hbs --}}
+<style>
+  /* -------- Template Preview Responsiveness -------- */
+
+  /* Keep modal nicely sized within viewport */
+  #viewTemplateModal .modal-dialog {
+    max-width: 1000px;        /* big enough for A4 but not too wide */
+    margin: 1.75rem auto;
+  }
+
+  /* Make only the body scroll if content is tall */
+  #viewTemplateModal .modal-body {
+    max-height: calc(100vh - 100px); /* header + footer height buffer */
+    overflow-y: auto;
+  }
+
+  /* Handle horizontal overflow from A4-style templates */
+  #templatePreview {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Make any images (logos, stamps, etc.) responsive */
+  #templatePreview img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>
+
 <div class="container-fluid">
   <div class="row">
     {{!-- Sidebar --}}
