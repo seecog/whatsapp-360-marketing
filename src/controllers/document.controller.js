@@ -25,6 +25,77 @@ function formatDate(value) {
     return String(value);
 }
 
+// 🔹 Salary breakup helper (using empCtc)
+function generateSalaryBreakup(annualGrossCtc, options = {}) {
+    const {
+        variablePayPct = 0.10,        // 10% of CTC
+        basicPctOfFixedGross = 0.40,  // 40% of fixed gross
+        hraPctOfBasic = 0.40,         // 40% of basic
+        monthlyProfessionalTax = 200  // e.g. Karnataka PT
+    } = options;
+
+    const round = (val) => Math.round(val);
+    const toMonthly = (val) => val / 12;
+
+    // 1) Split CTC into Fixed vs Variable
+    const variablePayAnnual = annualGrossCtc * variablePayPct;
+    const fixedGrossAnnual = annualGrossCtc - variablePayAnnual;
+
+    // 2) Breakup of Fixed Gross
+    const basicAnnual = fixedGrossAnnual * basicPctOfFixedGross;
+    const hraAnnual = basicAnnual * hraPctOfBasic;
+    const specialAllowanceAnnual = fixedGrossAnnual - basicAnnual - hraAnnual;
+
+    // 3) Monthly values
+    const basicMonthly = toMonthly(basicAnnual);
+    const hraMonthly = toMonthly(hraAnnual);
+    const specialAllowanceMonthly = toMonthly(specialAllowanceAnnual);
+    const fixedGrossMonthly = toMonthly(fixedGrossAnnual);
+    const variablePayMonthlyTarget = toMonthly(variablePayAnnual);
+
+    // 4) Deductions
+    const totalDeductionsMonthly = monthlyProfessionalTax;
+
+    // 5) Net pay (without variable)
+    const netTakeHomeMonthlyWithoutVariable =
+        fixedGrossMonthly - totalDeductionsMonthly;
+
+    // 6) Effective in-hand including averaged variable
+    const netTakeHomeMonthlyWithVariable =
+        fixedGrossMonthly + variablePayMonthlyTarget - totalDeductionsMonthly;
+
+    return {
+        meta: {
+            currency: 'INR',
+            annualGrossCtc: round(annualGrossCtc),
+            variablePayPct: variablePayPct * 100,
+        },
+        annual: {
+            fixedGross: round(fixedGrossAnnual),
+            variablePay: round(variablePayAnnual),
+            basic: round(basicAnnual),
+            hra: round(hraAnnual),
+            specialAllowance: round(specialAllowanceAnnual),
+            totalCtc: round(annualGrossCtc),
+        },
+        monthly: {
+            fixedGross: round(fixedGrossMonthly),
+            variablePayTarget: round(variablePayMonthlyTarget),
+            basic: round(basicMonthly),
+            hra: round(hraMonthly),
+            specialAllowance: round(specialAllowanceMonthly),
+        },
+        deductionsMonthly: {
+            professionalTax: round(monthlyProfessionalTax),
+            totalDeductions: round(totalDeductionsMonthly),
+        },
+        netTakeHome: {
+            withoutVariable: round(netTakeHomeMonthlyWithoutVariable),
+            withVariableAveraged: round(netTakeHomeMonthlyWithVariable),
+        },
+    };
+}
+
 export const renderDocumentsPage = async (req, res, next) => {
     try {
         const employees = await Employee.findAll({
@@ -148,26 +219,34 @@ export const generateDocument = async (req, res, next) => {
                 NET_SALARY: netSalary.toFixed(2),
             };
         } else if (code === 'OFFER_LETTER') {
-            // 🔹 Offer Letter specific data
+            // 🔹 Offer Letter specific data using empCtc and salary breakup
             const ctcAnnual = Number(
+                employee.empCtc || // ✅ primary source
                 employee.ctcAnnual ||
                 employee.ctc ||
                 0
             );
 
-            // If you already store breakdown, you can use that.
-            // Otherwise, fall back to a simple split or 0s.
-            const basic = Number(employee.basicSalary || 0);
-            const hra = Number(employee.hra || 0);
-            const special = Number(employee.specialAllowance || 0);
+            const breakup = generateSalaryBreakup(ctcAnnual);
+            console.log('Salary Breakup Generated:', breakup);
 
-            const grossAnnual =
-                basic && hra && special
-                    ? (basic + hra + special) * 12
-                    : ctcAnnual;
+            const basicAnnual = breakup.annual.basic;
+            const hraAnnual = breakup.annual.hra;
+            const specialAnnual = breakup.annual.specialAllowance;
 
-            const grossMonth = grossAnnual / 12 || 0;
-            const gross = basic + hra + special;
+            const variablePayAnnual = breakup.annual.variablePay;
+            const variablePayMonthly = breakup.monthly.variablePayTarget;
+
+            const basicMonthly = breakup.monthly.basic;
+            const hraMonthly = breakup.monthly.hra;
+            const specialMonthly = breakup.monthly.specialAllowance;
+
+            const grossAnnualFixed = breakup.annual.fixedGross;
+            const grossMonthFixed = breakup.monthly.fixedGross;
+
+            const netMonthly = breakup.netTakeHome.withoutVariable;
+            const deductionsMonthly = breakup.deductionsMonthly.totalDeductions;
+            const deductionsAnnual = deductionsMonthly * 12;
 
             templateData = {
                 ...templateData,
@@ -177,15 +256,15 @@ export const generateDocument = async (req, res, next) => {
                 JOINING_DATE: formatDate(employee.empDoj || employee.empDateOfJoining),
                 CTC: ctcAnnual.toFixed(2),
                 CTC_IN_WORDS: employee.ctcAnnualInWords || '',
-                BASIC_MONTH: basic.toFixed(2),
-                BASIC_ANNUAL: (basic * 12).toFixed(2),
-                HRA_MONTH: hra.toFixed(2),
-                HRA_ANNUAL: (hra * 12).toFixed(2),
-                SPECIAL_ALLOWANCE_MONTH: special.toFixed(2),
-                SPECIAL_ALLOWANCE_ANNUAL: (special * 12).toFixed(2),
-                GROSS_MONTH: grossMonth.toFixed(2),
-                GROSS_ANNUAL: grossAnnual.toFixed(2),
-                NET_PAY: grossMonth.toFixed(2),
+                BASIC_MONTH: basicMonthly.toFixed(2),
+                BASIC_ANNUAL: basicAnnual.toFixed(2),
+                HRA_MONTH: hraMonthly.toFixed(2),
+                HRA_ANNUAL: hraAnnual.toFixed(2),
+                SPECIAL_ALLOWANCE_MONTH: specialMonthly.toFixed(2),
+                SPECIAL_ALLOWANCE_ANNUAL: specialAnnual.toFixed(2),
+                GROSS_MONTH: grossMonthFixed.toFixed(2),
+                GROSS_ANNUAL: grossAnnualFixed.toFixed(2),
+                NET_PAY: netMonthly.toFixed(2),
 
                 // 👇 keys that your current HTML template expects
                 offerDate: formatDate(new Date()),
@@ -194,15 +273,26 @@ export const generateDocument = async (req, res, next) => {
                 designation: employee.empDesignation || '',
                 ctc: ctcAnnual.toFixed(2),
                 ctcInWords: employee.ctcAnnualInWords || '',
-                basicMonth: basic.toFixed(2),
-                basicAnnual: (basic * 12).toFixed(2),
-                hraMonth: hra.toFixed(2),
-                hraAnnual: (hra * 12).toFixed(2),
-                specialAllowanceMonth: special.toFixed(2),
-                specialAllowanceAnnual: (special * 12).toFixed(2),
-                grossMonth: gross.toFixed(2),
-                grossAnnual: (gross * 12).toFixed(2),
-                netPay: gross.toFixed(2),
+                basicMonth: basicMonthly.toFixed(2),
+                basicAnnual: basicAnnual.toFixed(2),
+                hraMonth: hraMonthly.toFixed(2),
+                hraAnnual: hraAnnual.toFixed(2),
+                specialAllowanceMonth: specialMonthly.toFixed(2),
+                specialAllowanceAnnual: specialAnnual.toFixed(2),
+                variablePayMonth: variablePayMonthly.toFixed(2),
+                variablePayAnnual: variablePayAnnual.toFixed(2),
+                grossMonth: grossMonthFixed.toFixed(2),
+                grossAnnual: grossAnnualFixed.toFixed(2),
+                netPay: netMonthly.toFixed(2),
+
+                // Extra fields (available if you want to use them in template)
+                fixedGrossMonthly: grossMonthFixed.toFixed(2),
+                fixedGrossAnnual: grossAnnualFixed.toFixed(2),
+                variableAnnual: breakup.annual.variablePay.toFixed(2),
+                variableMonthlyTarget: breakup.monthly.variablePayTarget.toFixed(2),
+                professionalTaxMonthly: breakup.deductionsMonthly.professionalTax.toFixed(2),
+                totalDeductionsMonthly: deductionsMonthly.toFixed(2),
+                totalDeductionsAnnual: deductionsAnnual.toFixed(2),
             };
         }
 
