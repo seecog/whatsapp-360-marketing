@@ -2,7 +2,6 @@
 <div class="container-fluid">
   <div class="row">
     {{!-- Sidebar same as Employees page, but Documents active --}}
-    {{!-- ...copy sidebar from employees.hbs and mark Documents link as active... --}}
     <div class="col-md-3 col-lg-2 px-0">
       <div class="sidebar p-3">
         <div class="text-center mb-2">
@@ -68,14 +67,61 @@
                     {{/each}}
                   </select>
                 </div>
+
                 <div class="col-md-6">
                   <label class="form-label">Document Type</label>
-                  <select name="documentTypeId" class="form-select" required>
+                  {{!-- Added id + data-code so JS can detect type --}}
+                  <select
+                    name="documentTypeId"
+                    id="documentTypeSelect"
+                    class="form-select"
+                    required
+                  >
                     <option value="">Select document type</option>
                     {{#each documentTypes}}
-                      <option value="{{id}}">{{name}} ({{code}})</option>
+                      <option
+                        value="{{id}}"
+                        data-code="{{code}}"
+                      >
+                        {{name}} ({{code}})
+                      </option>
                     {{/each}}
                   </select>
+                </div>
+              </div>
+
+              {{!-- Extra dynamic fields section --}}
+              <div class="row g-3 mt-3">
+                {{!-- Bonus Letter extra field --}}
+                <div class="col-md-6" id="bonusFieldWrapper" style="display: none;">
+                  <label class="form-label" for="bonusAmount">
+                    Bonus Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="form-control"
+                    id="bonusAmount"
+                    name="bonusAmount"
+                    placeholder="Enter bonus amount"
+                  />
+                </div>
+
+                {{!-- Increment Letter extra field --}}
+                <div class="col-md-6" id="incrementFieldWrapper" style="display: none;">
+                  <label class="form-label" for="incrementAmount">
+                    Salary Increment (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="form-control"
+                    id="incrementAmount"
+                    name="incrementAmount"
+                    placeholder="Enter increment amount"
+                  />
                 </div>
               </div>
 
@@ -96,3 +142,47 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const docTypeSelect = document.getElementById('documentTypeSelect');
+    const bonusFieldWrapper = document.getElementById('bonusFieldWrapper');
+    const incrementFieldWrapper = document.getElementById('incrementFieldWrapper');
+    const bonusAmountInput = document.getElementById('bonusAmount');
+    const incrementAmountInput = document.getElementById('incrementAmount');
+
+    function resetDynamicFields() {
+      bonusFieldWrapper.style.display = 'none';
+      incrementFieldWrapper.style.display = 'none';
+
+      if (bonusAmountInput) bonusAmountInput.value = '';
+      if (incrementAmountInput) incrementAmountInput.value = '';
+    }
+
+    function handleDocTypeChange() {
+      resetDynamicFields();
+
+      const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+      if (!selectedOption) return;
+
+      const rawCode = selectedOption.getAttribute('data-code') || '';
+      const code = rawCode.toUpperCase();
+
+      // Show Bonus field for BONUS_LETTER / BONUS
+      if (code === 'BONUS_LETTER' || code === 'BONUS') {
+        bonusFieldWrapper.style.display = 'block';
+      }
+
+      // Show Increment field for INCREMENT_LETTER / INCREMENT
+      if (code === 'INCREMENT_LETTER' || code === 'INCREMENT') {
+        incrementFieldWrapper.style.display = 'block';
+      }
+    }
+
+    if (docTypeSelect) {
+      docTypeSelect.addEventListener('change', handleDocTypeChange);
+      // run once on page load if some option is pre-selected
+      handleDocTypeChange();
+    }
+  })();
+</script>
