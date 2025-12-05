@@ -10,6 +10,78 @@ import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// 🔢 Convert number to Indian currency words (Rupees Only)
+function numberToIndianWords(amount) {
+    if (amount == null) return '';
+
+    let num = Math.round(Number(amount));
+    if (isNaN(num)) return '';
+
+    if (num === 0) return 'Zero Rupees Only';
+
+    const ones = [
+        '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six',
+        'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
+        'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+        'Seventeen', 'Eighteen', 'Nineteen'
+    ];
+    const tens = [
+        '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty',
+        'Sixty', 'Seventy', 'Eighty', 'Ninety'
+    ];
+
+    function twoDigit(n) {
+        if (n < 20) return ones[n];
+        const t = Math.floor(n / 10);
+        const o = n % 10;
+        return tens[t] + (o ? ' ' + ones[o] : '');
+    }
+
+    function threeDigit(n) {
+        let str = '';
+        const hundred = Math.floor(n / 100);
+        const rest = n % 100;
+
+        if (hundred) {
+            str += ones[hundred] + ' Hundred';
+            if (rest) str += ' and ';
+        }
+        if (rest) {
+            str += twoDigit(rest);
+        }
+        return str;
+    }
+
+    let resultParts = [];
+
+    const crore = Math.floor(num / 10000000);
+    if (crore) {
+        resultParts.push(threeDigit(crore) + ' Crore');
+        num = num % 10000000;
+    }
+
+    const lakh = Math.floor(num / 100000);
+    if (lakh) {
+        resultParts.push(threeDigit(lakh) + ' Lakh');
+        num = num % 100000;
+    }
+
+    const thousand = Math.floor(num / 1000);
+    if (thousand) {
+        resultParts.push(threeDigit(thousand) + ' Thousand');
+        num = num % 1000;
+    }
+
+    const hundredAndBelow = num;
+    if (hundredAndBelow) {
+        resultParts.push(threeDigit(hundredAndBelow));
+    }
+
+    const words = resultParts.join(' ') + ' Rupees Only';
+    return words;
+}
+
+
 function formatDate(value) {
     if (!value) return '';
 
@@ -25,14 +97,34 @@ function formatDate(value) {
     return String(value);
 }
 
+// Helper: Month YYYY (for salary slip month label)
+function formatMonthYear(value) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 // 🔹 Salary breakup helper (using empCtc)
 function generateSalaryBreakup(annualGrossCtc, options = {}) {
     const {
         variablePayPct = 0.10,
         basicPctOfFixedGross = 0.40,
         hraPctOfBasic = 0.40,
+
+        // Professional tax setup
         monthlyProfessionalTax = 200,
         professionalTaxThresholdMonthly = 25000,
+
+        // Indian payroll-style rules
+        pfPctOfBasic = 0.12,          // 12% of basic (employee share)
+        esiPctOfGross = 0.0075,       // 0.75% of gross (employee share)
+        esiWageThresholdMonthly = 21000, // ESI applicable if gross <= 21k
+        standardDeductionAnnual = 50000  // standard deduction for tax
     } = options;
 
     const round = (val) => Math.round(val);
@@ -62,6 +154,9 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
             },
             deductionsMonthly: {
                 professionalTax: 0,
+                pfEmployee: 0,
+                esiEmployee: 0,
+                incomeTaxTds: 0,
                 totalDeductions: 0,
             },
             netTakeHome: {
@@ -72,14 +167,8 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
     }
 
     const monthlyCtc = toMonthly(annualGrossCtc);
-    const advancedComponentsApplicable =
-        monthlyCtc >= professionalTaxThresholdMonthly;
 
-    const effectiveVariablePayPct = advancedComponentsApplicable
-        ? variablePayPct
-        : 0;
-
-    const variablePayAnnual = annualGrossCtc * effectiveVariablePayPct;
+    const variablePayAnnual = annualGrossCtc * variablePayPct;
     const fixedGrossAnnual = annualGrossCtc - variablePayAnnual;
 
     const basicAnnual = fixedGrossAnnual * basicPctOfFixedGross;
@@ -92,23 +181,59 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
     const fixedGrossMonthly = toMonthly(fixedGrossAnnual);
     const variablePayMonthlyTarget = toMonthly(variablePayAnnual);
 
-    const appliedProfessionalTaxMonthly = advancedComponentsApplicable
-        ? monthlyProfessionalTax
-        : 0;
+    // Professional Tax
+    const professionalTaxMonthly =
+        monthlyCtc >= professionalTaxThresholdMonthly
+            ? monthlyProfessionalTax
+            : 0;
 
-    const totalDeductionsMonthly = appliedProfessionalTaxMonthly;
+    // PF – 12% of basic
+    const pfMonthly = basicMonthly * pfPctOfBasic;
+
+    // ESI – 0.75% of gross, only if gross <= 21k
+    const esiMonthly =
+        fixedGrossMonthly <= esiWageThresholdMonthly
+            ? fixedGrossMonthly * esiPctOfGross
+            : 0;
+
+    // Income Tax / TDS – simple slab logic on annual CTC
+    const taxableIncomeAnnual = Math.max(
+        0,
+        annualGrossCtc - standardDeductionAnnual
+    );
+
+    let taxAnnual = 0;
+    if (taxableIncomeAnnual <= 250000) {
+        taxAnnual = 0;
+    } else if (taxableIncomeAnnual <= 500000) {
+        taxAnnual = (taxableIncomeAnnual - 250000) * 0.05;
+    } else if (taxableIncomeAnnual <= 1000000) {
+        taxAnnual =
+            250000 * 0.05 + (taxableIncomeAnnual - 500000) * 0.20;
+    } else {
+        taxAnnual =
+            250000 * 0.05 +
+            500000 * 0.20 +
+            (taxableIncomeAnnual - 1000000) * 0.30;
+    }
+    const incomeTaxMonthly = taxAnnual / 12;
+
+    const totalDeductionsMonthly =
+        professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
 
     const netTakeHomeMonthlyWithoutVariable =
         fixedGrossMonthly - totalDeductionsMonthly;
 
     const netTakeHomeMonthlyWithVariable =
-        fixedGrossMonthly + variablePayMonthlyTarget - totalDeductionsMonthly;
+        fixedGrossMonthly +
+        variablePayMonthlyTarget -
+        totalDeductionsMonthly;
 
     return {
         meta: {
             currency: 'INR',
             annualGrossCtc: round(annualGrossCtc),
-            variablePayPct: effectiveVariablePayPct * 100,
+            variablePayPct: variablePayPct * 100,
         },
         annual: {
             fixedGross: round(fixedGrossAnnual),
@@ -126,7 +251,10 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
             specialAllowance: round(specialAllowanceMonthly),
         },
         deductionsMonthly: {
-            professionalTax: round(appliedProfessionalTaxMonthly),
+            professionalTax: round(professionalTaxMonthly),
+            pfEmployee: round(pfMonthly),
+            esiEmployee: round(esiMonthly),
+            incomeTaxTds: round(incomeTaxMonthly),
             totalDeductions: round(totalDeductionsMonthly),
         },
         netTakeHome: {
@@ -262,7 +390,7 @@ export const generateDocument = async (req, res, next) => {
                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
                 const months = Math.floor(diffDays / 30);
-                const days = diffDays % 30;
+                const days = Math.min(diffDays % 30, 30);
 
                 if (months > 0 && days > 0) {
                     INTERNSHIP_DURATION = `${months} month(s) and ${days} day(s)`;
@@ -348,17 +476,67 @@ export const generateDocument = async (req, res, next) => {
             const fixedGrossMonthly = breakup.monthly.fixedGross;
 
             const professionalTaxMonthly = breakup.deductionsMonthly.professionalTax;
+            const pfMonthly = breakup.deductionsMonthly.pfEmployee;
+            const esiMonthly = breakup.deductionsMonthly.esiEmployee;
+            const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
 
-            const PF = professionalTaxMonthly; // mapped to PF column
-            const ESI = 0;
-            const TDS = 0;
+            // Extra fields from form
+            const slipDateRaw =
+                req.body.salarySlipDate ||
+                req.body.SALARY_SLIP_DATE ||
+                new Date();
 
-            const totalDeductionsMonthly = PF + ESI + TDS;
-            const netMonthly = fixedGrossMonthly - totalDeductionsMonthly;
+            const reimbursementRaw =
+                req.body.reimbursement ||
+                req.body.REIMBURSEMENT ||
+                req.body.reimbursementAmount ||
+                0;
+
+            const reimbursement = Number(reimbursementRaw) || 0;
+
+            // Total earnings includes reimbursement
+            const totalEarningsMonthly = fixedGrossMonthly + reimbursement;
+
+            const totalDeductionsMonthly =
+                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
+
+            const netMonthly = totalEarningsMonthly - totalDeductionsMonthly;
+
+            // Bank / account info
+            const bankName =
+                employee.bankName ||
+                employee.empBankName ||
+                '';
+
+            const bankAccountNumber =
+                employee.bankAccountNumber ||
+                employee.empBankAccountNo ||
+                '';
+
+            const BANK_ACCOUNT_LAST4 = bankAccountNumber
+                ? String(bankAccountNumber).slice(-4)
+                : '';
+
+            const uan =
+                employee.uan ||
+                employee.empUan ||
+                '';
+
+            const pfNumber =
+                employee.pfNumber ||
+                employee.empPfNumber ||
+                '';
+
+            const esiNumber =
+                employee.esiNumber ||
+                employee.empEsiNumber ||
+                '';
 
             templateData = {
                 ...templateData,
-                Month: 'November 2025', // TODO: make dynamic
+                Month: formatMonthYear(slipDateRaw) || 'Salary Month',
+                SALARY_SLIP_DATE: formatDate(slipDateRaw),
+
                 EMP_CODE: employee.empId || employee.id,
                 DOB: formatDate(employee.empDob),
                 DOJ: formatDate(employee.empDateOfJoining || employee.empDoj),
@@ -366,15 +544,26 @@ export const generateDocument = async (req, res, next) => {
                 DAYS_PAID: employee.daysPaid || 30,
                 WORK_DAYS: employee.workDays || 30,
 
+                // Bank & statutory details
+                BANK_NAME: bankName,
+                BANK_ACCOUNT_LAST4,
+                UAN: uan,
+                PF_NUMBER: pfNumber,
+                ESI_NUMBER: esiNumber,
+
+                // Earnings
                 BASIC: basicMonthly.toFixed(2),
                 HRA: hraMonthly.toFixed(2),
                 SPECIAL: specialMonthly.toFixed(2),
+                REIMBURSEMENT: reimbursement.toFixed(2),
 
-                PF: PF.toFixed(2),
-                ESI: ESI.toFixed(2),
-                TDS: TDS.toFixed(2),
+                // Deductions
+                PF: pfMonthly.toFixed(2),
+                ESI: esiMonthly.toFixed(2),
+                TDS: incomeTaxMonthly.toFixed(2),
+                PROFESSIONAL_TAX: professionalTaxMonthly.toFixed(2),
 
-                TOTAL_EARNINGS: fixedGrossMonthly.toFixed(2),
+                TOTAL_EARNINGS: totalEarningsMonthly.toFixed(2),
                 TOTAL_DEDUCTIONS: totalDeductionsMonthly.toFixed(2),
                 NET_SALARY: netMonthly.toFixed(2),
             };
@@ -406,19 +595,34 @@ export const generateDocument = async (req, res, next) => {
             const grossMonthFixed = breakup.monthly.fixedGross;
 
             const professionalTaxMonthly = breakup.deductionsMonthly.professionalTax;
-            const totalDeductionsMonthly = professionalTaxMonthly;
+            const pfMonthly = breakup.deductionsMonthly.pfEmployee;
+            const esiMonthly = breakup.deductionsMonthly.esiEmployee;
+            const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
+
+            const totalDeductionsMonthly =
+                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
             const totalDeductionsAnnual = totalDeductionsMonthly * 12;
 
             const netMonthly = grossMonthFixed - totalDeductionsMonthly;
 
+            // ✅ Joining date from form if provided, else from employee
+            const joiningDateRaw =
+                req.body.joiningDate ||
+                req.body.JOINING_DATE ||
+                employee.empDoj ||
+                employee.empDateOfJoining;
+
+            // ✅ AUTO-CONVERT CTC → WORDS
+            const ctcInWordsAuto = numberToIndianWords(ctcAnnual);
+
             templateData = {
                 ...templateData,
 
-                // old keys
+                // old keys (backward compatibility)
                 OFFER_DATE: formatDate(new Date()),
-                JOINING_DATE: formatDate(employee.empDoj || employee.empDateOfJoining),
+                JOINING_DATE: formatDate(joiningDateRaw),
                 CTC: ctcAnnual.toFixed(2),
-                CTC_IN_WORDS: employee.ctcAnnualInWords || '',
+                CTC_IN_WORDS: ctcInWordsAuto,
                 BASIC_MONTH: basicMonthly.toFixed(2),
                 BASIC_ANNUAL: basicAnnual.toFixed(2),
                 HRA_MONTH: hraMonthly.toFixed(2),
@@ -431,11 +635,11 @@ export const generateDocument = async (req, res, next) => {
 
                 // keys matching Offer Letter HTML
                 offerDate: formatDate(new Date()),
-                joiningDate: formatDate(employee.empDoj || employee.empDateOfJoining),
+                joiningDate: formatDate(joiningDateRaw),
                 fullName: employee.empName,
                 designation: employee.empDesignation || '',
                 ctc: ctcAnnual.toFixed(2),
-                ctcInWords: employee.ctcAnnualInWords || '',
+                ctcInWords: ctcInWordsAuto,
                 basicMonth: basicMonthly.toFixed(2),
                 basicAnnual: basicAnnual.toFixed(2),
                 hraMonth: hraMonthly.toFixed(2),
@@ -452,7 +656,12 @@ export const generateDocument = async (req, res, next) => {
                 fixedGrossAnnual: grossAnnualFixed.toFixed(2),
                 variableAnnual: breakup.annual.variablePay.toFixed(2),
                 variableMonthlyTarget: breakup.monthly.variablePayTarget.toFixed(2),
+
+                // deductions for template
                 professionalTaxMonthly: professionalTaxMonthly.toFixed(2),
+                pfEmployeeMonth: pfMonthly.toFixed(2),
+                esiEmployeeMonth: esiMonthly.toFixed(2),
+                incomeTaxMonthly: incomeTaxMonthly.toFixed(2),
                 totalDeductionsMonthly: totalDeductionsMonthly.toFixed(2),
                 totalDeductionsAnnual: totalDeductionsAnnual.toFixed(2),
             };
@@ -676,9 +885,9 @@ export const generateDocument = async (req, res, next) => {
 
             const INCREMENT_AMOUNT = Number(rawIncrementAmount) || 0;
 
-            // Get current annual CTC from employee (you can tweak these fields as per your DB)
+            // Get current annual CTC from employee
             const currentAnnualCtc = Number(
-                employee.empCtc ||       // your main CTC field
+                employee.empCtc ||
                 employee.ctcAnnual ||
                 employee.ctc ||
                 0
@@ -690,8 +899,8 @@ export const generateDocument = async (req, res, next) => {
             const revisedAnnualCtc = revisedMonthly * 12;
 
             const effectiveDateRaw =
-                employee.empIncrementEffectiveDate || // optional from DB
-                new Date();                           // default: today
+                employee.empIncrementEffectiveDate ||
+                new Date();
 
             templateData = {
                 ...templateData,
@@ -705,140 +914,140 @@ export const generateDocument = async (req, res, next) => {
                 REVISED_ANNUAL_CTC: revisedAnnualCtc.toFixed(2),
             };
         } else if (
-        code === 'FULL_FINAL' ||
-        code === 'FULL_FINAL_SETTLEMENT' ||
-        code === 'FULL_AND_FINAL' ||
-        code === 'FNF_STATEMENT'
-    ) {
-        const now = new Date();
+            code === 'FULL_FINAL' ||
+            code === 'FULL_FINAL_SETTLEMENT' ||
+            code === 'FULL_AND_FINAL' ||
+            code === 'FNF_STATEMENT'
+        ) {
+            const now = new Date();
 
-        // Basic employee details
-        const EMP_NAME = employee.empName;
-        const EMP_ID = employee.empId || employee.id;
-        const DESIGNATION = employee.empDesignation || '';
-        const DEPARTMENT = employee.empDepartment || '';
-        const LOCATION =
-            employee.empWorkLoc ||
-            employee.workLocation ||
-            'Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030';
+            // Basic employee details
+            const EMP_NAME = employee.empName;
+            const EMP_ID = employee.empId || employee.id;
+            const DESIGNATION = employee.empDesignation || '';
+            const DEPARTMENT = employee.empDepartment || '';
+            const LOCATION =
+                employee.empWorkLoc ||
+                employee.workLocation ||
+                'Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030';
 
-        const dojRaw =
-            employee.empDoj ||
-            employee.empDateOfJoining ||
-            employee.dateOfJoining ||
-            null;
-        const lwdRaw =
-            employee.empRelievingDate ||
-            employee.empLastWorkingDay ||
-            employee.empSeparationDate ||
-            now;
+            const dojRaw =
+                employee.empDoj ||
+                employee.empDateOfJoining ||
+                employee.dateOfJoining ||
+                null;
+            const lwdRaw =
+                employee.empRelievingDate ||
+                employee.empLastWorkingDay ||
+                employee.empSeparationDate ||
+                now;
 
-        // Settlement date (today or from DB/body)
-        const settlementDateRaw =
-            req.body.settlementDate ||
-            employee.settlementDate ||
-            now;
+            // Settlement date (today or from DB/body)
+            const settlementDateRaw =
+                req.body.settlementDate ||
+                employee.settlementDate ||
+                now;
 
-        // Settlement period label – e.g. "Final Month" or "Notice Period"
-        const SETTLEMENT_PERIOD_LABEL =
-            req.body.settlementPeriodLabel ||
-            employee.settlementPeriodLabel ||
-            'Final Salary Period';
+            // Settlement period label – e.g. "Final Month" or "Notice Period"
+            const SETTLEMENT_PERIOD_LABEL =
+                req.body.settlementPeriodLabel ||
+                employee.settlementPeriodLabel ||
+                'Final Salary Period';
 
-        // Earnings & Deductions – can be passed from form (later) or default to 0 for now
-        const num = (v) => Number(v || 0);
+            // Earnings & Deductions
+            const num = (v) => Number(v || 0);
 
-        const E_SALARY = num(req.body.E_SALARY || employee.fnfSalary);
-        const E_LEAVE_ENCASHMENT = num(req.body.E_LEAVE_ENCASHMENT || employee.fnfLeaveEncashment);
-        const E_BONUS_INCENTIVE = num(req.body.E_BONUS_INCENTIVE || employee.fnfBonusIncentive);
-        const E_OTHER_EARNINGS = num(req.body.E_OTHER_EARNINGS || employee.fnfOtherEarnings);
+            const E_SALARY = num(req.body.E_SALARY || employee.fnfSalary);
+            const E_LEAVE_ENCASHMENT = num(req.body.E_LEAVE_ENCASHMENT || employee.fnfLeaveEncashment);
+            const E_BONUS_INCENTIVE = num(req.body.E_BONUS_INCENTIVE || employee.fnfBonusIncentive);
+            const E_OTHER_EARNINGS = num(req.body.E_OTHER_EARNINGS || employee.fnfOtherEarnings);
 
-        const D_NOTICE_RECOVERY = num(req.body.D_NOTICE_RECOVERY || employee.fnfNoticeRecovery);
-        const D_ADVANCE_RECOVERY = num(req.body.D_ADVANCE_RECOVERY || employee.fnfAdvanceRecovery);
-        const D_PF_ESI = num(req.body.D_PF_ESI || employee.fnfPfEsi);
-        const D_TDS_PT = num(req.body.D_TDS_PT || employee.fnfTdsPt);
-        const D_OTHER_DEDUCTIONS = num(req.body.D_OTHER_DEDUCTIONS || employee.fnfOtherDeductions);
+            const D_NOTICE_RECOVERY = num(req.body.D_NOTICE_RECOVERY || employee.fnfNoticeRecovery);
+            const D_ADVANCE_RECOVERY = num(req.body.D_ADVANCE_RECOVERY || employee.fnfAdvanceRecovery);
+            const D_PF_ESI = num(req.body.D_PF_ESI || employee.fnfPfEsi);
+            const D_TDS_PT = num(req.body.D_TDS_PT || employee.fnfTdsPt);
+            const D_OTHER_DEDUCTIONS = num(req.body.D_OTHER_DEDUCTIONS || employee.fnfOtherDeductions);
 
-        const TOTAL_EARNINGS =
-            E_SALARY +
-            E_LEAVE_ENCASHMENT +
-            E_BONUS_INCENTIVE +
-            E_OTHER_EARNINGS;
+            const TOTAL_EARNINGS =
+                E_SALARY +
+                E_LEAVE_ENCASHMENT +
+                E_BONUS_INCENTIVE +
+                E_OTHER_EARNINGS;
 
-        const TOTAL_DEDUCTIONS =
-            D_NOTICE_RECOVERY +
-            D_ADVANCE_RECOVERY +
-            D_PF_ESI +
-            D_TDS_PT +
-            D_OTHER_DEDUCTIONS;
+            const TOTAL_DEDUCTIONS =
+                D_NOTICE_RECOVERY +
+                D_ADVANCE_RECOVERY +
+                D_PF_ESI +
+                D_TDS_PT +
+                D_OTHER_DEDUCTIONS;
 
-        const NET_PAYABLE = TOTAL_EARNINGS - TOTAL_DEDUCTIONS;
+            const NET_PAYABLE = TOTAL_EARNINGS - TOTAL_DEDUCTIONS;
 
-        // Net payable in words – if you have a stored field; else blank (or later we can plug number-to-words)
-        const NET_PAYABLE_WORDS =
-            req.body.NET_PAYABLE_WORDS ||
-            employee.fnfNetPayableWords ||
-            '';
+            // Net payable in words
+            const NET_PAYABLE_WORDS =
+                req.body.NET_PAYABLE_WORDS ||
+                employee.fnfNetPayableWords ||
+                '';
 
-        // Bank info
-        const bankName =
-            employee.bankName ||
-            employee.empBankName ||
-            '';
-        const bankAccountNumber =
-            employee.bankAccountNumber ||
-            employee.empBankAccountNo ||
-            '';
-        const BANK_ACCOUNT_LAST4 = bankAccountNumber
-            ? String(bankAccountNumber).slice(-4)
-            : '';
+            // Bank info
+            const bankName =
+                employee.bankName ||
+                employee.empBankName ||
+                '';
+            const bankAccountNumber =
+                employee.bankAccountNumber ||
+                employee.empBankAccountNo ||
+                '';
+            const BANK_ACCOUNT_LAST4 = bankAccountNumber
+                ? String(bankAccountNumber).slice(-4)
+                : '';
 
-        const paymentDateRaw =
-            req.body.paymentDate ||
-            employee.fnfPaymentDate ||
-            settlementDateRaw;
+            const paymentDateRaw =
+                req.body.paymentDate ||
+                employee.fnfPaymentDate ||
+                settlementDateRaw;
 
-        // Settlement ref number
-        const yyyymmdd = formatDate(settlementDateRaw).replace(/-/g, '');
-        const SETTLEMENT_REF =
-            employee.settlementRef ||
-            `FNF-${EMP_ID}-${yyyymmdd}`;
+            // Settlement ref number
+            const yyyymmdd = formatDate(settlementDateRaw).replace(/-/g, '');
+            const SETTLEMENT_REF =
+                employee.settlementRef ||
+                `FNF-${EMP_ID}-${yyyymmdd}`;
 
-        templateData = {
-            ...templateData,
+            templateData = {
+                ...templateData,
 
-            SETTLEMENT_DATE: formatDate(settlementDateRaw),
-            EMP_NAME,
-            EMP_ID,
-            DESIGNATION,
-            DEPARTMENT,
-            LOCATION,
-            DOJ: formatDate(dojRaw),
-            LWD: formatDate(lwdRaw),
-            SETTLEMENT_REF,
+                SETTLEMENT_DATE: formatDate(settlementDateRaw),
+                EMP_NAME,
+                EMP_ID,
+                DESIGNATION,
+                DEPARTMENT,
+                LOCATION,
+                DOJ: formatDate(dojRaw),
+                LWD: formatDate(lwdRaw),
+                SETTLEMENT_REF,
 
-            SETTLEMENT_PERIOD_LABEL,
+                SETTLEMENT_PERIOD_LABEL,
 
-            E_SALARY: E_SALARY.toFixed(2),
-            E_LEAVE_ENCASHMENT: E_LEAVE_ENCASHMENT.toFixed(2),
-            E_BONUS_INCENTIVE: E_BONUS_INCENTIVE.toFixed(2),
-            E_OTHER_EARNINGS: E_OTHER_EARNINGS.toFixed(2),
+                E_SALARY: E_SALARY.toFixed(2),
+                E_LEAVE_ENCASHMENT: E_LEAVE_ENCASHMENT.toFixed(2),
+                E_BONUS_INCENTIVE: E_BONUS_INCENTIVE.toFixed(2),
+                E_OTHER_EARNINGS: E_OTHER_EARNINGS.toFixed(2),
 
-            D_NOTICE_RECOVERY: D_NOTICE_RECOVERY.toFixed(2),
-            D_ADVANCE_RECOVERY: D_ADVANCE_RECOVERY.toFixed(2),
-            D_PF_ESI: D_PF_ESI.toFixed(2),
-            D_TDS_PT: D_TDS_PT.toFixed(2),
-            D_OTHER_DEDUCTIONS: D_OTHER_DEDUCTIONS.toFixed(2),
+                D_NOTICE_RECOVERY: D_NOTICE_RECOVERY.toFixed(2),
+                D_ADVANCE_RECOVERY: D_ADVANCE_RECOVERY.toFixed(2),
+                D_PF_ESI: D_PF_ESI.toFixed(2),
+                D_TDS_PT: D_TDS_PT.toFixed(2),
+                D_OTHER_DEDUCTIONS: D_OTHER_DEDUCTIONS.toFixed(2),
 
-            TOTAL_EARNINGS: TOTAL_EARNINGS.toFixed(2),
-            TOTAL_DEDUCTIONS: TOTAL_DEDUCTIONS.toFixed(2),
-            NET_PAYABLE: NET_PAYABLE.toFixed(2),
-            NET_PAYABLE_WORDS,
+                TOTAL_EARNINGS: TOTAL_EARNINGS.toFixed(2),
+                TOTAL_DEDUCTIONS: TOTAL_DEDUCTIONS.toFixed(2),
+                NET_PAYABLE: NET_PAYABLE.toFixed(2),
+                NET_PAYABLE_WORDS,
 
-            BANK_NAME: bankName,
-            BANK_ACCOUNT_LAST4,
-            PAYMENT_DATE: formatDate(paymentDateRaw),
-        };
+                BANK_NAME: bankName,
+                BANK_ACCOUNT_LAST4,
+                PAYMENT_DATE: formatDate(paymentDateRaw),
+            };
         } else if (
             code === 'RESIGNATION_ACCEPTANCE' ||
             code === 'RESIGNATION_ACCEPT' ||
@@ -912,7 +1121,6 @@ export const generateDocument = async (req, res, next) => {
                 employee.noDuesFormDate ||
                 now;
 
-            // These are already in baseData, but we can re-set explicitly if you like
             const EMP_NAME = employee.empName;
             const EMP_ID = employee.empId || employee.id;
             const DESIGNATION = employee.empDesignation || '';
@@ -927,7 +1135,6 @@ export const generateDocument = async (req, res, next) => {
                 FORM_DATE: formatDate(formDateRaw),
                 LWD: formatDate(lwdRaw),
 
-                // (optional but clear)
                 EMP_NAME,
                 EMP_ID,
                 DESIGNATION,
@@ -935,9 +1142,6 @@ export const generateDocument = async (req, res, next) => {
                 LOCATION,
             };
         }
-
-
-
 
         // ⭐ Generate PDF
         const pdfBuffer = await generatePdfFromTemplate(
