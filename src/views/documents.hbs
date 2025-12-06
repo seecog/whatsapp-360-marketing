@@ -70,7 +70,7 @@
 
                 <div class="col-md-6">
                   <label class="form-label">Document Type</label>
-                  {{!-- Added id + data-code so JS can detect type --}}
+                  {{!-- show only name, keep data-code for JS --}}
                   <select
                     name="documentTypeId"
                     id="documentTypeSelect"
@@ -83,7 +83,7 @@
                         value="{{id}}"
                         data-code="{{code}}"
                       >
-                        {{name}} ({{code}})
+                        {{name}}
                       </option>
                     {{/each}}
                   </select>
@@ -127,16 +127,29 @@
 
               {{!-- Salary Slip extra fields --}}
               <div class="row g-3 mt-3">
-                <div class="col-md-6" id="salarySlipDateWrapper" style="display: none;">
-                  <label class="form-label" for="salarySlipDate">
-                    Salary Slip Date
+                <div class="col-md-6" id="salaryMonthWrapper" style="display: none;">
+                  <label class="form-label" for="salaryMonth">
+                    Salary Month
                   </label>
-                  <input
-                    type="date"
-                    class="form-control"
-                    id="salarySlipDate"
-                    name="salarySlipDate"
-                  />
+                  <select
+                    class="form-select"
+                    id="salaryMonth"
+                    name="salaryMonth"
+                  >
+                    <option value="">Select month</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
                 </div>
 
                 <div class="col-md-6" id="reimbursementWrapper" style="display: none;">
@@ -196,9 +209,9 @@
     const bonusAmountInput = document.getElementById('bonusAmount');
     const incrementAmountInput = document.getElementById('incrementAmount');
 
-    const salarySlipDateWrapper = document.getElementById('salarySlipDateWrapper');
+    const salaryMonthWrapper = document.getElementById('salaryMonthWrapper');
     const reimbursementWrapper = document.getElementById('reimbursementWrapper');
-    const salarySlipDateInput = document.getElementById('salarySlipDate');
+    const salaryMonthInput = document.getElementById('salaryMonth');
     const reimbursementInput = document.getElementById('reimbursement');
 
     const offerJoiningDateWrapper = document.getElementById('offerJoiningDateWrapper');
@@ -207,13 +220,13 @@
     function resetDynamicFields() {
       bonusFieldWrapper.style.display = 'none';
       incrementFieldWrapper.style.display = 'none';
-      salarySlipDateWrapper.style.display = 'none';
+      salaryMonthWrapper.style.display = 'none';
       reimbursementWrapper.style.display = 'none';
       offerJoiningDateWrapper.style.display = 'none';
 
       if (bonusAmountInput) bonusAmountInput.value = '';
       if (incrementAmountInput) incrementAmountInput.value = '';
-      if (salarySlipDateInput) salarySlipDateInput.value = '';
+      if (salaryMonthInput) salaryMonthInput.selectedIndex = 0;
       if (reimbursementInput) reimbursementInput.value = '';
       if (offerJoiningDateInput) offerJoiningDateInput.value = '';
     }
@@ -239,7 +252,7 @@
 
       // Show Salary Slip fields for SALARY_SLIP
       if (code === 'SALARY_SLIP') {
-        salarySlipDateWrapper.style.display = 'block';
+        salaryMonthWrapper.style.display = 'block';
         reimbursementWrapper.style.display = 'block';
       }
 

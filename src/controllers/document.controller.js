@@ -480,11 +480,65 @@ export const generateDocument = async (req, res, next) => {
             const esiMonthly = breakup.deductionsMonthly.esiEmployee;
             const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
 
-            // Extra fields from form
-            const slipDateRaw =
-                req.body.salarySlipDate ||
-                req.body.SALARY_SLIP_DATE ||
-                new Date();
+            // ✅ NEW: take only MONTH from UI and compute last date of that month
+            //  - If selected month is already passed (or current) in this year => use current year
+            //  - If selected month is still upcoming in this year => use previous year
+            //    (so selecting "December" in Feb 2026 => December 2025)
+            const monthInputRaw = (req.body.salaryMonth || req.body.SALARY_MONTH || '').trim();
+            let slipDateObj = null;
+
+            if (monthInputRaw) {
+                const monthNames = [
+                    'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+                    'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+                ];
+
+                let monthIndex = -1; // 0–11
+
+                // Numeric (1–12 or 01–12)
+                const numMatch = /^(\d{1,2})$/.exec(monthInputRaw);
+                if (numMatch) {
+                    const m = Number(numMatch[1]);
+                    if (m >= 1 && m <= 12) {
+                        monthIndex = m - 1;
+                    }
+                } else {
+                    // Try full month name (e.g., "December")
+                    const upper = monthInputRaw.toUpperCase();
+                    monthIndex = monthNames.indexOf(upper);
+
+                    // Try short name (e.g., "Dec")
+                    if (monthIndex === -1) {
+                        const shortNames = monthNames.map(n => n.slice(0, 3));
+                        const shortIndex = shortNames.indexOf(upper.slice(0, 3));
+                        if (shortIndex !== -1) monthIndex = shortIndex;
+                    }
+                }
+
+                if (monthIndex >= 0 && monthIndex <= 11) {
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonthIndex = today.getMonth(); // 0–11
+
+                    let yearForSlip;
+                    if (monthIndex <= currentMonthIndex) {
+                        // Month already occurred (or current) this year
+                        yearForSlip = currentYear;
+                    } else {
+                        // Month not yet arrived in current year – go to previous year
+                        yearForSlip = currentYear - 1;
+                    }
+
+                    // Last day of that month
+                    slipDateObj = new Date(yearForSlip, monthIndex + 1, 0);
+                }
+            }
+
+            // Fallback: last day of current month
+            if (!slipDateObj || isNaN(slipDateObj)) {
+                const today = new Date();
+                slipDateObj = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            }
 
             const reimbursementRaw =
                 req.body.reimbursement ||
@@ -534,8 +588,8 @@ export const generateDocument = async (req, res, next) => {
 
             templateData = {
                 ...templateData,
-                Month: formatMonthYear(slipDateRaw) || 'Salary Month',
-                SALARY_SLIP_DATE: formatDate(slipDateRaw),
+                Month: formatMonthYear(slipDateObj) || 'Salary Month',
+                SALARY_SLIP_DATE: formatDate(slipDateObj),
 
                 EMP_CODE: employee.empId || employee.id,
                 DOB: formatDate(employee.empDob),
