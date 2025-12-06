@@ -121,7 +121,7 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
         professionalTaxThresholdMonthly = 25000,
 
         // Indian payroll-style rules
-        pfPctOfBasic = 0.12,          // 12% of basic (employee share)
+        pfPctOfBasic = 0,          // 12% of basic (employee share)
         esiPctOfGross = 0.0075,       // 0.75% of gross (employee share)
         esiWageThresholdMonthly = 21000, // ESI applicable if gross <= 21k
         standardDeductionAnnual = 50000  // standard deduction for tax
