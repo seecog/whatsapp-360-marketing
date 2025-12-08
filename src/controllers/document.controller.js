@@ -2,6 +2,7 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
 
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
@@ -10,7 +11,49 @@ import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🔢 Convert number to Indian currency words (Rupees Only)
+/* ------------------------------------------------------------------
+✉️ Nodemailer setup (all email logic lives in this file now)
+------------------------------------------------------------------ */
+const mailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+    secure: process.env.SMTP_SECURE === 'true', // 'true' for 465, false for 587
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+console.log('Mailer configured:', mailTransporter.options);
+
+/**
+ * Send a simple notification email that a document has been generated.
+ * No attachment is sent.
+ */
+async function sendSimpleDocumentEmail({ to, cc, subject, html }) {
+    if (!to) {
+        console.warn('sendSimpleDocumentEmail called without "to" address.');
+        return false;
+    }
+
+    try {
+        const info = await mailTransporter.sendMail({
+            from: process.env.MAIL_FROM || process.env.SMTP_USER,
+            to,
+            cc,
+            subject,
+            html,
+        });
+        console.log('Document email sent. MessageId:', info.messageId);
+        return true;
+    } catch (err) {
+        console.error('Error sending document email:', err);
+        return false;
+    }
+}
+
+/* ------------------------------------------------------------------
+   🔢 Convert number to Indian currency words (Rupees Only)
+------------------------------------------------------------------ */
 function numberToIndianWords(amount) {
     if (amount == null) return '';
 
@@ -81,7 +124,9 @@ function numberToIndianWords(amount) {
     return words;
 }
 
-
+/* ------------------------------------------------------------------
+   📅 Date helpers
+------------------------------------------------------------------ */
 function formatDate(value) {
     if (!value) return '';
 
@@ -109,7 +154,9 @@ function formatMonthYear(value) {
     return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// 🔹 Salary breakup helper (using empCtc)
+/* ------------------------------------------------------------------
+   💸 Salary breakup helper (using empCtc)
+------------------------------------------------------------------ */
 function generateSalaryBreakup(annualGrossCtc, options = {}) {
     const {
         variablePayPct = 0.10,
@@ -121,10 +168,10 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
         professionalTaxThresholdMonthly = 25000,
 
         // Indian payroll-style rules
-        pfPctOfBasic = 0,          // 12% of basic (employee share)
-        esiPctOfGross = 0.0075,       // 0.75% of gross (employee share)
-        esiWageThresholdMonthly = 21000, // ESI applicable if gross <= 21k
-        standardDeductionAnnual = 50000  // standard deduction for tax
+        pfPctOfBasic = 0,
+        esiPctOfGross = 0.0075,
+        esiWageThresholdMonthly = 21000,
+        standardDeductionAnnual = 50000
     } = options;
 
     const round = (val) => Math.round(val);
@@ -181,22 +228,18 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
     const fixedGrossMonthly = toMonthly(fixedGrossAnnual);
     const variablePayMonthlyTarget = toMonthly(variablePayAnnual);
 
-    // Professional Tax
     const professionalTaxMonthly =
         monthlyCtc >= professionalTaxThresholdMonthly
             ? monthlyProfessionalTax
             : 0;
 
-    // PF – 12% of basic
     const pfMonthly = basicMonthly * pfPctOfBasic;
 
-    // ESI – 0.75% of gross, only if gross <= 21k
     const esiMonthly =
         fixedGrossMonthly <= esiWageThresholdMonthly
             ? fixedGrossMonthly * esiPctOfGross
             : 0;
 
-    // Income Tax / TDS – simple slab logic on annual CTC
     const taxableIncomeAnnual = Math.max(
         0,
         annualGrossCtc - standardDeductionAnnual
@@ -264,6 +307,9 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
     };
 }
 
+/* ------------------------------------------------------------------
+   Render documents page
+------------------------------------------------------------------ */
 export const renderDocumentsPage = async (req, res, next) => {
     try {
         const employees = await Employee.findAll({
@@ -276,7 +322,9 @@ export const renderDocumentsPage = async (req, res, next) => {
         });
 
         const employeesPlain = employees.map((e) => e.get({ plain: true }));
-        const documentTypesPlain = documentTypes.map((d) => d.get({ plain: true }));
+        const documentTypesPlain = documentTypes.map((d) =>
+            d.get({ plain: true })
+        );
 
         const user = req.user
             ? { firstName: req.user.firstName, lastName: req.user.lastName }
@@ -294,6 +342,9 @@ export const renderDocumentsPage = async (req, res, next) => {
     }
 };
 
+/* ------------------------------------------------------------------
+   Generate document + PDF + save + send email
+------------------------------------------------------------------ */
 export const generateDocument = async (req, res, next) => {
     try {
         const { employeeId, documentTypeId } = req.body;
@@ -347,26 +398,25 @@ export const generateDocument = async (req, res, next) => {
         const code = (docType.code || '').toUpperCase();
         let templateData = { ...baseData };
 
+        /* --------------------------------------------------------------
+           Document-specific branches
+        -------------------------------------------------------------- */
+
         // 🔹 Internship Completion Certificate
         if (code === 'INTERNSHIP_CERT' || code === 'INTERNSHIP_CERTIFICATE') {
             const now = new Date();
 
-            // Intern name
             const INTERN_NAME = employee.empName;
-
-            // Internship role
             const INTERNSHIP_ROLE =
                 employee.internRole ||
                 employee.empDesignation ||
                 'Intern';
 
-            // Department
             const DEPARTMENT_NAME =
                 employee.empDepartment ||
                 employee.departmentName ||
                 'Internship Department';
 
-            // Start & End dates
             const startDateRaw =
                 employee.internStartDate ||
                 employee.empInternStartDate ||
@@ -383,9 +433,14 @@ export const generateDocument = async (req, res, next) => {
             const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
             const endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            // Duration calculation (simple months/days text)
             let INTERNSHIP_DURATION = '';
-            if (startDateObj && endDateObj && !isNaN(startDateObj) && !isNaN(endDateObj) && endDateObj >= startDateObj) {
+            if (
+                startDateObj &&
+                endDateObj &&
+                !isNaN(startDateObj) &&
+                !isNaN(endDateObj) &&
+                endDateObj >= startDateObj
+            ) {
                 const diffMs = endDateObj - startDateObj;
                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
@@ -400,33 +455,31 @@ export const generateDocument = async (req, res, next) => {
                     INTERNSHIP_DURATION = `${days} day(s)`;
                 }
             } else {
-                INTERNSHIP_DURATION = employee.internDuration || employee.internMonths || 'Internship Period';
+                INTERNSHIP_DURATION =
+                    employee.internDuration ||
+                    employee.internMonths ||
+                    'Internship Period';
             }
 
-            // Domain / area
             const INTERNSHIP_DOMAIN =
                 employee.internDomain ||
                 employee.internProjectDomain ||
                 'Software Development';
 
-            // Performance summary
             const PERFORMANCE_SUMMARY =
                 employee.internPerformanceSummary ||
                 employee.internRatingText ||
                 'Good';
 
-            // Issue details
             const ISSUE_DATE = formatDate(now);
             const ISSUE_PLACE =
                 employee.empWorkLoc ||
                 employee.workLocation ||
                 'Bengaluru, Karnataka';
 
-            // Certificate number (simple pattern)
             const todayStr = now.toISOString().slice(0, 10).replace(/-/g, '');
             const CERTIFICATE_NO = `INT-${employee.empId || employee.id}-${todayStr}`;
 
-            // Supervisor info
             const SUPERVISOR_NAME =
                 employee.supervisorName ||
                 employee.internSupervisorName ||
@@ -458,7 +511,6 @@ export const generateDocument = async (req, res, next) => {
                 SUPERVISOR_DESIGNATION,
             };
 
-
             // 🔹 Salary Slip
         } else if (code === 'SALARY_SLIP') {
             const ctcAnnual = Number(
@@ -480,11 +532,8 @@ export const generateDocument = async (req, res, next) => {
             const esiMonthly = breakup.deductionsMonthly.esiEmployee;
             const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
 
-            // ✅ NEW: take only MONTH from UI and compute last date of that month
-            //  - If selected month is already passed (or current) in this year => use current year
-            //  - If selected month is still upcoming in this year => use previous year
-            //    (so selecting "December" in Feb 2026 => December 2025)
-            const monthInputRaw = (req.body.salaryMonth || req.body.SALARY_MONTH || '').trim();
+            const monthInputRaw =
+                (req.body.salaryMonth || req.body.SALARY_MONTH || '').trim();
             let slipDateObj = null;
 
             if (monthInputRaw) {
@@ -493,23 +542,18 @@ export const generateDocument = async (req, res, next) => {
                     'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
                 ];
 
-                let monthIndex = -1; // 0–11
+                let monthIndex = -1;
 
-                // Numeric (1–12 or 01–12)
                 const numMatch = /^(\d{1,2})$/.exec(monthInputRaw);
                 if (numMatch) {
                     const m = Number(numMatch[1]);
-                    if (m >= 1 && m <= 12) {
-                        monthIndex = m - 1;
-                    }
+                    if (m >= 1 && m <= 12) monthIndex = m - 1;
                 } else {
-                    // Try full month name (e.g., "December")
                     const upper = monthInputRaw.toUpperCase();
                     monthIndex = monthNames.indexOf(upper);
 
-                    // Try short name (e.g., "Dec")
                     if (monthIndex === -1) {
-                        const shortNames = monthNames.map(n => n.slice(0, 3));
+                        const shortNames = monthNames.map((n) => n.slice(0, 3));
                         const shortIndex = shortNames.indexOf(upper.slice(0, 3));
                         if (shortIndex !== -1) monthIndex = shortIndex;
                     }
@@ -518,26 +562,26 @@ export const generateDocument = async (req, res, next) => {
                 if (monthIndex >= 0 && monthIndex <= 11) {
                     const today = new Date();
                     const currentYear = today.getFullYear();
-                    const currentMonthIndex = today.getMonth(); // 0–11
+                    const currentMonthIndex = today.getMonth();
 
                     let yearForSlip;
                     if (monthIndex <= currentMonthIndex) {
-                        // Month already occurred (or current) this year
                         yearForSlip = currentYear;
                     } else {
-                        // Month not yet arrived in current year – go to previous year
                         yearForSlip = currentYear - 1;
                     }
 
-                    // Last day of that month
                     slipDateObj = new Date(yearForSlip, monthIndex + 1, 0);
                 }
             }
 
-            // Fallback: last day of current month
             if (!slipDateObj || isNaN(slipDateObj)) {
                 const today = new Date();
-                slipDateObj = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                slipDateObj = new Date(
+                    today.getFullYear(),
+                    today.getMonth() + 1,
+                    0
+                );
             }
 
             const reimbursementRaw =
@@ -548,7 +592,6 @@ export const generateDocument = async (req, res, next) => {
 
             const reimbursement = Number(reimbursementRaw) || 0;
 
-            // Total earnings includes reimbursement
             const totalEarningsMonthly = fixedGrossMonthly + reimbursement;
 
             const totalDeductionsMonthly =
@@ -556,7 +599,6 @@ export const generateDocument = async (req, res, next) => {
 
             const netMonthly = totalEarningsMonthly - totalDeductionsMonthly;
 
-            // Bank / account info
             const bankName =
                 employee.bankName ||
                 employee.empBankName ||
@@ -591,27 +633,29 @@ export const generateDocument = async (req, res, next) => {
                 Month: formatMonthYear(slipDateObj) || 'Salary Month',
                 SALARY_SLIP_DATE: formatDate(slipDateObj),
 
+                // used for email subject/body
+                EMAIL_MONTH_YEAR: formatMonthYear(slipDateObj),
+
                 EMP_CODE: employee.empId || employee.id,
                 DOB: formatDate(employee.empDob),
-                DOJ: formatDate(employee.empDateOfJoining || employee.empDoj),
+                DOJ: formatDate(
+                    employee.empDateOfJoining || employee.empDoj
+                ),
                 PAN: employee.empPan || '',
                 DAYS_PAID: employee.daysPaid || 30,
                 WORK_DAYS: employee.workDays || 30,
 
-                // Bank & statutory details
                 BANK_NAME: bankName,
                 BANK_ACCOUNT_LAST4,
                 UAN: uan,
                 PF_NUMBER: pfNumber,
                 ESI_NUMBER: esiNumber,
 
-                // Earnings
                 BASIC: basicMonthly.toFixed(2),
                 HRA: hraMonthly.toFixed(2),
                 SPECIAL: specialMonthly.toFixed(2),
                 REIMBURSEMENT: reimbursement.toFixed(2),
 
-                // Deductions
                 PF: pfMonthly.toFixed(2),
                 ESI: esiMonthly.toFixed(2),
                 TDS: incomeTaxMonthly.toFixed(2),
@@ -655,24 +699,22 @@ export const generateDocument = async (req, res, next) => {
 
             const totalDeductionsMonthly =
                 professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
-            const totalDeductionsAnnual = totalDeductionsMonthly * 12;
+            const totalDeductionsAnnual =
+                totalDeductionsMonthly * 12;
 
-            const netMonthly = grossMonthFixed - totalDeductionsMonthly;
+            const netMonthly =
+                grossMonthFixed - totalDeductionsMonthly;
 
-            // ✅ Joining date from form if provided, else from employee
             const joiningDateRaw =
                 req.body.joiningDate ||
                 req.body.JOINING_DATE ||
                 employee.empDoj ||
                 employee.empDateOfJoining;
 
-            // ✅ AUTO-CONVERT CTC → WORDS
             const ctcInWordsAuto = numberToIndianWords(ctcAnnual);
 
             templateData = {
                 ...templateData,
-
-                // old keys (backward compatibility)
                 OFFER_DATE: formatDate(new Date()),
                 JOINING_DATE: formatDate(joiningDateRaw),
                 CTC: ctcAnnual.toFixed(2),
@@ -687,7 +729,6 @@ export const generateDocument = async (req, res, next) => {
                 GROSS_ANNUAL: grossAnnualFixed.toFixed(2),
                 NET_PAY: netMonthly.toFixed(2),
 
-                // keys matching Offer Letter HTML
                 offerDate: formatDate(new Date()),
                 joiningDate: formatDate(joiningDateRaw),
                 fullName: employee.empName,
@@ -709,21 +750,22 @@ export const generateDocument = async (req, res, next) => {
                 fixedGrossMonthly: grossMonthFixed.toFixed(2),
                 fixedGrossAnnual: grossAnnualFixed.toFixed(2),
                 variableAnnual: breakup.annual.variablePay.toFixed(2),
-                variableMonthlyTarget: breakup.monthly.variablePayTarget.toFixed(2),
+                variableMonthlyTarget:
+                    breakup.monthly.variablePayTarget.toFixed(2),
 
-                // deductions for template
-                professionalTaxMonthly: professionalTaxMonthly.toFixed(2),
+                professionalTaxMonthly:
+                    professionalTaxMonthly.toFixed(2),
                 pfEmployeeMonth: pfMonthly.toFixed(2),
                 esiEmployeeMonth: esiMonthly.toFixed(2),
                 incomeTaxMonthly: incomeTaxMonthly.toFixed(2),
-                totalDeductionsMonthly: totalDeductionsMonthly.toFixed(2),
-                totalDeductionsAnnual: totalDeductionsAnnual.toFixed(2),
+                totalDeductionsMonthly:
+                    totalDeductionsMonthly.toFixed(2),
+                totalDeductionsAnnual:
+                    totalDeductionsAnnual.toFixed(2),
             };
 
             // 🔹 Bonus Letter
         } else if (code === 'BONUS_LETTER' || code === 'BONUS') {
-
-            // 👉 Get bonus details from request body first, then fallback to employee fields
             const rawBonusAmount =
                 req.body.bonusAmount ||
                 req.body.BONUS_AMOUNT ||
@@ -745,7 +787,6 @@ export const generateDocument = async (req, res, next) => {
 
             templateData = {
                 ...templateData,
-                // matches your Bonus Letter HTML template
                 DATE: formatDate(new Date()),
                 EMP_ID: employee.empId || employee.id,
                 EMP_NAME: employee.empName,
@@ -761,7 +802,8 @@ export const generateDocument = async (req, res, next) => {
             code === 'RELIEVING_LETTER' ||
             code === 'RELIEVING_EXPERIENCE'
         ) {
-            const periodFrom = employee.empDoj || employee.empDateOfJoining;
+            const periodFrom =
+                employee.empDoj || employee.empDateOfJoining;
             const periodTo =
                 employee.empRelievingDate ||
                 employee.empLastWorkingDay ||
@@ -800,7 +842,9 @@ export const generateDocument = async (req, res, next) => {
                     const diffMs = end - start;
                     numberOfMonths = Math.max(
                         1,
-                        Math.round(diffMs / (1000 * 60 * 60 * 24 * 30))
+                        Math.round(
+                            diffMs / (1000 * 60 * 60 * 24 * 30)
+                        )
                     );
                 }
             }
@@ -825,7 +869,8 @@ export const generateDocument = async (req, res, next) => {
                 NumberofMonths: numberOfMonths || '',
                 DepartmentName: employee.empDepartment || '',
                 SupervisorName: employee.supervisorName || '',
-                SupervisorDesignation: employee.supervisorDesignation || '',
+                SupervisorDesignation:
+                    employee.supervisorDesignation || '',
                 WorkingHours:
                     employee.workingHours || '10:00 AM to 6:00 PM',
                 Amount: (employee.empCtc / 12).toFixed(2),
@@ -865,8 +910,9 @@ export const generateDocument = async (req, res, next) => {
                 ),
                 MonthlySalary: monthlyFixed.toFixed(2),
             };
+
+            // 🔹 Probation Letter
         } else if (code === 'PROBATION_LETTER' || code === 'PROBATION') {
-            // Joining date (from employee)
             const joiningRaw =
                 employee.empDoj ||
                 employee.empDateOfJoining ||
@@ -875,13 +921,11 @@ export const generateDocument = async (req, res, next) => {
 
             const joiningDateObj = joiningRaw ? new Date(joiningRaw) : null;
 
-            // Probation period (string) - from DB if available, else default
             const probationPeriod =
                 employee.probationPeriod ||
                 employee.empProbationPeriod ||
                 '3 months';
 
-            // Probation end date - from DB if available, else joining + 3 months
             let probationEndRaw =
                 employee.probationEndDate ||
                 employee.empProbationEndDate ||
@@ -889,11 +933,10 @@ export const generateDocument = async (req, res, next) => {
 
             if (!probationEndRaw && joiningDateObj && !isNaN(joiningDateObj)) {
                 const tmp = new Date(joiningDateObj);
-                tmp.setMonth(tmp.getMonth() + 3); // default 3 months
+                tmp.setMonth(tmp.getMonth() + 3);
                 probationEndRaw = tmp;
             }
 
-            // Reporting manager
             const reportingManagerName =
                 employee.reportingManagerName ||
                 employee.empReportingManagerName ||
@@ -904,13 +947,11 @@ export const generateDocument = async (req, res, next) => {
                 employee.empReportingManagerDesignation ||
                 '';
 
-            // Work location
             const workLocation =
                 employee.empWorkLoc ||
                 employee.workLocation ||
                 'Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030';
 
-            // Working hours
             const workingHours =
                 employee.workingHours ||
                 '10:00 AM to 6:00 PM';
@@ -929,17 +970,15 @@ export const generateDocument = async (req, res, next) => {
                 WORKING_HOURS: workingHours,
             };
 
+            // 🔹 Increment Letter
         } else if (code === 'INCREMENT_LETTER' || code === 'INCREMENT') {
-            // 👉 Get increment details, prefer request body, fallback to employee fields
-
             const rawIncrementAmount =
-                req.body.incrementAmount ||   // from documents.hbs
-                req.body.INCREMENT_AMOUNT ||  // alt naming
+                req.body.incrementAmount ||
+                req.body.INCREMENT_AMOUNT ||
                 0;
 
             const INCREMENT_AMOUNT = Number(rawIncrementAmount) || 0;
 
-            // Get current annual CTC from employee
             const currentAnnualCtc = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -947,8 +986,8 @@ export const generateDocument = async (req, res, next) => {
                 0
             );
 
-            // Derive current monthly, revised monthly, revised annual
-            const currentMonthly = currentAnnualCtc > 0 ? currentAnnualCtc / 12 : 0;
+            const currentMonthly =
+                currentAnnualCtc > 0 ? currentAnnualCtc / 12 : 0;
             const revisedMonthly = currentMonthly + INCREMENT_AMOUNT;
             const revisedAnnualCtc = revisedMonthly * 12;
 
@@ -958,7 +997,6 @@ export const generateDocument = async (req, res, next) => {
 
             templateData = {
                 ...templateData,
-                // matches your Increment Letter template
                 OFFER_DATE: formatDate(new Date()),
                 EMP_NAME: employee.empName,
                 DESIGNATION: employee.empDesignation || '',
@@ -967,6 +1005,8 @@ export const generateDocument = async (req, res, next) => {
                 REVISED_AMOUNT: revisedMonthly.toFixed(2),
                 REVISED_ANNUAL_CTC: revisedAnnualCtc.toFixed(2),
             };
+
+            // 🔹 Full & Final
         } else if (
             code === 'FULL_FINAL' ||
             code === 'FULL_FINAL_SETTLEMENT' ||
@@ -975,7 +1015,6 @@ export const generateDocument = async (req, res, next) => {
         ) {
             const now = new Date();
 
-            // Basic employee details
             const EMP_NAME = employee.empName;
             const EMP_ID = employee.empId || employee.id;
             const DESIGNATION = employee.empDesignation || '';
@@ -996,31 +1035,55 @@ export const generateDocument = async (req, res, next) => {
                 employee.empSeparationDate ||
                 now;
 
-            // Settlement date (today or from DB/body)
             const settlementDateRaw =
                 req.body.settlementDate ||
                 employee.settlementDate ||
                 now;
 
-            // Settlement period label – e.g. "Final Month" or "Notice Period"
             const SETTLEMENT_PERIOD_LABEL =
                 req.body.settlementPeriodLabel ||
                 employee.settlementPeriodLabel ||
                 'Final Salary Period';
 
-            // Earnings & Deductions
             const num = (v) => Number(v || 0);
 
-            const E_SALARY = num(req.body.E_SALARY || employee.fnfSalary);
-            const E_LEAVE_ENCASHMENT = num(req.body.E_LEAVE_ENCASHMENT || employee.fnfLeaveEncashment);
-            const E_BONUS_INCENTIVE = num(req.body.E_BONUS_INCENTIVE || employee.fnfBonusIncentive);
-            const E_OTHER_EARNINGS = num(req.body.E_OTHER_EARNINGS || employee.fnfOtherEarnings);
+            const E_SALARY =
+                num(req.body.E_SALARY || employee.fnfSalary);
+            const E_LEAVE_ENCASHMENT =
+                num(
+                    req.body.E_LEAVE_ENCASHMENT ||
+                    employee.fnfLeaveEncashment
+                );
+            const E_BONUS_INCENTIVE =
+                num(
+                    req.body.E_BONUS_INCENTIVE ||
+                    employee.fnfBonusIncentive
+                );
+            const E_OTHER_EARNINGS =
+                num(
+                    req.body.E_OTHER_EARNINGS ||
+                    employee.fnfOtherEarnings
+                );
 
-            const D_NOTICE_RECOVERY = num(req.body.D_NOTICE_RECOVERY || employee.fnfNoticeRecovery);
-            const D_ADVANCE_RECOVERY = num(req.body.D_ADVANCE_RECOVERY || employee.fnfAdvanceRecovery);
-            const D_PF_ESI = num(req.body.D_PF_ESI || employee.fnfPfEsi);
-            const D_TDS_PT = num(req.body.D_TDS_PT || employee.fnfTdsPt);
-            const D_OTHER_DEDUCTIONS = num(req.body.D_OTHER_DEDUCTIONS || employee.fnfOtherDeductions);
+            const D_NOTICE_RECOVERY =
+                num(
+                    req.body.D_NOTICE_RECOVERY ||
+                    employee.fnfNoticeRecovery
+                );
+            const D_ADVANCE_RECOVERY =
+                num(
+                    req.body.D_ADVANCE_RECOVERY ||
+                    employee.fnfAdvanceRecovery
+                );
+            const D_PF_ESI =
+                num(req.body.D_PF_ESI || employee.fnfPfEsi);
+            const D_TDS_PT =
+                num(req.body.D_TDS_PT || employee.fnfTdsPt);
+            const D_OTHER_DEDUCTIONS =
+                num(
+                    req.body.D_OTHER_DEDUCTIONS ||
+                    employee.fnfOtherDeductions
+                );
 
             const TOTAL_EARNINGS =
                 E_SALARY +
@@ -1035,15 +1098,14 @@ export const generateDocument = async (req, res, next) => {
                 D_TDS_PT +
                 D_OTHER_DEDUCTIONS;
 
-            const NET_PAYABLE = TOTAL_EARNINGS - TOTAL_DEDUCTIONS;
+            const NET_PAYABLE =
+                TOTAL_EARNINGS - TOTAL_DEDUCTIONS;
 
-            // Net payable in words
             const NET_PAYABLE_WORDS =
                 req.body.NET_PAYABLE_WORDS ||
                 employee.fnfNetPayableWords ||
                 '';
 
-            // Bank info
             const bankName =
                 employee.bankName ||
                 employee.empBankName ||
@@ -1061,8 +1123,8 @@ export const generateDocument = async (req, res, next) => {
                 employee.fnfPaymentDate ||
                 settlementDateRaw;
 
-            // Settlement ref number
-            const yyyymmdd = formatDate(settlementDateRaw).replace(/-/g, '');
+            const yyyymmdd =
+                formatDate(settlementDateRaw).replace(/-/g, '');
             const SETTLEMENT_REF =
                 employee.settlementRef ||
                 `FNF-${EMP_ID}-${yyyymmdd}`;
@@ -1102,6 +1164,8 @@ export const generateDocument = async (req, res, next) => {
                 BANK_ACCOUNT_LAST4,
                 PAYMENT_DATE: formatDate(paymentDateRaw),
             };
+
+            // 🔹 Resignation Acceptance
         } else if (
             code === 'RESIGNATION_ACCEPTANCE' ||
             code === 'RESIGNATION_ACCEPT' ||
@@ -1118,20 +1182,17 @@ export const generateDocument = async (req, res, next) => {
                 employee.workLocation ||
                 'Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030';
 
-            // Resignation date – from employee or today
             const resignationDateRaw =
                 employee.empResignationDate ||
                 employee.resignationDate ||
                 null;
 
-            // Last working day – from DB or fallback
             const lastWorkingDayRaw =
                 employee.empLastWorkingDay ||
                 employee.empRelievingDate ||
                 employee.empSeparationDate ||
                 null;
 
-            // Notice period text (e.g. "30 days")
             const NOTICE_PERIOD =
                 employee.noticePeriodText ||
                 employee.empNoticePeriodText ||
@@ -1154,6 +1215,8 @@ export const generateDocument = async (req, res, next) => {
                 LAST_WORKING_DAY: formatDate(lastWorkingDayRaw),
                 NOTICE_PERIOD,
             };
+
+            // 🔹 No Dues / Clearance Form
         } else if (
             code === 'NO_DUES' ||
             code === 'NO_DUES_FORM' ||
@@ -1161,7 +1224,6 @@ export const generateDocument = async (req, res, next) => {
         ) {
             const now = new Date();
 
-            // Last working day from employee record
             const lwdRaw =
                 employee.empLastWorkingDay ||
                 employee.empRelievingDate ||
@@ -1169,7 +1231,6 @@ export const generateDocument = async (req, res, next) => {
                 employee.lastWorkingDay ||
                 null;
 
-            // Form date: allow override from request, otherwise today
             const formDateRaw =
                 req.body.formDate ||
                 employee.noDuesFormDate ||
@@ -1197,7 +1258,9 @@ export const generateDocument = async (req, res, next) => {
             };
         }
 
-        // ⭐ Generate PDF
+        /* --------------------------------------------------------------
+           ⭐ Generate PDF
+        -------------------------------------------------------------- */
         const pdfBuffer = await generatePdfFromTemplate(
             docType.templateHtml,
             templateData
@@ -1205,6 +1268,93 @@ export const generateDocument = async (req, res, next) => {
 
         const fileName = `${docType.code}-${baseData.EMP_ID}.pdf`;
 
+        // 📁 Save PDF into /GeneratedPdf at project root
+        let savedPdfPath = null;
+        try {
+            const generatedPdfDir = path.join(__dirname, '..', '..', 'GeneratedPdf');
+            if (!fs.existsSync(generatedPdfDir)) {
+                fs.mkdirSync(generatedPdfDir, { recursive: true });
+            }
+
+            savedPdfPath = path.join(generatedPdfDir, fileName);
+            fs.writeFileSync(savedPdfPath, pdfBuffer);
+            console.log('PDF saved at:', savedPdfPath);
+        } catch (fileErr) {
+            console.error('Error saving generated PDF to disk:', fileErr);
+            savedPdfPath = null;
+        }
+
+        /* --------------------------------------------------------------
+           📧 Send email directly from this controller
+           - For ALL document types (no attachment)
+           - For SALARY_SLIP: email must succeed, otherwise do NOT download PDF
+        -------------------------------------------------------------- */
+        let emailSent = true;
+        let emailAttempted = false;
+
+        try {
+            if (employee.empEmail) {
+                const companyName =
+                    process.env.COMPANY_NAME || 'Seecog Softwares Pvt. Ltd.';
+                const empName = employee.empName || 'Employee';
+                const docLabel = docType.name || docType.code || 'Document';
+
+                let subject = `${docLabel} generated for ${empName}`;
+                let html = `<p>Hi ${empName},</p>`;
+
+                if (code === 'SALARY_SLIP') {
+                    const monthText =
+                        templateData.EMAIL_MONTH_YEAR ||
+                        templateData.Month ||
+                        'this month';
+                    subject = `Salary Slip - ${monthText}`;
+                    html += `<p>Your salary slip for <strong>${monthText}</strong> has been generated.</p>`;
+                } else {
+                    html += `<p>Your <strong>${docLabel}</strong> has been generated.</p>`;
+                }
+
+                html += `
+<p>This is an automated notification from ${companyName} HR system. The document has been generated and stored in our records.</p>
+<p>Regards,<br/>HR Team<br/>${companyName}</p>
+                `;
+
+                emailAttempted = true;
+                emailSent = await sendSimpleDocumentEmail({
+                    to: employee.empEmail,
+                    cc: 'sonam@seecogsoftwares.com', // same as earlier
+                    subject,
+                    html,
+                });
+
+                if (emailSent) {
+                    console.log(
+                        `Document notification email SENT to ${employee.empEmail} for document type ${docType.code}`
+                    );
+                } else {
+                    console.warn(
+                        `Document notification email NOT sent to ${employee.empEmail} for document type ${docType.code}`
+                    );
+                }
+            } else {
+                console.log(
+                    `Employee ${employee.id} has no email (empEmail), skipping email.`
+                );
+            }
+        } catch (emailErr) {
+            emailSent = false;
+            console.error('Error sending document email wrapper:', emailErr);
+        }
+
+        // 🧷 Special rule: for SALARY_SLIP, only allow download if email was sent successfully
+        if (code === 'SALARY_SLIP' && emailAttempted && !emailSent) {
+            return res
+                .status(500)
+                .send('Failed to send salary slip email. PDF not downloaded.');
+        }
+
+        /* --------------------------------------------------------------
+           Return PDF to browser
+        -------------------------------------------------------------- */
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',

@@ -12,7 +12,7 @@ import { Designation } from './Designation.js';
 import { LeaveType } from './LeaveType.js';
 import { LeaveRequest } from './LeaveRequest.js';
 import DocumentType from './DocumentType.js';
-
+import EmailTemplate from './EmailTemplate.js';
 // ✅ IMPORT CHILD TABLES FOR EMPLOYEE
 import EmployeeEducation from './EmployeeEducation.js';
 import EmployeeExperience from './EmployeeExperience.js';
@@ -140,6 +140,18 @@ EmployeeDocument.belongsTo(Employee, {
   as: 'employee',
 });
 
+// DocumentType ⇄ EmailTemplate
+DocumentType.hasMany(EmailTemplate, {
+  foreignKey: 'documentTypeId',
+  as: 'emailTemplates',
+});
+
+EmailTemplate.belongsTo(DocumentType, {
+  foreignKey: 'documentTypeId',
+  as: 'documentType',
+});
+
+
 export {
   User,
   Business,
@@ -159,4 +171,5 @@ export {
   EmployeeEducation,
   EmployeeExperience,
   EmployeeDocument,
+  EmailTemplate,
 };
