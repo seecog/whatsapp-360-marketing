@@ -96,6 +96,8 @@ import documentTypesRoutes from './routes/documentTypes.routes.js';
 import stateRoutes from './routes/state.routes.js';
 import countryRoutes from './routes/country.routes.js';
 import businessAddressRoutes from './routes/businessAddress.routes.js';
+import emailTemplateRoutes from './routes/emailTemplate.routes.js';
+import { renderEmailTemplatesPage } from './controllers/emailTemplate.controller.js';
 
 // ---------- Frontend pages ----------
 app.get('/', (req, res) => res.redirect('/login'));
@@ -187,5 +189,9 @@ app.use(documentTypesRoutes);
 app.use('/api/v1/countries', countryRoutes);
 app.use('/api/v1/states', stateRoutes);
 app.use('/api/v1/business-addresses', businessAddressRoutes);
+app.get('/email-templates', verifyUser, renderEmailTemplatesPage);
+
+// API routes under /api/v1/email-templates
+app.use('/', emailTemplateRoutes);
 
 export { app };
