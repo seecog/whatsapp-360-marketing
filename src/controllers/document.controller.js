@@ -904,14 +904,37 @@ export const generateDocument = async (req, res, next) => {
             code === 'INTERN_OFFER' ||
             code === 'INTERNSHIP_OFFER_LETTER'
         ) {
+            // Prefer UI Internship Start Date, then DB internship_start_date, then older fallbacks
+            const internshipStartFromBody =
+                req.body.internshipStartDate ||
+                req.body.INTERNSHIP_START_DATE ||
+                null;
+
             const startDateRaw =
+                internshipStartFromBody ||
+                employee.internshipStartDate ||
+                employee.internship_start_date ||
                 employee.internStartDate ||
                 employee.empInternStartDate ||
                 employee.empDoj ||
                 employee.empDateOfJoining ||
                 null;
 
+            // Internship Offer Date: UI first, then DB, then today
+            const internshipOfferDateFromBody =
+                req.body.internshipOfferDate ||
+                req.body.INTERNSHIP_OFFER_DATE ||
+                null;
+
+            const offerDateRaw =
+                internshipOfferDateFromBody ||
+                employee.internshipOfferDate ||
+                employee.internship_offer_date ||
+                null;
+
             let endDateRaw =
+                employee.internshipEndDate ||
+                employee.internship_end_date ||
                 employee.internEndDate ||
                 employee.empInternEndDate ||
                 null;
@@ -919,7 +942,49 @@ export const generateDocument = async (req, res, next) => {
             const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
             let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            // Auto-set end date = 6 months from start if not provided
+            // 🔸 SAVE Internship Start / Offer Date + Designation into employees table
+            try {
+                if (startDateRaw) {
+                    const dbStartDate =
+                        startDateObj && !isNaN(startDateObj.getTime())
+                            ? startDateObj
+                            : new Date(startDateRaw);
+                    if (!isNaN(dbStartDate.getTime())) {
+                        // Handle both camelCase and snake_case just in case
+                        employee.internship_start_date = dbStartDate;
+                        employee.internshipStartDate = dbStartDate;
+                    }
+                }
+
+                if (offerDateRaw || internshipOfferDateFromBody) {
+                    const offerDateObj =
+                        offerDateRaw
+                            ? new Date(offerDateRaw)
+                            : new Date();
+                    if (!isNaN(offerDateObj.getTime())) {
+                        employee.internship_offer_date = offerDateObj;
+                        employee.internshipOfferDate = offerDateObj;
+                    }
+                }
+
+                // ✅ Also snapshot internship designation from empDesignation
+                if (employee.empDesignation) {
+                    employee.internship_designation =
+                        employee.empDesignation || employee.internship_designation;
+                }
+
+                await employee.save();
+                console.log(
+                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, designation=${employee.internship_designation}`
+                );
+            } catch (saveErr) {
+                console.error(
+                    'Error saving internship_start_date / internship_offer_date / internship_designation for employee:',
+                    saveErr
+                );
+            }
+
+            // Auto-set end date = 6 months from Internship Start if not provided
             if ((!endDateObj || isNaN(endDateObj.getTime())) && startDateObj && !isNaN(startDateObj.getTime())) {
                 endDateObj = addMonths(startDateObj, 6);
                 endDateRaw = endDateObj;
@@ -986,7 +1051,7 @@ export const generateDocument = async (req, res, next) => {
                 employee.supervisorDesignation ||
                 'Reporting Manager';
 
-            // New nicely formatted display dates for the letter header/body
+            // Display-friendly dates
             const startDateDisplay = startDateObj
                 ? formatDateDisplay(startDateObj)
                 : formatDateDisplay(startDateRaw);
@@ -995,7 +1060,8 @@ export const generateDocument = async (req, res, next) => {
                 ? formatDateDisplay(endDateObj)
                 : formatDateDisplay(endDateRaw);
 
-            const letterDateDisplay = formatDateDisplay(new Date());
+            const letterDateObj = offerDateRaw ? new Date(offerDateRaw) : new Date();
+            const letterDateDisplay = formatDateDisplay(letterDateObj);
 
             templateData = {
                 ...templateData,
@@ -1003,14 +1069,15 @@ export const generateDocument = async (req, res, next) => {
                 designation: employee.empDesignation || '',
                 Designation: employee.empDesignation || '',
 
-                // Raw ISO-style dates (kept for compatibility if used anywhere)
+                // Raw ISO-style dates
                 StartDate: formatDate(startDateRaw),
                 EndDate: formatDate(endDateRaw),
 
-                // New display-friendly dates for the template
+                // Display-friendly dates for the template
                 StartDateDisplay: startDateDisplay,
                 EndDateDisplay: endDateDisplay,
                 LetterDate: letterDateDisplay,
+                INTERNSHIP_OFFER_DATE: formatDate(letterDateObj),
 
                 NumberofMonths: numberOfMonthsText || '',
                 DepartmentName: employee.empDepartment || '',
@@ -1019,7 +1086,7 @@ export const generateDocument = async (req, res, next) => {
                 WorkingHours:
                     employee.workingHours || '10:00 AM to 6:00 PM',
 
-                // Amount fields (mainly for paid internships, safe to be blank for unpaid)
+                // Amount fields (for paid internships; blank for unpaid)
                 Amount: isPaidInternship ? monthlyStipend.toFixed(2) : '',
                 AmountinWords: isPaidInternship ? stipendWords : '',
 

@@ -183,6 +183,33 @@
                 </div>
               </div>
 
+              {{!-- Internship Offer extra fields --}}
+              <div class="row g-3 mt-3">
+                <div class="col-md-6" id="internshipStartWrapper" style="display: none;">
+                  <label class="form-label" for="internshipStartDate">
+                    Internship Start Date
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="internshipStartDate"
+                    name="internshipStartDate"
+                  />
+                </div>
+
+                <div class="col-md-6" id="internshipOfferDateWrapper" style="display: none;">
+                  <label class="form-label" for="internshipOfferDate">
+                    Internship Offer Date
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="internshipOfferDate"
+                    name="internshipOfferDate"
+                  />
+                </div>
+              </div>
+
               <div class="mt-4 d-flex justify-content-end">
                 <button type="submit" class="btn btn-primary">
                   <i class="fas fa-file-pdf me-2"></i>Generate Document (PDF)
@@ -217,18 +244,28 @@
     const offerJoiningDateWrapper = document.getElementById('offerJoiningDateWrapper');
     const offerJoiningDateInput = document.getElementById('offerJoiningDate');
 
+    // Internship Offer fields
+    const internshipStartWrapper = document.getElementById('internshipStartWrapper');
+    const internshipOfferDateWrapper = document.getElementById('internshipOfferDateWrapper');
+    const internshipStartInput = document.getElementById('internshipStartDate');
+    const internshipOfferDateInput = document.getElementById('internshipOfferDate');
+
     function resetDynamicFields() {
       bonusFieldWrapper.style.display = 'none';
       incrementFieldWrapper.style.display = 'none';
       salaryMonthWrapper.style.display = 'none';
       reimbursementWrapper.style.display = 'none';
       offerJoiningDateWrapper.style.display = 'none';
+      internshipStartWrapper.style.display = 'none';
+      internshipOfferDateWrapper.style.display = 'none';
 
       if (bonusAmountInput) bonusAmountInput.value = '';
       if (incrementAmountInput) incrementAmountInput.value = '';
       if (salaryMonthInput) salaryMonthInput.selectedIndex = 0;
       if (reimbursementInput) reimbursementInput.value = '';
       if (offerJoiningDateInput) offerJoiningDateInput.value = '';
+      if (internshipStartInput) internshipStartInput.value = '';
+      if (internshipOfferDateInput) internshipOfferDateInput.value = '';
     }
 
     function handleDocTypeChange() {
@@ -259,6 +296,16 @@
       // Show Offer Letter fields for OFFER_LETTER
       if (code === 'OFFER_LETTER') {
         offerJoiningDateWrapper.style.display = 'block';
+      }
+
+      // Show Internship Offer fields
+      if (
+        code === 'INTERNSHIP_OFFER' ||
+        code === 'INTERN_OFFER' ||
+        code === 'INTERNSHIP_OFFER_LETTER'
+      ) {
+        internshipStartWrapper.style.display = 'block';
+        internshipOfferDateWrapper.style.display = 'block';
       }
     }
 
