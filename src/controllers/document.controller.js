@@ -355,8 +355,7 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
             specialAllowance: round(specialAllowanceMonthly),
         },
         deductionsMonthly: {
-            professionalTax: round
-                (professionalTaxMonthly),
+            professionalTax: round(professionalTaxMonthly),
             pfEmployee: round(pfMonthly),
             esiEmployee: round(esiMonthly),
             incomeTaxTds: round(incomeTaxMonthly),
@@ -383,7 +382,30 @@ export const renderDocumentsPage = async (req, res, next) => {
             order: [['name', 'ASC']],
         });
 
-        const employeesPlain = employees.map((e) => e.get({ plain: true }));
+        // ✅ Add prefill fields for Internship Offer dates (YYYY-MM-DD) per employee
+        const employeesPlain = employees.map((e) => {
+            const emp = e.get({ plain: true });
+
+            const startRaw =
+                emp.internshipStartDate ||
+                emp.internship_start_date ||
+                emp.internStartDate ||
+                emp.empInternStartDate ||
+                null;
+
+            const offerRaw =
+                emp.internshipOfferDate ||
+                emp.internship_offer_date ||
+                emp.internOfferDate ||
+                null;
+
+            return {
+                ...emp,
+                internshipStartDatePrefill: formatDate(startRaw),
+                internshipOfferDatePrefill: formatDate(offerRaw),
+            };
+        });
+
         const documentTypesPlain = documentTypes.map((d) =>
             d.get({ plain: true })
         );
@@ -403,6 +425,7 @@ export const renderDocumentsPage = async (req, res, next) => {
         next(err);
     }
 };
+
 
 /* ------------------------------------------------------------------
    Generate document + PDF + save + send email
@@ -942,7 +965,13 @@ export const generateDocument = async (req, res, next) => {
             const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
             let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            // 🔸 SAVE Internship Start / Offer Date + Designation into employees table
+            // Auto-set end date = 6 months from Internship Start if not provided
+            if ((!endDateObj || isNaN(endDateObj.getTime())) && startDateObj && !isNaN(startDateObj.getTime())) {
+                endDateObj = addMonths(startDateObj, 6);
+                endDateRaw = endDateObj;
+            }
+
+            // 🔸 SAVE Internship Start / Offer Date + End Date + Designation into employees table
             try {
                 if (startDateRaw) {
                     const dbStartDate =
@@ -967,6 +996,12 @@ export const generateDocument = async (req, res, next) => {
                     }
                 }
 
+                // ✅ Save internship end date (calculated or existing)
+                if (endDateObj && !isNaN(endDateObj.getTime())) {
+                    employee.internship_end_date = endDateObj;
+                    employee.internshipEndDate = endDateObj;
+                }
+
                 // ✅ Also snapshot internship designation from empDesignation
                 if (employee.empDesignation) {
                     employee.internship_designation =
@@ -975,19 +1010,13 @@ export const generateDocument = async (req, res, next) => {
 
                 await employee.save();
                 console.log(
-                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, designation=${employee.internship_designation}`
+                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, end=${employee.internship_end_date}, designation=${employee.internship_designation}`
                 );
             } catch (saveErr) {
                 console.error(
-                    'Error saving internship_start_date / internship_offer_date / internship_designation for employee:',
+                    'Error saving internship_start_date / internship_offer_date / internship_end_date / internship_designation for employee:',
                     saveErr
                 );
-            }
-
-            // Auto-set end date = 6 months from Internship Start if not provided
-            if ((!endDateObj || isNaN(endDateObj.getTime())) && startDateObj && !isNaN(startDateObj.getTime())) {
-                endDateObj = addMonths(startDateObj, 6);
-                endDateRaw = endDateObj;
             }
 
             let numberOfMonthsText = employee.internMonths;
@@ -1102,6 +1131,14 @@ export const generateDocument = async (req, res, next) => {
             code === 'PPO_OFFER' ||
             code === 'PRE_PLACEMENT_OFFER'
         ) {
+            // ------------------------------
+            // ✅ PPO: pull JoiningDate + Internship fields from DB
+            // ✅ IssueDate = current date
+            // ✅ PPO_REF_NO = generated
+            // ------------------------------
+
+            const now = new Date();
+
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -1111,19 +1148,58 @@ export const generateDocument = async (req, res, next) => {
             const breakup = generateSalaryBreakup(ctcAnnual);
             const monthlyFixed = breakup.monthly.fixedGross;
 
-            // Joining date for PPO: prefer body/explicit PPO fields, fallback only if missing
+            // Joining date for PPO: from DB (employees.empDateOfJoining) by your requirement
+            // (fallback to today only if null)
             const joiningDateRaw =
-                req.body.ppoJoiningDate ||
-                req.body.PPO_JOINING_DATE ||
-                employee.ppoJoiningDate ||
-                employee.empPpoJoiningDate ||
-                employee.fullTimeJoiningDate ||
+                employee.empDateOfJoining ||
+                employee.empDoj ||
                 employee.empFullTimeJoiningDate ||
+                employee.fullTimeJoiningDate ||
                 null;
 
-            const joiningDateFormatted = formatDate(
-                joiningDateRaw || new Date()
+            const joiningDateFormatted = formatDate(joiningDateRaw || now);
+
+            // Internship fields from DB
+            const internshipStartRaw =
+                employee.internship_start_date ||
+                employee.internshipStartDate ||
+                null;
+
+            const internshipEndRaw =
+                employee.internship_end_date ||
+                employee.internshipEndDate ||
+                null;
+
+            const internshipDesignationRaw =
+                employee.internship_designation ||
+                employee.internshipDesignation ||
+                '';
+
+            // Auto-calc internship end date if missing but start exists (optional safety)
+            let internshipEndObj = internshipEndRaw ? new Date(internshipEndRaw) : null;
+            const internshipStartObj = internshipStartRaw ? new Date(internshipStartRaw) : null;
+
+            if (
+                (!internshipEndObj || isNaN(internshipEndObj.getTime())) &&
+                internshipStartObj &&
+                !isNaN(internshipStartObj.getTime())
+            ) {
+                internshipEndObj = addMonths(internshipStartObj, 6);
+            }
+
+            const internshipStartFormatted = formatDate(internshipStartRaw);
+            const internshipEndFormatted = formatDate(
+                internshipEndObj && !isNaN(internshipEndObj.getTime())
+                    ? internshipEndObj
+                    : internshipEndRaw
             );
+
+            // IssueDate: current date (display style used in your HTML meta)
+            const issueDateDisplay = formatDateDisplay(now);
+
+            // PPO Ref No (generated)
+            const yyyymmdd = formatDate(now).replace(/-/g, '');
+            const ppoRefNo = `PPO-${employee.empId || employee.id}-${yyyymmdd}`;
 
             const ctcInWords = ctcAnnual > 0
                 ? numberToIndianWords(ctcAnnual)
@@ -1137,18 +1213,31 @@ export const generateDocument = async (req, res, next) => {
                 ...templateData,
                 Name: employee.empName,
                 'Name': employee.empName,
+
+                // PPO designation should be current empDesignation (since you said PPO designation changes)
                 Designation: employee.empDesignation || '',
                 'Designation': employee.empDesignation || '',
+
                 EmployeeType:
                     employee.empType ||
                     employee.employeeType ||
                     'Full-time',
+
                 CTC: ctcAnnual.toFixed(2),
                 'CTC': ctcAnnual.toFixed(2),
                 CTC_IN_WORDS: ctcInWords,
+
                 JoiningDate: joiningDateFormatted,
+
                 MonthlySalary: monthlyFixed.toFixed(2),
                 MONTHLY_SALARY_IN_WORDS: monthlySalaryWords,
+
+                // ✅ New fields for PPO HTML
+                PPO_REF_NO: ppoRefNo,
+                IssueDate: issueDateDisplay,
+                InternshipDesignation: internshipDesignationRaw || '',
+                InternshipStartDate: internshipStartFormatted,
+                InternshipEndDate: internshipEndFormatted,
             };
 
             // 🔹 Probation Letter
@@ -1384,11 +1473,11 @@ export const generateDocument = async (req, res, next) => {
                 employee.fnfPaymentDate ||
                 settlementDateRaw;
 
-            const yyyymmdd =
+            const yyyymmdd2 =
                 formatDate(settlementDateRaw).replace(/-/g, '');
             const SETTLEMENT_REF =
                 employee.settlementRef ||
-                `FNF-${EMP_ID}-${yyyymmdd}`;
+                `FNF-${EMP_ID}-${yyyymmdd2}`;
 
             templateData = {
                 ...templateData,
@@ -1520,7 +1609,7 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           ⭐ Generate PDF
+        ⭐ Generate PDF
         -------------------------------------------------------------- */
         const pdfBuffer = await generatePdfFromTemplate(
             docType.templateHtml,
@@ -1546,9 +1635,9 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           📧 Send email directly from this controller
-           - For ALL document types (no attachment)
-           - For SALARY_SLIP: email must succeed, otherwise do NOT download PDF
+        📧 Send email directly from this controller
+        - For ALL document types (no attachment)
+        - For SALARY_SLIP: email must succeed, otherwise do NOT download PDF
         -------------------------------------------------------------- */
         let emailSent = true;
         let emailAttempted = false;
@@ -1561,7 +1650,7 @@ export const generateDocument = async (req, res, next) => {
                 const docLabel = docType.name || docType.code || 'Document';
 
                 let subject = `${docLabel} generated for ${empName}`;
-                let html = `<p>Hi ${empName},</p>`;
+                let html = `<p>Dear ${empName},</p>`;
 
                 if (code === 'SALARY_SLIP') {
                     const monthText =
@@ -1571,11 +1660,13 @@ export const generateDocument = async (req, res, next) => {
                     subject = `Salary Slip - ${monthText}`;
                     html += `<p>Your salary slip for <strong>${monthText}</strong> has been generated.</p>`;
                 } else {
-                    html += `<p>Your <strong>${docLabel}</strong> has been generated.</p>`;
+                    html += `<p>Congratulations! We're pleased to extend to you an <strong>${docLabel}</strong> with Seecog Softwares Pvt. Ltd. 🎉</p>`;
                 }
+                html += `
+<p>Please find attached your ${docLabel} for your review and records. This is an automated notification from our HR system confirming that the document has been generated and securely stored in our records.</p>`;
 
                 html += `
-<p>This is an automated notification from ${companyName} HR system. The document has been generated and stored in our records.</p>
+<p>We're excited to have you join us and look forward to seeing your contributions and growth during the internship. If you have any questions regarding the offer, joining formalities, or any part of the letter, please feel free to reply to this email—we'll be happy to assist you.</p>
 <p>Regards,<br/>HR Team<br/>${companyName}</p>
                 `;
 
@@ -1614,7 +1705,7 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           Return PDF to browser
+        Return PDF to browser
         -------------------------------------------------------------- */
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(

@@ -60,10 +60,16 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Employee</label>
-                  <select name="employeeId" class="form-select" required>
+                  <select name="employeeId" id="employeeSelect" class="form-select" required>
                     <option value="">Select employee</option>
                     {{#each employees}}
-                      <option value="{{id}}">{{empName}} ({{empId}})</option>
+                      <option
+                        value="{{id}}"
+                        data-internship-start-date="{{internshipStartDatePrefill}}"
+                        data-internship-offer-date="{{internshipOfferDatePrefill}}"
+                      >
+                        {{empName}} ({{empId}})
+                      </option>
                     {{/each}}
                   </select>
                 </div>
@@ -185,6 +191,18 @@
 
               {{!-- Internship Offer extra fields --}}
               <div class="row g-3 mt-3">
+                <div class="col-md-6" id="internshipOfferDateWrapper" style="display: none;">
+                  <label class="form-label" for="internshipOfferDate">
+                    Internship Offer Date
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="internshipOfferDate"
+                    name="internshipOfferDate"
+                  />
+                </div>
+                
                 <div class="col-md-6" id="internshipStartWrapper" style="display: none;">
                   <label class="form-label" for="internshipStartDate">
                     Internship Start Date
@@ -197,17 +215,7 @@
                   />
                 </div>
 
-                <div class="col-md-6" id="internshipOfferDateWrapper" style="display: none;">
-                  <label class="form-label" for="internshipOfferDate">
-                    Internship Offer Date
-                  </label>
-                  <input
-                    type="date"
-                    class="form-control"
-                    id="internshipOfferDate"
-                    name="internshipOfferDate"
-                  />
-                </div>
+                
               </div>
 
               <div class="mt-4 d-flex justify-content-end">
@@ -231,6 +239,8 @@
 <script>
   (function () {
     const docTypeSelect = document.getElementById('documentTypeSelect');
+    const employeeSelect = document.getElementById('employeeSelect');
+
     const bonusFieldWrapper = document.getElementById('bonusFieldWrapper');
     const incrementFieldWrapper = document.getElementById('incrementFieldWrapper');
     const bonusAmountInput = document.getElementById('bonusAmount');
@@ -268,6 +278,34 @@
       if (internshipOfferDateInput) internshipOfferDateInput.value = '';
     }
 
+    function isInternshipOfferSelected() {
+      const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+      if (!selectedOption) return false;
+
+      const rawCode = selectedOption.getAttribute('data-code') || '';
+      const code = rawCode.toUpperCase();
+
+      return (
+        code === 'INTERNSHIP_OFFER' ||
+        code === 'INTERN_OFFER' ||
+        code === 'INTERNSHIP_OFFER_LETTER'
+      );
+    }
+
+    function prefillInternshipDatesFromEmployee() {
+      if (!employeeSelect || !internshipStartInput || !internshipOfferDateInput) return;
+
+      const empOpt = employeeSelect.options[employeeSelect.selectedIndex];
+      if (!empOpt) return;
+
+      const dbStart = empOpt.getAttribute('data-internship-start-date') || '';
+      const dbOffer = empOpt.getAttribute('data-internship-offer-date') || '';
+
+      // If DB has values, set them
+      if (dbStart) internshipStartInput.value = dbStart;
+      if (dbOffer) internshipOfferDateInput.value = dbOffer;
+    }
+
     function handleDocTypeChange() {
       resetDynamicFields();
 
@@ -299,20 +337,30 @@
       }
 
       // Show Internship Offer fields
-      if (
-        code === 'INTERNSHIP_OFFER' ||
-        code === 'INTERN_OFFER' ||
-        code === 'INTERNSHIP_OFFER_LETTER'
-      ) {
+      if (isInternshipOfferSelected()) {
         internshipStartWrapper.style.display = 'block';
         internshipOfferDateWrapper.style.display = 'block';
+
+        // ✅ Prefill from DB (employee option dataset)
+        prefillInternshipDatesFromEmployee();
+      }
+    }
+
+    function handleEmployeeChange() {
+      // Only prefill when Internship Offer is selected
+      if (isInternshipOfferSelected()) {
+        prefillInternshipDatesFromEmployee();
       }
     }
 
     if (docTypeSelect) {
       docTypeSelect.addEventListener('change', handleDocTypeChange);
-      // run once on page load if some option is pre-selected
       handleDocTypeChange();
+    }
+
+    if (employeeSelect) {
+      employeeSelect.addEventListener('change', handleEmployeeChange);
+      handleEmployeeChange();
     }
   })();
 </script>
