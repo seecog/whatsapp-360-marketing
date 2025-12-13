@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
 import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
+import {Designation} from '../models/Designation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,28 @@ async function sendSimpleDocumentEmail({ to, cc, subject, html }) {
         return false;
     }
 }
+
+// Helper: calculate total days + Sundays + working days (Sunday is weekly off)
+function getMonthWorkingMeta(dateObj) {
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+        return { totalDays: 0, sundays: 0, workingDays: 0 };
+    }
+
+    const year = dateObj.getFullYear();
+    const monthIndex = dateObj.getMonth(); // 0-11
+
+    const totalDays = new Date(year, monthIndex + 1, 0).getDate();
+
+    let sundays = 0;
+    for (let day = 1; day <= totalDays; day++) {
+        const dow = new Date(year, monthIndex, day).getDay(); // 0 = Sunday
+        if (dow === 0) sundays++;
+    }
+
+    const workingDays = Math.max(0, totalDays - sundays);
+    return { totalDays, sundays, workingDays };
+}
+
 
 /* ------------------------------------------------------------------
    🔢 Convert number to Indian currency words (Rupees Only)
@@ -491,8 +514,12 @@ export const generateDocument = async (req, res, next) => {
         if (code === 'INTERNSHIP_CERT' || code === 'INTERNSHIP_CERTIFICATE') {
             const now = new Date();
 
-            const INTERN_NAME = employee.empName;
+            const INTERN_NAME = employee.empName || '';
+
+            // ✅ ROLE from DB internship_designation (with safe fallbacks)
             const INTERNSHIP_ROLE =
+                employee.internship_designation ||
+                employee.internshipDesignation ||
                 employee.internRole ||
                 employee.empDesignation ||
                 'Intern';
@@ -502,7 +529,10 @@ export const generateDocument = async (req, res, next) => {
                 employee.departmentName ||
                 'Internship Department';
 
+            // ✅ START/END from DB internship_start_date / internship_end_date (with fallbacks)
             const startDateRaw =
+                employee.internship_start_date ||
+                employee.internshipStartDate ||
                 employee.internStartDate ||
                 employee.empInternStartDate ||
                 employee.empDoj ||
@@ -510,6 +540,8 @@ export const generateDocument = async (req, res, next) => {
                 null;
 
             let endDateRaw =
+                employee.internship_end_date ||
+                employee.internshipEndDate ||
                 employee.internEndDate ||
                 employee.empInternEndDate ||
                 employee.internCompletionDate ||
@@ -518,13 +550,18 @@ export const generateDocument = async (req, res, next) => {
             const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
             let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            // If no end date stored, auto-set to 6 months from start
-            if ((!endDateObj || isNaN(endDateObj.getTime())) && startDateObj && !isNaN(startDateObj.getTime())) {
+            // ✅ If end date missing, auto = 6 months from start
+            if (
+                (!endDateObj || isNaN(endDateObj.getTime())) &&
+                startDateObj &&
+                !isNaN(startDateObj.getTime())
+            ) {
                 endDateObj = addMonths(startDateObj, 6);
                 endDateRaw = endDateObj;
             }
 
-            let INTERNSHIP_DURATION = '';
+            // ✅ INTERNSHIP_DURATION (default 6 months; calculate if dates exist)
+            let INTERNSHIP_DURATION = '6 months';
             if (
                 startDateObj &&
                 endDateObj &&
@@ -534,23 +571,56 @@ export const generateDocument = async (req, res, next) => {
             ) {
                 const diffMs = endDateObj - startDateObj;
                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const monthsCount = Math.max(
-                    1,
-                    Math.round(diffDays / 30)
-                );
-                const monthLabel = monthsCount === 1 ? 'month' : 'months';
-                INTERNSHIP_DURATION = `approximately ${monthsCount} ${monthLabel}`;
-            } else {
-                INTERNSHIP_DURATION =
-                    employee.internDuration ||
-                    employee.internMonths ||
-                    'approximately six months';
+                const monthsCount = Math.max(1, Math.round(diffDays / 30));
+                INTERNSHIP_DURATION = `${monthsCount} months`;
             }
 
-            const INTERNSHIP_DOMAIN =
+            // ✅ INTERNSHIP_DOMAIN:
+            // Default fallback (old behavior) + NEW: fetch from designations.metaData.work_profile
+            let INTERNSHIP_DOMAIN =
                 employee.internDomain ||
                 employee.internProjectDomain ||
                 'Software Development';
+
+            try {
+                // We will match Designation by name = employee's internship role / designation text
+                const desigName = String(INTERNSHIP_ROLE || employee.empDesignation || '').trim();
+
+                if (desigName) {
+                    const where = { name: desigName };
+
+                    // Optional tenant filter if you have businessId on employee (safe, won't break if undefined)
+                    const empBusinessId = employee.businessId || employee.business_id;
+                    if (empBusinessId != null) where.businessId = empBusinessId;
+
+                    const desigRow = await Designation.findOne({
+                        where,
+                        attributes: ['id', 'name', 'metaData'],
+                    });
+
+                    if (desigRow && desigRow.metaData) {
+                        const md = desigRow.metaData;
+                        const metaObj =
+                            typeof md === 'string'
+                                ? (() => {
+                                    try { return JSON.parse(md); } catch { return null; }
+                                })()
+                                : md;
+
+                        const workProfile =
+                            metaObj?.work_profile ||
+                            metaObj?.workProfile ||
+                            '';
+
+                        if (workProfile && String(workProfile).trim()) {
+                            // ✅ Set domain from designation metaData.work_profile
+                            INTERNSHIP_DOMAIN = String(workProfile).trim();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Unable to read designations.metaData.work_profile:', e?.message || e);
+            }
 
             const PERFORMANCE_SUMMARY =
                 employee.internPerformanceSummary ||
@@ -576,9 +646,11 @@ export const generateDocument = async (req, res, next) => {
                 employee.internSupervisorDesignation ||
                 'Supervisor';
 
+            // ✅ Use display format because your HTML prints START_DATE / END_DATE directly
             const START_DATE_DISPLAY = startDateObj
                 ? formatDateDisplay(startDateObj)
                 : formatDateDisplay(startDateRaw);
+
             const END_DATE_DISPLAY = endDateObj
                 ? formatDateDisplay(endDateObj)
                 : formatDateDisplay(endDateRaw);
@@ -597,15 +669,16 @@ export const generateDocument = async (req, res, next) => {
                 END_DATE: END_DATE_DISPLAY,
                 INTERNSHIP_DURATION,
 
+                // ✅ Now coming from designation.metaData.work_profile (if present)
                 INTERNSHIP_DOMAIN,
                 PERFORMANCE_SUMMARY,
 
                 SUPERVISOR_NAME,
                 SUPERVISOR_DESIGNATION,
             };
+        }
 
-            // 🔹 Salary Slip
-        } else if (code === 'SALARY_SLIP') {
+        else if (code === 'SALARY_SLIP') {
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -620,7 +693,7 @@ export const generateDocument = async (req, res, next) => {
             const specialMonthly = breakup.monthly.specialAllowance;
             const fixedGrossMonthly = breakup.monthly.fixedGross;
 
-            const professionalTaxMonthly = breakup.deductionsMonthly.professionalTax;
+            const professionalTaxMonthlyBase = breakup.deductionsMonthly.professionalTax;
             const pfMonthly = breakup.deductionsMonthly.pfEmployee;
             const esiMonthly = breakup.deductionsMonthly.esiEmployee;
             const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
@@ -677,6 +750,36 @@ export const generateDocument = async (req, res, next) => {
                 );
             }
 
+            // ✅ Working days (Sunday is weekly off)
+            const { workingDays } = getMonthWorkingMeta(slipDateObj);
+            const WORK_DAYS = workingDays;
+
+            // ✅ Non Paid Leave from UI (0..28), capped to working days
+            const nonPaidLeaveRaw =
+                req.body.nonPaidLeave ||
+                req.body.NON_PAID_LEAVE ||
+                req.body.non_paid_leave ||
+                0;
+
+            let NON_PAID_LEAVE = Number(nonPaidLeaveRaw);
+            if (isNaN(NON_PAID_LEAVE) || NON_PAID_LEAVE < 0) NON_PAID_LEAVE = 0;
+            if (NON_PAID_LEAVE > 28) NON_PAID_LEAVE = 28;
+            if (WORK_DAYS > 0 && NON_PAID_LEAVE > WORK_DAYS) NON_PAID_LEAVE = WORK_DAYS;
+
+            const DAYS_PAID = Math.max(0, WORK_DAYS - NON_PAID_LEAVE);
+
+            // ✅ Earned salary factor
+            const prorationFactor = WORK_DAYS > 0 ? (DAYS_PAID / WORK_DAYS) : 0;
+
+            // ✅ Earned components (after LOP)
+            const basicEarned = basicMonthly * prorationFactor;
+            const hraEarned = hraMonthly * prorationFactor;
+            const specialEarned = specialMonthly * prorationFactor;
+            const fixedGrossEarned = fixedGrossMonthly * prorationFactor;
+
+            // ✅ LOP deduction (so you can SHOW it in salary slip)
+            const LOP_DEDUCTION = Math.max(0, fixedGrossMonthly - fixedGrossEarned);
+
             const reimbursementRaw =
                 req.body.reimbursement ||
                 req.body.REIMBURSEMENT ||
@@ -685,12 +788,16 @@ export const generateDocument = async (req, res, next) => {
 
             const reimbursement = Number(reimbursementRaw) || 0;
 
-            const totalEarningsMonthly = fixedGrossMonthly + reimbursement;
+            // ✅ Total Earnings: show Actual (full) vs Earned (after LOP)
+            const totalEarningsActualMonthly = fixedGrossMonthly + reimbursement;
+            const totalEarningsEarnedMonthly = fixedGrossEarned + reimbursement;
 
+            // Keep original deductions (same as your system), add LOP as deduction
+            const professionalTaxMonthly = professionalTaxMonthlyBase;
             const totalDeductionsMonthly =
-                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
+                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly + LOP_DEDUCTION;
 
-            const netMonthly = totalEarningsMonthly - totalDeductionsMonthly;
+            const netMonthly = totalEarningsActualMonthly - totalDeductionsMonthly;
 
             const bankName =
                 employee.bankName ||
@@ -735,8 +842,11 @@ export const generateDocument = async (req, res, next) => {
                     employee.empDateOfJoining || employee.empDoj
                 ),
                 PAN: employee.empPan || '',
-                DAYS_PAID: employee.daysPaid || 30,
-                WORK_DAYS: employee.workDays || 30,
+
+                // ✅ Auto-calculated based on month (Sunday weekly off) + non-paid leave
+                DAYS_PAID: DAYS_PAID,
+                WORK_DAYS: WORK_DAYS,
+                NON_PAID_LEAVE: NON_PAID_LEAVE,
 
                 BANK_NAME: bankName,
                 BANK_ACCOUNT_LAST4,
@@ -744,9 +854,15 @@ export const generateDocument = async (req, res, next) => {
                 PF_NUMBER: pfNumber,
                 ESI_NUMBER: esiNumber,
 
-                BASIC: basicMonthly.toFixed(2),
-                HRA: hraMonthly.toFixed(2),
-                SPECIAL: specialMonthly.toFixed(2),
+                // ✅ Actual vs Earned amounts
+                BASIC_ACTUAL: basicMonthly.toFixed(2),
+                HRA_ACTUAL: hraMonthly.toFixed(2),
+                SPECIAL_ACTUAL: specialMonthly.toFixed(2),
+
+                BASIC_EARNED: basicEarned.toFixed(2),
+                HRA_EARNED: hraEarned.toFixed(2),
+                SPECIAL_EARNED: specialEarned.toFixed(2),
+
                 REIMBURSEMENT: reimbursement.toFixed(2),
 
                 PF: pfMonthly.toFixed(2),
@@ -754,13 +870,25 @@ export const generateDocument = async (req, res, next) => {
                 TDS: incomeTaxMonthly.toFixed(2),
                 PROFESSIONAL_TAX: professionalTaxMonthly.toFixed(2),
 
-                TOTAL_EARNINGS: totalEarningsMonthly.toFixed(2),
+                // ✅ New deduction line item
+                LOP_DEDUCTION: LOP_DEDUCTION.toFixed(2),
+
+                TOTAL_EARNINGS_ACTUAL: totalEarningsActualMonthly.toFixed(2),
+                TOTAL_EARNINGS_EARNED: totalEarningsEarnedMonthly.toFixed(2),
+
                 TOTAL_DEDUCTIONS: totalDeductionsMonthly.toFixed(2),
                 NET_SALARY: netMonthly.toFixed(2),
+
+                // Backward-safe fields (in case any old template uses them)
+                BASIC: basicEarned.toFixed(2),
+                HRA: hraEarned.toFixed(2),
+                SPECIAL: specialEarned.toFixed(2),
+                TOTAL_EARNINGS: totalEarningsEarnedMonthly.toFixed(2),
             };
 
             // 🔹 Offer Letter
         } else if (code === 'OFFER_LETTER') {
+
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -966,7 +1094,11 @@ export const generateDocument = async (req, res, next) => {
             let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
             // Auto-set end date = 6 months from Internship Start if not provided
-            if ((!endDateObj || isNaN(endDateObj.getTime())) && startDateObj && !isNaN(startDateObj.getTime())) {
+            if (
+                (!endDateObj || isNaN(endDateObj.getTime())) &&
+                startDateObj &&
+                !isNaN(startDateObj.getTime())
+            ) {
                 endDateObj = addMonths(startDateObj, 6);
                 endDateRaw = endDateObj;
             }
@@ -978,18 +1110,15 @@ export const generateDocument = async (req, res, next) => {
                         startDateObj && !isNaN(startDateObj.getTime())
                             ? startDateObj
                             : new Date(startDateRaw);
+
                     if (!isNaN(dbStartDate.getTime())) {
-                        // Handle both camelCase and snake_case just in case
                         employee.internship_start_date = dbStartDate;
                         employee.internshipStartDate = dbStartDate;
                     }
                 }
 
                 if (offerDateRaw || internshipOfferDateFromBody) {
-                    const offerDateObj =
-                        offerDateRaw
-                            ? new Date(offerDateRaw)
-                            : new Date();
+                    const offerDateObj = offerDateRaw ? new Date(offerDateRaw) : new Date();
                     if (!isNaN(offerDateObj.getTime())) {
                         employee.internship_offer_date = offerDateObj;
                         employee.internshipOfferDate = offerDateObj;
@@ -1002,15 +1131,19 @@ export const generateDocument = async (req, res, next) => {
                     employee.internshipEndDate = endDateObj;
                 }
 
-                // ✅ Also snapshot internship designation from empDesignation
-                if (employee.empDesignation) {
-                    employee.internship_designation =
-                        employee.empDesignation || employee.internship_designation;
+                // ✅ Only update internship_designation if it's blank/empty
+                const currentInternDesig = (employee.internship_designation || '').trim();
+                if (!currentInternDesig) {
+                    const empDesig = (employee.empDesignation || '').trim();
+                    if (empDesig) {
+                        employee.internship_designation = empDesig;
+                        employee.internshipDesignation = empDesig; // keep camelCase in sync if your model has it
+                    }
                 }
 
                 await employee.save();
                 console.log(
-                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, end=${employee.internship_end_date}, designation=${employee.internship_designation}`
+                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, end=${employee.internship_end_date}, internship_designation=${employee.internship_designation}`
                 );
             } catch (saveErr) {
                 console.error(
@@ -1021,7 +1154,8 @@ export const generateDocument = async (req, res, next) => {
 
             let numberOfMonthsText = employee.internMonths;
 
-            if (!numberOfMonthsText &&
+            if (
+                !numberOfMonthsText &&
                 startDateObj &&
                 endDateObj &&
                 !isNaN(startDateObj.getTime()) &&
@@ -1030,18 +1164,11 @@ export const generateDocument = async (req, res, next) => {
             ) {
                 const diffMs = endDateObj - startDateObj;
                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const monthsCount = Math.max(
-                    1,
-                    Math.round(diffDays / 30)
-                );
+                const monthsCount = Math.max(1, Math.round(diffDays / 30));
                 numberOfMonthsText = `${monthsCount} months`;
             }
 
-            const stipendAmountRaw =
-                employee.internStipend ||
-                employee.empStipend ||
-                0;
-
+            const stipendAmountRaw = employee.internStipend || employee.empStipend || 0;
             let monthlyStipend = Number(stipendAmountRaw) || 0;
 
             // fallback: if not specifically set, derive from CTC
@@ -1051,7 +1178,7 @@ export const generateDocument = async (req, res, next) => {
 
             let stipendWords = '';
             if (monthlyStipend > 0) {
-                const full = numberToIndianWords(monthlyStipend); // e.g. "Five Thousand Rupees Only"
+                const full = numberToIndianWords(monthlyStipend); // "Five Thousand Rupees Only"
                 stipendWords = full
                     .replace(/ Rupees Only$/i, '')
                     .replace(/ Rupees$/i, '')
@@ -1065,20 +1192,21 @@ export const generateDocument = async (req, res, next) => {
             let stipendText2 = '';
 
             if (isPaidInternship) {
-                stipendText1 = `You will be paid a monthly stipend of ₹${monthlyStipend.toFixed(2)} (Rupees ${stipendWords} only), subject to satisfactory attendance and performance.`;
-                stipendText2 = 'The stipend will be paid on a monthly basis, after the end of each month, directly to your bank account, subject to applicable deductions, if any.';
+                stipendText1 = `You will be paid a monthly stipend of ₹${monthlyStipend.toFixed(
+                    2
+                )} (Rupees ${stipendWords} only), subject to satisfactory attendance and performance.`;
+                stipendText2 =
+                    'The stipend will be paid on a monthly basis, after the end of each month, directly to your bank account, subject to applicable deductions, if any.';
             } else {
-                stipendText1 = 'This is an unpaid internship for learning and training purposes. You will not be paid any stipend for this internship.';
-                stipendText2 = 'All other terms and conditions of the internship will remain as described in this letter.';
+                stipendText1 =
+                    'This is an unpaid internship for learning and training purposes. You will not be paid any stipend for this internship.';
+                stipendText2 =
+                    'All other terms and conditions of the internship will remain as described in this letter.';
             }
 
-            const supervisorName =
-                employee.supervisorName ||
-                'Mukesh Kumhar';
-
+            const supervisorName = employee.supervisorName || 'Mukesh Kumhar';
             const supervisorDesignation =
-                employee.supervisorDesignation ||
-                'Reporting Manager';
+                employee.supervisorDesignation || 'Reporting Manager';
 
             // Display-friendly dates
             const startDateDisplay = startDateObj
@@ -1112,8 +1240,7 @@ export const generateDocument = async (req, res, next) => {
                 DepartmentName: employee.empDepartment || '',
                 SupervisorName: supervisorName,
                 SupervisorDesignation: supervisorDesignation,
-                WorkingHours:
-                    employee.workingHours || '10:00 AM to 6:00 PM',
+                WorkingHours: employee.workingHours || '10:00 AM to 6:00 PM',
 
                 // Amount fields (for paid internships; blank for unpaid)
                 Amount: isPaidInternship ? monthlyStipend.toFixed(2) : '',
@@ -1123,9 +1250,8 @@ export const generateDocument = async (req, res, next) => {
                 StipendText1: stipendText1,
                 StipendText2: stipendText2,
             };
-
-            // 🔹 PPO Letter
-        } else if (
+        }
+ else if (
             code === 'PPO' ||
             code === 'PPO_LETTER' ||
             code === 'PPO_OFFER' ||
@@ -1667,7 +1793,7 @@ export const generateDocument = async (req, res, next) => {
 
                 html += `
 <p>We're excited to have you join us and look forward to seeing your contributions and growth during the internship. If you have any questions regarding the offer, joining formalities, or any part of the letter, please feel free to reply to this email—we'll be happy to assist you.</p>
-<p>Regards,<br/>HR Team<br/>${companyName}</p>
+<p>Thanks & Regards<br/>HR Team<br/><br>Contact : 7348820668</br>${companyName}<br>Web : http://seecogsoftwares.com</br><br>T+91 8147614116</br><br></br><br>Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030</br><br>Cloud | Mobility | Social Media | Automation | BI/DW | Machine Learning | SaaS | DevOps |HealthcareIT | Salesforce (SFDC) | Azure | Frontend (UI) | Digital Transformation |Software Engineering Services</br></p>
                 `;
 
                 emailAttempted = true;
