@@ -1,6 +1,8 @@
 // src/models/EmployeeDocument.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/index.js';
+import { Op } from 'sequelize';
+
 
 const EmployeeDocument = sequelize.define(
     'EmployeeDocument',

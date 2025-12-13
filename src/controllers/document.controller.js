@@ -3,11 +3,13 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import { Op } from 'sequelize';
 
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
 import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
 import {Designation} from '../models/Designation.js';
+import EmployeeDocument from '../models/EmployeeDocument.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -828,6 +830,47 @@ export const generateDocument = async (req, res, next) => {
                 employee.empEsiNumber ||
                 '';
 
+            // ✅ PAN: employees table first, else employee_documents table
+            let PAN_NUMBER = String(
+                employee.empPan ||
+                employee.empPAN ||
+                employee.pan ||
+                employee.panNumber ||
+                employee.emp_pan ||
+                employee.PAN ||
+                ''
+            ).trim();
+
+            // Treat these as "empty"
+            const isPanMissing =
+                !PAN_NUMBER || PAN_NUMBER === '--' || PAN_NUMBER.toUpperCase() === 'NA';
+
+            if (isPanMissing) {
+                try {
+                    const panDoc = await EmployeeDocument.findOne({
+                        where: {
+                            employeeId: employee.id,
+                            [Op.or]: [
+                                { category: 'PAN' },
+                                { documentType: { [Op.like]: '%pan%' } },
+                            ],
+                        },
+                        order: [
+                            ['updatedAt', 'DESC'],
+                            ['createdAt', 'DESC'],
+                            ['id', 'DESC'],
+                        ],
+                    });
+
+                    if (panDoc) {
+                        const fromDoc = String(panDoc.documentNumber || '').trim();
+                        if (fromDoc) PAN_NUMBER = fromDoc;
+                    }
+                } catch (e) {
+                    console.warn('PAN fetch failed from employee_documents:', e?.message || e);
+                }
+            }
+
             templateData = {
                 ...templateData,
                 Month: formatMonthYear(slipDateObj) || 'Salary Month',
@@ -838,10 +881,10 @@ export const generateDocument = async (req, res, next) => {
 
                 EMP_CODE: employee.empId || employee.id,
                 DOB: formatDate(employee.empDob),
-                DOJ: formatDate(
-                    employee.empDateOfJoining || employee.empDoj
-                ),
-                PAN: employee.empPan || '',
+                DOJ: formatDate(employee.empDateOfJoining || employee.empDoj),
+
+                // ✅ PAN in PDF
+                PAN: PAN_NUMBER || 'NA',
 
                 // ✅ Auto-calculated based on month (Sunday weekly off) + non-paid leave
                 DAYS_PAID: DAYS_PAID,
@@ -879,15 +922,15 @@ export const generateDocument = async (req, res, next) => {
                 TOTAL_DEDUCTIONS: totalDeductionsMonthly.toFixed(2),
                 NET_SALARY: netMonthly.toFixed(2),
 
-                // Backward-safe fields (in case any old template uses them)
+                // Backward-safe fields
                 BASIC: basicEarned.toFixed(2),
                 HRA: hraEarned.toFixed(2),
                 SPECIAL: specialEarned.toFixed(2),
                 TOTAL_EARNINGS: totalEarningsEarnedMonthly.toFixed(2),
             };
+        }
 
-            // 🔹 Offer Letter
-        } else if (code === 'OFFER_LETTER') {
+        else if (code === 'OFFER_LETTER') {
 
             const ctcAnnual = Number(
                 employee.empCtc ||
