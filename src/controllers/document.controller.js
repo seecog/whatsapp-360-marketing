@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import Employee from '../models/Employee.js';
 import DocumentType from '../models/DocumentType.js';
 import { generatePdfFromTemplate } from '../utils/generatePdfFromTemplate.js';
+import {Designation} from '../models/Designation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,28 @@ async function sendSimpleDocumentEmail({ to, cc, subject, html }) {
         return false;
     }
 }
+
+// Helper: calculate total days + Sundays + working days (Sunday is weekly off)
+function getMonthWorkingMeta(dateObj) {
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+        return { totalDays: 0, sundays: 0, workingDays: 0 };
+    }
+
+    const year = dateObj.getFullYear();
+    const monthIndex = dateObj.getMonth(); // 0-11
+
+    const totalDays = new Date(year, monthIndex + 1, 0).getDate();
+
+    let sundays = 0;
+    for (let day = 1; day <= totalDays; day++) {
+        const dow = new Date(year, monthIndex, day).getDay(); // 0 = Sunday
+        if (dow === 0) sundays++;
+    }
+
+    const workingDays = Math.max(0, totalDays - sundays);
+    return { totalDays, sundays, workingDays };
+}
+
 
 /* ------------------------------------------------------------------
    🔢 Convert number to Indian currency words (Rupees Only)
@@ -154,12 +177,73 @@ function formatMonthYear(value) {
     return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+/**
+ * Display date helper for letters (e.g., "02 June 2025")
+ */
+function formatDateDisplay(value) {
+    if (!value) return '';
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) {
+        return String(value);
+    }
+    const day = String(d.getDate()).padStart(2, '0');
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day} ${monthName} ${year}`;
+}
+
+/**
+ * Indian-style currency formatting with commas, 2 decimals.
+ * e.g. 5000 -> "5,000.00", 96000 -> "96,000.00"
+ */
+function formatIndianCurrency(amount) {
+    if (amount == null || isNaN(Number(amount))) {
+        return '0.00';
+    }
+    const fixed = Number(amount).toFixed(2); // "5000.00"
+    const [intPart, decPart] = fixed.split('.');
+    let lastThree = intPart.slice(-3);
+    let other = intPart.slice(0, -3);
+
+    if (other !== '') {
+        other = other.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+        return other + ',' + lastThree + '.' + decPart;
+    }
+    return lastThree + '.' + decPart;
+}
+
+/**
+ * Add months to a date (calendar-safe), used for 6-month internship end date.
+ */
+function addMonths(dateInput, months) {
+    if (!dateInput) return null;
+    const d = dateInput instanceof Date ? new Date(dateInput.getTime()) : new Date(dateInput);
+    if (isNaN(d.getTime())) return null;
+
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const day = d.getDate();
+
+    const result = new Date(year, month + months, day);
+
+    // If day overflowed (e.g., 31st → next month), snap to last day of previous month
+    if (result.getDate() !== day) {
+        result.setDate(0);
+    }
+
+    return result;
+}
+
 /* ------------------------------------------------------------------
    💸 Salary breakup helper (using empCtc)
 ------------------------------------------------------------------ */
 function generateSalaryBreakup(annualGrossCtc, options = {}) {
     const {
-        variablePayPct = 0.10,
+        variablePayPct = 0,
         basicPctOfFixedGross = 0.40,
         hraPctOfBasic = 0.40,
 
@@ -169,7 +253,7 @@ function generateSalaryBreakup(annualGrossCtc, options = {}) {
 
         // Indian payroll-style rules
         pfPctOfBasic = 0,
-        esiPctOfGross = 0.0075,
+        esiPctOfGross = 0,
         esiWageThresholdMonthly = 21000,
         standardDeductionAnnual = 50000
     } = options;
@@ -321,7 +405,30 @@ export const renderDocumentsPage = async (req, res, next) => {
             order: [['name', 'ASC']],
         });
 
-        const employeesPlain = employees.map((e) => e.get({ plain: true }));
+        // ✅ Add prefill fields for Internship Offer dates (YYYY-MM-DD) per employee
+        const employeesPlain = employees.map((e) => {
+            const emp = e.get({ plain: true });
+
+            const startRaw =
+                emp.internshipStartDate ||
+                emp.internship_start_date ||
+                emp.internStartDate ||
+                emp.empInternStartDate ||
+                null;
+
+            const offerRaw =
+                emp.internshipOfferDate ||
+                emp.internship_offer_date ||
+                emp.internOfferDate ||
+                null;
+
+            return {
+                ...emp,
+                internshipStartDatePrefill: formatDate(startRaw),
+                internshipOfferDatePrefill: formatDate(offerRaw),
+            };
+        });
+
         const documentTypesPlain = documentTypes.map((d) =>
             d.get({ plain: true })
         );
@@ -341,6 +448,7 @@ export const renderDocumentsPage = async (req, res, next) => {
         next(err);
     }
 };
+
 
 /* ------------------------------------------------------------------
    Generate document + PDF + save + send email
@@ -406,8 +514,12 @@ export const generateDocument = async (req, res, next) => {
         if (code === 'INTERNSHIP_CERT' || code === 'INTERNSHIP_CERTIFICATE') {
             const now = new Date();
 
-            const INTERN_NAME = employee.empName;
+            const INTERN_NAME = employee.empName || '';
+
+            // ✅ ROLE from DB internship_designation (with safe fallbacks)
             const INTERNSHIP_ROLE =
+                employee.internship_designation ||
+                employee.internshipDesignation ||
                 employee.internRole ||
                 employee.empDesignation ||
                 'Intern';
@@ -417,61 +529,105 @@ export const generateDocument = async (req, res, next) => {
                 employee.departmentName ||
                 'Internship Department';
 
+            // ✅ START/END from DB internship_start_date / internship_end_date (with fallbacks)
             const startDateRaw =
+                employee.internship_start_date ||
+                employee.internshipStartDate ||
                 employee.internStartDate ||
                 employee.empInternStartDate ||
                 employee.empDoj ||
                 employee.empDateOfJoining ||
                 null;
 
-            const endDateRaw =
+            let endDateRaw =
+                employee.internship_end_date ||
+                employee.internshipEndDate ||
                 employee.internEndDate ||
                 employee.empInternEndDate ||
                 employee.internCompletionDate ||
-                now;
+                null;
 
             const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
-            const endDateObj = endDateRaw ? new Date(endDateRaw) : null;
+            let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            let INTERNSHIP_DURATION = '';
+            // ✅ If end date missing, auto = 6 months from start
+            if (
+                (!endDateObj || isNaN(endDateObj.getTime())) &&
+                startDateObj &&
+                !isNaN(startDateObj.getTime())
+            ) {
+                endDateObj = addMonths(startDateObj, 6);
+                endDateRaw = endDateObj;
+            }
+
+            // ✅ INTERNSHIP_DURATION (default 6 months; calculate if dates exist)
+            let INTERNSHIP_DURATION = '6 months';
             if (
                 startDateObj &&
                 endDateObj &&
-                !isNaN(startDateObj) &&
-                !isNaN(endDateObj) &&
+                !isNaN(startDateObj.getTime()) &&
+                !isNaN(endDateObj.getTime()) &&
                 endDateObj >= startDateObj
             ) {
                 const diffMs = endDateObj - startDateObj;
                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                const months = Math.floor(diffDays / 30);
-                const days = Math.min(diffDays % 30, 30);
-
-                if (months > 0 && days > 0) {
-                    INTERNSHIP_DURATION = `${months} month(s) and ${days} day(s)`;
-                } else if (months > 0) {
-                    INTERNSHIP_DURATION = `${months} month(s)`;
-                } else {
-                    INTERNSHIP_DURATION = `${days} day(s)`;
-                }
-            } else {
-                INTERNSHIP_DURATION =
-                    employee.internDuration ||
-                    employee.internMonths ||
-                    'Internship Period';
+                const monthsCount = Math.max(1, Math.round(diffDays / 30));
+                INTERNSHIP_DURATION = `${monthsCount} months`;
             }
 
-            const INTERNSHIP_DOMAIN =
+            // ✅ INTERNSHIP_DOMAIN:
+            // Default fallback (old behavior) + NEW: fetch from designations.metaData.work_profile
+            let INTERNSHIP_DOMAIN =
                 employee.internDomain ||
                 employee.internProjectDomain ||
                 'Software Development';
+
+            try {
+                // We will match Designation by name = employee's internship role / designation text
+                const desigName = String(INTERNSHIP_ROLE || employee.empDesignation || '').trim();
+
+                if (desigName) {
+                    const where = { name: desigName };
+
+                    // Optional tenant filter if you have businessId on employee (safe, won't break if undefined)
+                    const empBusinessId = employee.businessId || employee.business_id;
+                    if (empBusinessId != null) where.businessId = empBusinessId;
+
+                    const desigRow = await Designation.findOne({
+                        where,
+                        attributes: ['id', 'name', 'metaData'],
+                    });
+
+                    if (desigRow && desigRow.metaData) {
+                        const md = desigRow.metaData;
+                        const metaObj =
+                            typeof md === 'string'
+                                ? (() => {
+                                    try { return JSON.parse(md); } catch { return null; }
+                                })()
+                                : md;
+
+                        const workProfile =
+                            metaObj?.work_profile ||
+                            metaObj?.workProfile ||
+                            '';
+
+                        if (workProfile && String(workProfile).trim()) {
+                            // ✅ Set domain from designation metaData.work_profile
+                            INTERNSHIP_DOMAIN = String(workProfile).trim();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Unable to read designations.metaData.work_profile:', e?.message || e);
+            }
 
             const PERFORMANCE_SUMMARY =
                 employee.internPerformanceSummary ||
                 employee.internRatingText ||
                 'Good';
 
-            const ISSUE_DATE = formatDate(now);
+            const ISSUE_DATE_DISPLAY = formatDateDisplay(now);
             const ISSUE_PLACE =
                 employee.empWorkLoc ||
                 employee.workLocation ||
@@ -490,29 +646,39 @@ export const generateDocument = async (req, res, next) => {
                 employee.internSupervisorDesignation ||
                 'Supervisor';
 
+            // ✅ Use display format because your HTML prints START_DATE / END_DATE directly
+            const START_DATE_DISPLAY = startDateObj
+                ? formatDateDisplay(startDateObj)
+                : formatDateDisplay(startDateRaw);
+
+            const END_DATE_DISPLAY = endDateObj
+                ? formatDateDisplay(endDateObj)
+                : formatDateDisplay(endDateRaw);
+
             templateData = {
                 ...templateData,
                 CERTIFICATE_NO,
-                ISSUE_DATE,
+                ISSUE_DATE: ISSUE_DATE_DISPLAY,
                 ISSUE_PLACE,
 
                 INTERN_NAME,
                 INTERNSHIP_ROLE,
                 DEPARTMENT_NAME,
 
-                START_DATE: formatDate(startDateRaw),
-                END_DATE: formatDate(endDateRaw),
+                START_DATE: START_DATE_DISPLAY,
+                END_DATE: END_DATE_DISPLAY,
                 INTERNSHIP_DURATION,
 
+                // ✅ Now coming from designation.metaData.work_profile (if present)
                 INTERNSHIP_DOMAIN,
                 PERFORMANCE_SUMMARY,
 
                 SUPERVISOR_NAME,
                 SUPERVISOR_DESIGNATION,
             };
+        }
 
-            // 🔹 Salary Slip
-        } else if (code === 'SALARY_SLIP') {
+        else if (code === 'SALARY_SLIP') {
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -527,7 +693,7 @@ export const generateDocument = async (req, res, next) => {
             const specialMonthly = breakup.monthly.specialAllowance;
             const fixedGrossMonthly = breakup.monthly.fixedGross;
 
-            const professionalTaxMonthly = breakup.deductionsMonthly.professionalTax;
+            const professionalTaxMonthlyBase = breakup.deductionsMonthly.professionalTax;
             const pfMonthly = breakup.deductionsMonthly.pfEmployee;
             const esiMonthly = breakup.deductionsMonthly.esiEmployee;
             const incomeTaxMonthly = breakup.deductionsMonthly.incomeTaxTds;
@@ -584,6 +750,36 @@ export const generateDocument = async (req, res, next) => {
                 );
             }
 
+            // ✅ Working days (Sunday is weekly off)
+            const { workingDays } = getMonthWorkingMeta(slipDateObj);
+            const WORK_DAYS = workingDays;
+
+            // ✅ Non Paid Leave from UI (0..28), capped to working days
+            const nonPaidLeaveRaw =
+                req.body.nonPaidLeave ||
+                req.body.NON_PAID_LEAVE ||
+                req.body.non_paid_leave ||
+                0;
+
+            let NON_PAID_LEAVE = Number(nonPaidLeaveRaw);
+            if (isNaN(NON_PAID_LEAVE) || NON_PAID_LEAVE < 0) NON_PAID_LEAVE = 0;
+            if (NON_PAID_LEAVE > 28) NON_PAID_LEAVE = 28;
+            if (WORK_DAYS > 0 && NON_PAID_LEAVE > WORK_DAYS) NON_PAID_LEAVE = WORK_DAYS;
+
+            const DAYS_PAID = Math.max(0, WORK_DAYS - NON_PAID_LEAVE);
+
+            // ✅ Earned salary factor
+            const prorationFactor = WORK_DAYS > 0 ? (DAYS_PAID / WORK_DAYS) : 0;
+
+            // ✅ Earned components (after LOP)
+            const basicEarned = basicMonthly * prorationFactor;
+            const hraEarned = hraMonthly * prorationFactor;
+            const specialEarned = specialMonthly * prorationFactor;
+            const fixedGrossEarned = fixedGrossMonthly * prorationFactor;
+
+            // ✅ LOP deduction (so you can SHOW it in salary slip)
+            const LOP_DEDUCTION = Math.max(0, fixedGrossMonthly - fixedGrossEarned);
+
             const reimbursementRaw =
                 req.body.reimbursement ||
                 req.body.REIMBURSEMENT ||
@@ -592,12 +788,16 @@ export const generateDocument = async (req, res, next) => {
 
             const reimbursement = Number(reimbursementRaw) || 0;
 
-            const totalEarningsMonthly = fixedGrossMonthly + reimbursement;
+            // ✅ Total Earnings: show Actual (full) vs Earned (after LOP)
+            const totalEarningsActualMonthly = fixedGrossMonthly + reimbursement;
+            const totalEarningsEarnedMonthly = fixedGrossEarned + reimbursement;
 
+            // Keep original deductions (same as your system), add LOP as deduction
+            const professionalTaxMonthly = professionalTaxMonthlyBase;
             const totalDeductionsMonthly =
-                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly;
+                professionalTaxMonthly + pfMonthly + esiMonthly + incomeTaxMonthly + LOP_DEDUCTION;
 
-            const netMonthly = totalEarningsMonthly - totalDeductionsMonthly;
+            const netMonthly = totalEarningsActualMonthly - totalDeductionsMonthly;
 
             const bankName =
                 employee.bankName ||
@@ -642,8 +842,11 @@ export const generateDocument = async (req, res, next) => {
                     employee.empDateOfJoining || employee.empDoj
                 ),
                 PAN: employee.empPan || '',
-                DAYS_PAID: employee.daysPaid || 30,
-                WORK_DAYS: employee.workDays || 30,
+
+                // ✅ Auto-calculated based on month (Sunday weekly off) + non-paid leave
+                DAYS_PAID: DAYS_PAID,
+                WORK_DAYS: WORK_DAYS,
+                NON_PAID_LEAVE: NON_PAID_LEAVE,
 
                 BANK_NAME: bankName,
                 BANK_ACCOUNT_LAST4,
@@ -651,9 +854,15 @@ export const generateDocument = async (req, res, next) => {
                 PF_NUMBER: pfNumber,
                 ESI_NUMBER: esiNumber,
 
-                BASIC: basicMonthly.toFixed(2),
-                HRA: hraMonthly.toFixed(2),
-                SPECIAL: specialMonthly.toFixed(2),
+                // ✅ Actual vs Earned amounts
+                BASIC_ACTUAL: basicMonthly.toFixed(2),
+                HRA_ACTUAL: hraMonthly.toFixed(2),
+                SPECIAL_ACTUAL: specialMonthly.toFixed(2),
+
+                BASIC_EARNED: basicEarned.toFixed(2),
+                HRA_EARNED: hraEarned.toFixed(2),
+                SPECIAL_EARNED: specialEarned.toFixed(2),
+
                 REIMBURSEMENT: reimbursement.toFixed(2),
 
                 PF: pfMonthly.toFixed(2),
@@ -661,13 +870,25 @@ export const generateDocument = async (req, res, next) => {
                 TDS: incomeTaxMonthly.toFixed(2),
                 PROFESSIONAL_TAX: professionalTaxMonthly.toFixed(2),
 
-                TOTAL_EARNINGS: totalEarningsMonthly.toFixed(2),
+                // ✅ New deduction line item
+                LOP_DEDUCTION: LOP_DEDUCTION.toFixed(2),
+
+                TOTAL_EARNINGS_ACTUAL: totalEarningsActualMonthly.toFixed(2),
+                TOTAL_EARNINGS_EARNED: totalEarningsEarnedMonthly.toFixed(2),
+
                 TOTAL_DEDUCTIONS: totalDeductionsMonthly.toFixed(2),
                 NET_SALARY: netMonthly.toFixed(2),
+
+                // Backward-safe fields (in case any old template uses them)
+                BASIC: basicEarned.toFixed(2),
+                HRA: hraEarned.toFixed(2),
+                SPECIAL: specialEarned.toFixed(2),
+                TOTAL_EARNINGS: totalEarningsEarnedMonthly.toFixed(2),
             };
 
             // 🔹 Offer Letter
         } else if (code === 'OFFER_LETTER') {
+
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -772,13 +993,23 @@ export const generateDocument = async (req, res, next) => {
                 employee.empBonusAmount ||
                 0;
 
-            const BONUS_AMOUNT = Number(rawBonusAmount) || 0;
+            const BONUS_AMOUNT_NUMERIC = Number(rawBonusAmount) || 0;
+            const BONUS_AMOUNT_DISPLAY = formatIndianCurrency(BONUS_AMOUNT_NUMERIC);
 
-            const BONUS_IN_WORDS =
+            let BONUS_IN_WORDS =
                 req.body.bonusInWords ||
                 req.body.BONUS_IN_WORDS ||
                 employee.empBonusInWords ||
                 '';
+
+            // Auto-generate "Six Thousand" style words if not provided
+            if (!BONUS_IN_WORDS && BONUS_AMOUNT_NUMERIC > 0) {
+                const full = numberToIndianWords(BONUS_AMOUNT_NUMERIC); // "Six Thousand Rupees Only"
+                BONUS_IN_WORDS = full
+                    .replace(/ Rupees Only$/i, '')
+                    .replace(/ Rupees$/i, '')
+                    .trim();
+            }
 
             const creditDateRaw =
                 req.body.creditDate ||
@@ -787,13 +1018,13 @@ export const generateDocument = async (req, res, next) => {
 
             templateData = {
                 ...templateData,
-                DATE: formatDate(new Date()),
+                DATE: formatDateDisplay(new Date()),
                 EMP_ID: employee.empId || employee.id,
                 EMP_NAME: employee.empName,
                 DESIGNATION: employee.empDesignation || '',
-                BONUS_AMOUNT: BONUS_AMOUNT.toFixed(2),
+                BONUS_AMOUNT: BONUS_AMOUNT_DISPLAY,
                 BONUS_IN_WORDS,
-                CREDIT_DATE: formatDate(creditDateRaw),
+                CREDIT_DATE: formatDateDisplay(creditDateRaw),
             };
 
             // 🔹 Relieving & Experience Letter
@@ -810,11 +1041,12 @@ export const generateDocument = async (req, res, next) => {
                 employee.empSeparationDate ||
                 new Date();
 
+            // ✅ Use display format (e.g., "02 June 2025") for the letter
             templateData = {
                 ...templateData,
-                PERIOD_FROM: formatDate(periodFrom),
-                PERIOD_TO: formatDate(periodTo),
-                RELIEVING_DATE: formatDate(periodTo),
+                PERIOD_FROM: formatDateDisplay(periodFrom),
+                PERIOD_TO: formatDateDisplay(periodTo),
+                RELIEVING_DATE: formatDateDisplay(periodTo),
             };
 
             // 🔹 Internship Offer Letter
@@ -823,67 +1055,216 @@ export const generateDocument = async (req, res, next) => {
             code === 'INTERN_OFFER' ||
             code === 'INTERNSHIP_OFFER_LETTER'
         ) {
+            // Prefer UI Internship Start Date, then DB internship_start_date, then older fallbacks
+            const internshipStartFromBody =
+                req.body.internshipStartDate ||
+                req.body.INTERNSHIP_START_DATE ||
+                null;
+
             const startDateRaw =
+                internshipStartFromBody ||
+                employee.internshipStartDate ||
+                employee.internship_start_date ||
                 employee.internStartDate ||
                 employee.empInternStartDate ||
                 employee.empDoj ||
-                employee.empDateOfJoining;
+                employee.empDateOfJoining ||
+                null;
 
-            const endDateRaw =
+            // Internship Offer Date: UI first, then DB, then today
+            const internshipOfferDateFromBody =
+                req.body.internshipOfferDate ||
+                req.body.INTERNSHIP_OFFER_DATE ||
+                null;
+
+            const offerDateRaw =
+                internshipOfferDateFromBody ||
+                employee.internshipOfferDate ||
+                employee.internship_offer_date ||
+                null;
+
+            let endDateRaw =
+                employee.internshipEndDate ||
+                employee.internship_end_date ||
                 employee.internEndDate ||
-                employee.empInternEndDate;
+                employee.empInternEndDate ||
+                null;
 
-            let numberOfMonths = employee.internMonths;
+            const startDateObj = startDateRaw ? new Date(startDateRaw) : null;
+            let endDateObj = endDateRaw ? new Date(endDateRaw) : null;
 
-            if (!numberOfMonths && startDateRaw && endDateRaw) {
-                const start = new Date(startDateRaw);
-                const end = new Date(endDateRaw);
-                if (!isNaN(start) && !isNaN(end) && end > start) {
-                    const diffMs = end - start;
-                    numberOfMonths = Math.max(
-                        1,
-                        Math.round(
-                            diffMs / (1000 * 60 * 60 * 24 * 30)
-                        )
-                    );
-                }
+            // Auto-set end date = 6 months from Internship Start if not provided
+            if (
+                (!endDateObj || isNaN(endDateObj.getTime())) &&
+                startDateObj &&
+                !isNaN(startDateObj.getTime())
+            ) {
+                endDateObj = addMonths(startDateObj, 6);
+                endDateRaw = endDateObj;
             }
 
-            const stipend = Number(
-                employee.internStipend ||
-                employee.empStipend ||
-                0
-            );
-            const stipendInWords =
-                employee.internStipendInWords ||
-                employee.empStipendInWords ||
-                '';
+            // 🔸 SAVE Internship Start / Offer Date + End Date + Designation into employees table
+            try {
+                if (startDateRaw) {
+                    const dbStartDate =
+                        startDateObj && !isNaN(startDateObj.getTime())
+                            ? startDateObj
+                            : new Date(startDateRaw);
+
+                    if (!isNaN(dbStartDate.getTime())) {
+                        employee.internship_start_date = dbStartDate;
+                        employee.internshipStartDate = dbStartDate;
+                    }
+                }
+
+                if (offerDateRaw || internshipOfferDateFromBody) {
+                    const offerDateObj = offerDateRaw ? new Date(offerDateRaw) : new Date();
+                    if (!isNaN(offerDateObj.getTime())) {
+                        employee.internship_offer_date = offerDateObj;
+                        employee.internshipOfferDate = offerDateObj;
+                    }
+                }
+
+                // ✅ Save internship end date (calculated or existing)
+                if (endDateObj && !isNaN(endDateObj.getTime())) {
+                    employee.internship_end_date = endDateObj;
+                    employee.internshipEndDate = endDateObj;
+                }
+
+                // ✅ Only update internship_designation if it's blank/empty
+                const currentInternDesig = (employee.internship_designation || '').trim();
+                if (!currentInternDesig) {
+                    const empDesig = (employee.empDesignation || '').trim();
+                    if (empDesig) {
+                        employee.internship_designation = empDesig;
+                        employee.internshipDesignation = empDesig; // keep camelCase in sync if your model has it
+                    }
+                }
+
+                await employee.save();
+                console.log(
+                    `Internship fields updated for employee ${employee.id}: start=${employee.internship_start_date}, offer=${employee.internship_offer_date}, end=${employee.internship_end_date}, internship_designation=${employee.internship_designation}`
+                );
+            } catch (saveErr) {
+                console.error(
+                    'Error saving internship_start_date / internship_offer_date / internship_end_date / internship_designation for employee:',
+                    saveErr
+                );
+            }
+
+            let numberOfMonthsText = employee.internMonths;
+
+            if (
+                !numberOfMonthsText &&
+                startDateObj &&
+                endDateObj &&
+                !isNaN(startDateObj.getTime()) &&
+                !isNaN(endDateObj.getTime()) &&
+                endDateObj > startDateObj
+            ) {
+                const diffMs = endDateObj - startDateObj;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const monthsCount = Math.max(1, Math.round(diffDays / 30));
+                numberOfMonthsText = `${monthsCount} months`;
+            }
+
+            const stipendAmountRaw = employee.internStipend || employee.empStipend || 0;
+            let monthlyStipend = Number(stipendAmountRaw) || 0;
+
+            // fallback: if not specifically set, derive from CTC
+            if (!monthlyStipend && employee.empCtc) {
+                monthlyStipend = Number(employee.empCtc) / 12;
+            }
+
+            let stipendWords = '';
+            if (monthlyStipend > 0) {
+                const full = numberToIndianWords(monthlyStipend); // "Five Thousand Rupees Only"
+                stipendWords = full
+                    .replace(/ Rupees Only$/i, '')
+                    .replace(/ Rupees$/i, '')
+                    .trim();
+            }
+
+            // ✅ Decide paid vs unpaid internship text
+            const isPaidInternship = monthlyStipend > 0;
+
+            let stipendText1 = '';
+            let stipendText2 = '';
+
+            if (isPaidInternship) {
+                stipendText1 = `You will be paid a monthly stipend of ₹${monthlyStipend.toFixed(
+                    2
+                )} (Rupees ${stipendWords} only), subject to satisfactory attendance and performance.`;
+                stipendText2 =
+                    'The stipend will be paid on a monthly basis, after the end of each month, directly to your bank account, subject to applicable deductions, if any.';
+            } else {
+                stipendText1 =
+                    'This is an unpaid internship for learning and training purposes. You will not be paid any stipend for this internship.';
+                stipendText2 =
+                    'All other terms and conditions of the internship will remain as described in this letter.';
+            }
+
+            const supervisorName = employee.supervisorName || 'Mukesh Kumhar';
+            const supervisorDesignation =
+                employee.supervisorDesignation || 'Reporting Manager';
+
+            // Display-friendly dates
+            const startDateDisplay = startDateObj
+                ? formatDateDisplay(startDateObj)
+                : formatDateDisplay(startDateRaw);
+
+            const endDateDisplay = endDateObj
+                ? formatDateDisplay(endDateObj)
+                : formatDateDisplay(endDateRaw);
+
+            const letterDateObj = offerDateRaw ? new Date(offerDateRaw) : new Date();
+            const letterDateDisplay = formatDateDisplay(letterDateObj);
 
             templateData = {
                 ...templateData,
                 FullName: employee.empName,
                 designation: employee.empDesignation || '',
                 Designation: employee.empDesignation || '',
+
+                // Raw ISO-style dates
                 StartDate: formatDate(startDateRaw),
                 EndDate: formatDate(endDateRaw),
-                NumberofMonths: numberOfMonths || '',
-                DepartmentName: employee.empDepartment || '',
-                SupervisorName: employee.supervisorName || '',
-                SupervisorDesignation:
-                    employee.supervisorDesignation || '',
-                WorkingHours:
-                    employee.workingHours || '10:00 AM to 6:00 PM',
-                Amount: (employee.empCtc / 12).toFixed(2),
-                AmountinWords: stipendInWords,
-            };
 
-            // 🔹 PPO Letter
-        } else if (
+                // Display-friendly dates for the template
+                StartDateDisplay: startDateDisplay,
+                EndDateDisplay: endDateDisplay,
+                LetterDate: letterDateDisplay,
+                INTERNSHIP_OFFER_DATE: formatDate(letterDateObj),
+
+                NumberofMonths: numberOfMonthsText || '',
+                DepartmentName: employee.empDepartment || '',
+                SupervisorName: supervisorName,
+                SupervisorDesignation: supervisorDesignation,
+                WorkingHours: employee.workingHours || '10:00 AM to 6:00 PM',
+
+                // Amount fields (for paid internships; blank for unpaid)
+                Amount: isPaidInternship ? monthlyStipend.toFixed(2) : '',
+                AmountinWords: isPaidInternship ? stipendWords : '',
+
+                // New dynamic stipend text used in HTML template
+                StipendText1: stipendText1,
+                StipendText2: stipendText2,
+            };
+        }
+ else if (
             code === 'PPO' ||
             code === 'PPO_LETTER' ||
             code === 'PPO_OFFER' ||
             code === 'PRE_PLACEMENT_OFFER'
         ) {
+            // ------------------------------
+            // ✅ PPO: pull JoiningDate + Internship fields from DB
+            // ✅ IssueDate = current date
+            // ✅ PPO_REF_NO = generated
+            // ------------------------------
+
+            const now = new Date();
+
             const ctcAnnual = Number(
                 employee.empCtc ||
                 employee.ctcAnnual ||
@@ -893,22 +1274,96 @@ export const generateDocument = async (req, res, next) => {
             const breakup = generateSalaryBreakup(ctcAnnual);
             const monthlyFixed = breakup.monthly.fixedGross;
 
+            // Joining date for PPO: from DB (employees.empDateOfJoining) by your requirement
+            // (fallback to today only if null)
+            const joiningDateRaw =
+                employee.empDateOfJoining ||
+                employee.empDoj ||
+                employee.empFullTimeJoiningDate ||
+                employee.fullTimeJoiningDate ||
+                null;
+
+            const joiningDateFormatted = formatDate(joiningDateRaw || now);
+
+            // Internship fields from DB
+            const internshipStartRaw =
+                employee.internship_start_date ||
+                employee.internshipStartDate ||
+                null;
+
+            const internshipEndRaw =
+                employee.internship_end_date ||
+                employee.internshipEndDate ||
+                null;
+
+            const internshipDesignationRaw =
+                employee.internship_designation ||
+                employee.internshipDesignation ||
+                '';
+
+            // Auto-calc internship end date if missing but start exists (optional safety)
+            let internshipEndObj = internshipEndRaw ? new Date(internshipEndRaw) : null;
+            const internshipStartObj = internshipStartRaw ? new Date(internshipStartRaw) : null;
+
+            if (
+                (!internshipEndObj || isNaN(internshipEndObj.getTime())) &&
+                internshipStartObj &&
+                !isNaN(internshipStartObj.getTime())
+            ) {
+                internshipEndObj = addMonths(internshipStartObj, 6);
+            }
+
+            const internshipStartFormatted = formatDate(internshipStartRaw);
+            const internshipEndFormatted = formatDate(
+                internshipEndObj && !isNaN(internshipEndObj.getTime())
+                    ? internshipEndObj
+                    : internshipEndRaw
+            );
+
+            // IssueDate: current date (display style used in your HTML meta)
+            const issueDateDisplay = formatDateDisplay(now);
+
+            // PPO Ref No (generated)
+            const yyyymmdd = formatDate(now).replace(/-/g, '');
+            const ppoRefNo = `PPO-${employee.empId || employee.id}-${yyyymmdd}`;
+
+            const ctcInWords = ctcAnnual > 0
+                ? numberToIndianWords(ctcAnnual)
+                : '';
+
+            const monthlySalaryWords = monthlyFixed > 0
+                ? numberToIndianWords(monthlyFixed)
+                : '';
+
             templateData = {
                 ...templateData,
                 Name: employee.empName,
                 'Name': employee.empName,
+
+                // PPO designation should be current empDesignation (since you said PPO designation changes)
                 Designation: employee.empDesignation || '',
                 'Designation': employee.empDesignation || '',
+
                 EmployeeType:
                     employee.empType ||
                     employee.employeeType ||
-                    'Full Time',
+                    'Full-time',
+
                 CTC: ctcAnnual.toFixed(2),
                 'CTC': ctcAnnual.toFixed(2),
-                JoiningDate: formatDate(
-                    employee.empDoj || employee.empDateOfJoining
-                ),
+                CTC_IN_WORDS: ctcInWords,
+
+                JoiningDate: joiningDateFormatted,
+
                 MonthlySalary: monthlyFixed.toFixed(2),
+                MONTHLY_SALARY_IN_WORDS: monthlySalaryWords,
+
+                // ✅ New fields for PPO HTML
+                PPO_REF_NO: ppoRefNo,
+                IssueDate: issueDateDisplay,
+                InternshipDesignation: internshipDesignationRaw || '',
+                InternshipStartDate: internshipStartFormatted,
+                InternshipEndDate: internshipEndFormatted,
             };
 
             // 🔹 Probation Letter
@@ -958,13 +1413,13 @@ export const generateDocument = async (req, res, next) => {
 
             templateData = {
                 ...templateData,
-                LETTER_DATE: formatDate(new Date()),
+                LETTER_DATE: formatDateDisplay(new Date()),
                 EMP_NAME: employee.empName,
                 DESIGNATION: employee.empDesignation || '',
                 WORK_LOCATION: workLocation,
-                JOINING_DATE: formatDate(joiningRaw),
+                JOINING_DATE: formatDateDisplay(joiningRaw),
                 PROBATION_PERIOD: probationPeriod,
-                PROBATION_END_DATE: formatDate(probationEndRaw),
+                PROBATION_END_DATE: formatDateDisplay(probationEndRaw),
                 REPORTING_MANAGER_NAME: reportingManagerName,
                 REPORTING_MANAGER_DESIGNATION: reportingManagerDesignation,
                 WORKING_HOURS: workingHours,
@@ -995,15 +1450,36 @@ export const generateDocument = async (req, res, next) => {
                 employee.empIncrementEffectiveDate ||
                 new Date();
 
+            // Indian formatted amounts
+            const formattedCurrentMonthly = formatIndianCurrency(currentMonthly);
+            const formattedRevisedMonthly = formatIndianCurrency(revisedMonthly);
+            const formattedRevisedAnnualCtc = formatIndianCurrency(revisedAnnualCtc);
+
+            // Optional: amounts in words (without trailing "Rupees Only")
+            const currentMonthlyWords = numberToIndianWords(currentMonthly)
+                .replace(/ Rupees Only$/i, '')
+                .trim();
+            const revisedMonthlyWords = numberToIndianWords(revisedMonthly)
+                .replace(/ Rupees Only$/i, '')
+                .trim();
+            const revisedAnnualWords = numberToIndianWords(revisedAnnualCtc)
+                .replace(/ Rupees Only$/i, '')
+                .trim();
+
             templateData = {
                 ...templateData,
-                OFFER_DATE: formatDate(new Date()),
+                OFFER_DATE: formatDateDisplay(new Date()),
                 EMP_NAME: employee.empName,
                 DESIGNATION: employee.empDesignation || '',
-                EFFECTIVE_DATE: formatDate(effectiveDateRaw),
-                AMOUNT: currentMonthly.toFixed(2),
-                REVISED_AMOUNT: revisedMonthly.toFixed(2),
-                REVISED_ANNUAL_CTC: revisedAnnualCtc.toFixed(2),
+                EFFECTIVE_DATE: formatDateDisplay(effectiveDateRaw),
+                AMOUNT: formattedCurrentMonthly,
+                REVISED_AMOUNT: formattedRevisedMonthly,
+                REVISED_ANNUAL_CTC: formattedRevisedAnnualCtc,
+
+                // Extra fields if you want to show amount in words in the HTML
+                CURRENT_MONTHLY_IN_WORDS: currentMonthlyWords,
+                REVISED_MONTHLY_IN_WORDS: revisedMonthlyWords,
+                REVISED_ANNUAL_CTC_IN_WORDS: revisedAnnualWords,
             };
 
             // 🔹 Full & Final
@@ -1123,11 +1599,11 @@ export const generateDocument = async (req, res, next) => {
                 employee.fnfPaymentDate ||
                 settlementDateRaw;
 
-            const yyyymmdd =
+            const yyyymmdd2 =
                 formatDate(settlementDateRaw).replace(/-/g, '');
             const SETTLEMENT_REF =
                 employee.settlementRef ||
-                `FNF-${EMP_ID}-${yyyymmdd}`;
+                `FNF-${EMP_ID}-${yyyymmdd2}`;
 
             templateData = {
                 ...templateData,
@@ -1259,7 +1735,7 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           ⭐ Generate PDF
+        ⭐ Generate PDF
         -------------------------------------------------------------- */
         const pdfBuffer = await generatePdfFromTemplate(
             docType.templateHtml,
@@ -1285,9 +1761,9 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           📧 Send email directly from this controller
-           - For ALL document types (no attachment)
-           - For SALARY_SLIP: email must succeed, otherwise do NOT download PDF
+        📧 Send email directly from this controller
+        - For ALL document types (no attachment)
+        - For SALARY_SLIP: email must succeed, otherwise do NOT download PDF
         -------------------------------------------------------------- */
         let emailSent = true;
         let emailAttempted = false;
@@ -1300,7 +1776,7 @@ export const generateDocument = async (req, res, next) => {
                 const docLabel = docType.name || docType.code || 'Document';
 
                 let subject = `${docLabel} generated for ${empName}`;
-                let html = `<p>Hi ${empName},</p>`;
+                let html = `<p>Dear ${empName},</p>`;
 
                 if (code === 'SALARY_SLIP') {
                     const monthText =
@@ -1310,12 +1786,14 @@ export const generateDocument = async (req, res, next) => {
                     subject = `Salary Slip - ${monthText}`;
                     html += `<p>Your salary slip for <strong>${monthText}</strong> has been generated.</p>`;
                 } else {
-                    html += `<p>Your <strong>${docLabel}</strong> has been generated.</p>`;
+                    html += `<p>Congratulations! We're pleased to extend to you an <strong>${docLabel}</strong> with Seecog Softwares Pvt. Ltd. 🎉</p>`;
                 }
+                html += `
+<p>Please find attached your ${docLabel} for your review and records. This is an automated notification from our HR system confirming that the document has been generated and securely stored in our records.</p>`;
 
                 html += `
-<p>This is an automated notification from ${companyName} HR system. The document has been generated and stored in our records.</p>
-<p>Regards,<br/>HR Team<br/>${companyName}</p>
+<p>We're excited to have you join us and look forward to seeing your contributions and growth during the internship. If you have any questions regarding the offer, joining formalities, or any part of the letter, please feel free to reply to this email—we'll be happy to assist you.</p>
+<p>Thanks & Regards<br/>HR Team<br/><br>Contact : 7348820668</br>${companyName}<br>Web : http://seecogsoftwares.com</br><br>T+91 8147614116</br><br></br><br>Prestige Cube, Site No. 26, Laskar Hosur Road, Adugodi, Koramangala, Bengaluru, Karnataka 560030</br><br>Cloud | Mobility | Social Media | Automation | BI/DW | Machine Learning | SaaS | DevOps |HealthcareIT | Salesforce (SFDC) | Azure | Frontend (UI) | Digital Transformation |Software Engineering Services</br></p>
                 `;
 
                 emailAttempted = true;
@@ -1353,7 +1831,7 @@ export const generateDocument = async (req, res, next) => {
         }
 
         /* --------------------------------------------------------------
-           Return PDF to browser
+        Return PDF to browser
         -------------------------------------------------------------- */
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(

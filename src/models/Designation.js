@@ -24,6 +24,10 @@ export const Designation = sequelize.define('Designation', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    metaData:{
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
     status: {
         type: DataTypes.ENUM('ACTIVE', 'INACTIVE'),
         allowNull: false,

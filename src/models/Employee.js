@@ -440,6 +440,22 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    internship_start_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    internship_end_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    internship_offer_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    internship_designation: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
 
     // --- Exit details (for offboarding) ---
     exitType: {

@@ -60,10 +60,16 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Employee</label>
-                  <select name="employeeId" class="form-select" required>
+                  <select name="employeeId" id="employeeSelect" class="form-select" required>
                     <option value="">Select employee</option>
                     {{#each employees}}
-                      <option value="{{id}}">{{empName}} ({{empId}})</option>
+                      <option
+                        value="{{id}}"
+                        data-internship-start-date="{{internshipStartDatePrefill}}"
+                        data-internship-offer-date="{{internshipOfferDatePrefill}}"
+                      >
+                        {{empName}} ({{empId}})
+                      </option>
                     {{/each}}
                   </select>
                 </div>
@@ -166,6 +172,44 @@
                     placeholder="Enter reimbursement amount"
                   />
                 </div>
+
+                {{!-- ✅ NEW: Non Paid Leave (0 to 28) --}}
+                <div class="col-md-6" id="nonPaidLeaveWrapper" style="display: none;">
+                  <label class="form-label" for="nonPaidLeave">
+                    Non Paid Leave (LOP Days)
+                  </label>
+                  <select class="form-select" id="nonPaidLeave" name="nonPaidLeave">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                  </select>
+                </div>
               </div>
 
               {{!-- Offer Letter extra fields --}}
@@ -181,6 +225,35 @@
                     name="joiningDate"
                   />
                 </div>
+              </div>
+
+              {{!-- Internship Offer extra fields --}}
+              <div class="row g-3 mt-3">
+                <div class="col-md-6" id="internshipOfferDateWrapper" style="display: none;">
+                  <label class="form-label" for="internshipOfferDate">
+                    Internship Offer Date
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="internshipOfferDate"
+                    name="internshipOfferDate"
+                  />
+                </div>
+                
+                <div class="col-md-6" id="internshipStartWrapper" style="display: none;">
+                  <label class="form-label" for="internshipStartDate">
+                    Internship Start Date
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="internshipStartDate"
+                    name="internshipStartDate"
+                  />
+                </div>
+
+                
               </div>
 
               <div class="mt-4 d-flex justify-content-end">
@@ -204,6 +277,8 @@
 <script>
   (function () {
     const docTypeSelect = document.getElementById('documentTypeSelect');
+    const employeeSelect = document.getElementById('employeeSelect');
+
     const bonusFieldWrapper = document.getElementById('bonusFieldWrapper');
     const incrementFieldWrapper = document.getElementById('incrementFieldWrapper');
     const bonusAmountInput = document.getElementById('bonusAmount');
@@ -214,8 +289,18 @@
     const salaryMonthInput = document.getElementById('salaryMonth');
     const reimbursementInput = document.getElementById('reimbursement');
 
+    // ✅ NEW: Non Paid Leave
+    const nonPaidLeaveWrapper = document.getElementById('nonPaidLeaveWrapper');
+    const nonPaidLeaveInput = document.getElementById('nonPaidLeave');
+
     const offerJoiningDateWrapper = document.getElementById('offerJoiningDateWrapper');
     const offerJoiningDateInput = document.getElementById('offerJoiningDate');
+
+    // Internship Offer fields
+    const internshipStartWrapper = document.getElementById('internshipStartWrapper');
+    const internshipOfferDateWrapper = document.getElementById('internshipOfferDateWrapper');
+    const internshipStartInput = document.getElementById('internshipStartDate');
+    const internshipOfferDateInput = document.getElementById('internshipOfferDate');
 
     function resetDynamicFields() {
       bonusFieldWrapper.style.display = 'none';
@@ -223,12 +308,50 @@
       salaryMonthWrapper.style.display = 'none';
       reimbursementWrapper.style.display = 'none';
       offerJoiningDateWrapper.style.display = 'none';
+      internshipStartWrapper.style.display = 'none';
+      internshipOfferDateWrapper.style.display = 'none';
+
+      // ✅ NEW
+      if (nonPaidLeaveWrapper) nonPaidLeaveWrapper.style.display = 'none';
 
       if (bonusAmountInput) bonusAmountInput.value = '';
       if (incrementAmountInput) incrementAmountInput.value = '';
       if (salaryMonthInput) salaryMonthInput.selectedIndex = 0;
       if (reimbursementInput) reimbursementInput.value = '';
       if (offerJoiningDateInput) offerJoiningDateInput.value = '';
+      if (internshipStartInput) internshipStartInput.value = '';
+      if (internshipOfferDateInput) internshipOfferDateInput.value = '';
+
+      // ✅ NEW
+      if (nonPaidLeaveInput) nonPaidLeaveInput.selectedIndex = 0;
+    }
+
+    function isInternshipOfferSelected() {
+      const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+      if (!selectedOption) return false;
+
+      const rawCode = selectedOption.getAttribute('data-code') || '';
+      const code = rawCode.toUpperCase();
+
+      return (
+        code === 'INTERNSHIP_OFFER' ||
+        code === 'INTERN_OFFER' ||
+        code === 'INTERNSHIP_OFFER_LETTER'
+      );
+    }
+
+    function prefillInternshipDatesFromEmployee() {
+      if (!employeeSelect || !internshipStartInput || !internshipOfferDateInput) return;
+
+      const empOpt = employeeSelect.options[employeeSelect.selectedIndex];
+      if (!empOpt) return;
+
+      const dbStart = empOpt.getAttribute('data-internship-start-date') || '';
+      const dbOffer = empOpt.getAttribute('data-internship-offer-date') || '';
+
+      // If DB has values, set them
+      if (dbStart) internshipStartInput.value = dbStart;
+      if (dbOffer) internshipOfferDateInput.value = dbOffer;
     }
 
     function handleDocTypeChange() {
@@ -254,18 +377,41 @@
       if (code === 'SALARY_SLIP') {
         salaryMonthWrapper.style.display = 'block';
         reimbursementWrapper.style.display = 'block';
+
+        // ✅ NEW
+        if (nonPaidLeaveWrapper) nonPaidLeaveWrapper.style.display = 'block';
       }
 
       // Show Offer Letter fields for OFFER_LETTER
       if (code === 'OFFER_LETTER') {
         offerJoiningDateWrapper.style.display = 'block';
       }
+
+      // Show Internship Offer fields
+      if (isInternshipOfferSelected()) {
+        internshipStartWrapper.style.display = 'block';
+        internshipOfferDateWrapper.style.display = 'block';
+
+        // ✅ Prefill from DB (employee option dataset)
+        prefillInternshipDatesFromEmployee();
+      }
+    }
+
+    function handleEmployeeChange() {
+      // Only prefill when Internship Offer is selected
+      if (isInternshipOfferSelected()) {
+        prefillInternshipDatesFromEmployee();
+      }
     }
 
     if (docTypeSelect) {
       docTypeSelect.addEventListener('change', handleDocTypeChange);
-      // run once on page load if some option is pre-selected
       handleDocTypeChange();
+    }
+
+    if (employeeSelect) {
+      employeeSelect.addEventListener('change', handleEmployeeChange);
+      handleEmployeeChange();
     }
   })();
 </script>
