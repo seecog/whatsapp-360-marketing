@@ -8,21 +8,26 @@ import { buildTokenPair, hashToken } from '../../utils/token.util.js';
 export default async function register(req, res) {
     try {
         const { firstName, lastName, phoneNo, email, password } = req.body || {};
+        const normalizedEmail = String(email || '').trim().toLowerCase();
         if (!firstName || !lastName || !phoneNo || !email || !password) {
-            return res.status(404).json({ message: 'firstName, lastName, phoneNo, email and password required' });
+            return res
+                .status(400)
+                .json(new ApiResponse(400, null, 'firstName, lastName, phoneNo, email and password required'));
         }
 
-        console.log('registering user', email);
+        console.log('registering user', normalizedEmail);
 
-        const exists = await User.findOne({ where: { email } });
-        if (exists) return res.status(404).json({ message: 'User already exists' });
+        const exists = await User.findOne({ where: { email: normalizedEmail } });
+        if (exists) {
+            return res.status(409).json(new ApiResponse(409, null, 'User already exists'));
+        }
 
         const user = await User.create({
             avatarUrl: null,
             firstName, 
             lastName,
             phoneNo,
-            email,
+            email: normalizedEmail,
             password,
         });
 
@@ -55,6 +60,15 @@ export default async function register(req, res) {
             )
     } catch (e) {
         console.error('register error', e);
-        return res.status(500).json({ message: 'internal_error' });
+        // Race condition safety: if two requests register same email concurrently,
+        // DB unique constraint is the source of truth.
+        if (e && (e.name === 'SequelizeUniqueConstraintError' || e.name === 'SequelizeValidationError')) {
+            const msg =
+                e.name === 'SequelizeUniqueConstraintError'
+                    ? 'User already exists'
+                    : 'Invalid user data';
+            return res.status(409).json(new ApiResponse(409, null, msg));
+        }
+        return res.status(500).json(new ApiResponse(500, null, 'internal_error'));
     }
 }

@@ -1,0 +1,487 @@
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 px-0">
+      {{> sidebar}}
+    </div>
+
+    <!-- Main -->
+    <div class="col-md-9 col-lg-10 px-0">
+      <div class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <div class="page-title" style="font-size: 28px;">Departments</div>
+            <div class="page-subtitle">Search, sort and manage departments with pagination.</div>
+          </div>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal" onclick="openCreateDepartment()">
+            <i class="fa-solid fa-circle-plus me-2"></i>Add Department
+          </button>
+        </div>
+
+        <div class="section-card mb-4">
+          <div class="section-header">
+            <h5><i class="fa-solid fa-building-columns"></i> Departments</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="input-group input-group-sm" style="width: 280px;">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input id="qInput" type="text" class="form-control" placeholder="Search name/code" />
+              </div>
+              <select id="pageSizeSelect" class="form-select form-select-sm" style="width: 120px;">
+                <option value="10">10 / page</option>
+                <option value="20" selected>20 / page</option>
+                <option value="50">50 / page</option>
+              </select>
+              <select id="businessSelect" class="form-select form-select-sm" style="width: 220px;">
+                <option value="">All Businesses</option>
+              </select>
+              <button class="btn btn-sm btn-outline-secondary" onclick="resetFilters()">
+                <i class="fas fa-rotate-left me-1"></i>Reset
+              </button>
+            </div>
+          </div>
+
+          <div class="p-3">
+            <div class="table-responsive">
+              <table class="table table-premium align-middle mb-0">
+                <thead>
+                  <tr class="text-muted" style="font-size:12px; letter-spacing:.06em; text-transform:uppercase;">
+                    <th class="th-sort" onclick="setSort('businessId')">
+                      <i class="fa-solid fa-building me-1"></i> Business <span class="sort-ind" id="sortBusinessId"></span>
+                    </th>
+                    <th class="th-sort" onclick="setSort('name')">
+                      <i class="fa-solid fa-building-columns me-1"></i> Name <span class="sort-ind" id="sortName"></span>
+                    </th>
+                    <th class="th-sort" onclick="setSort('code')">
+                      <i class="fa-solid fa-hashtag me-1"></i> Code <span class="sort-ind" id="sortCode"></span>
+                    </th>
+                    <th><i class="fa-regular fa-note-sticky me-1"></i> Description</th>
+                    <th class="th-sort" onclick="setSort('status')">
+                      <i class="fa-solid fa-toggle-on me-1"></i> Status <span class="sort-ind" id="sortStatus"></span>
+                    </th>
+                    <th class="th-sort" onclick="setSort('createdAt')">
+                      <i class="fa-regular fa-calendar me-1"></i> Created <span class="sort-ind" id="sortCreatedAt"></span>
+                    </th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="deptTbody">
+                  <tr>
+                    <td colspan="7" class="text-center py-4">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+              <div class="text-muted" id="tableMeta">—</div>
+              <nav>
+                <ul class="pagination pagination-sm mb-0" id="pager"></ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade" id="departmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="departmentModalTitle"><i class="fa-solid fa-building-columns me-2 text-primary"></i>Add Department</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalAlert"></div>
+        <form id="departmentForm">
+          <input type="hidden" id="departmentId" />
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Business</label>
+              <select id="formBusinessId" class="form-select" required>
+                <option value="">Select business</option>
+              </select>
+              <small class="text-muted">Department is unique per business (name/code).</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select id="formStatus" class="form-select">
+                <option value="ACTIVE" selected>ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Name *</label>
+              <input id="formName" class="form-control" placeholder="e.g., HR" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Code</label>
+              <input id="formCode" class="form-control" placeholder="e.g., HR" />
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label">Description</label>
+              <textarea id="formDescription" class="form-control" rows="3" placeholder="Optional description"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveBtn" onclick="submitDepartment()">
+          <i class="fa-solid fa-floppy-disk me-2"></i>Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-trash-can me-2 text-danger"></i>Delete Department</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning mb-0">
+          Are you sure you want to delete <strong id="deleteName">this department</strong>?
+        </div>
+        <input type="hidden" id="deleteId" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+          <i class="fa-solid fa-trash-can me-2"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let state = {
+    page: 1,
+    pageSize: 20,
+    q: '',
+    sortBy: 'createdAt',
+    sortDir: 'DESC',
+    businessId: '',
+    total: 0,
+    totalPages: 1,
+    items: [],
+    businessesMap: {}
+  };
+
+  const els = {
+    tbody: document.getElementById('deptTbody'),
+    pager: document.getElementById('pager'),
+    meta: document.getElementById('tableMeta'),
+    q: document.getElementById('qInput'),
+    pageSize: document.getElementById('pageSizeSelect'),
+    business: document.getElementById('businessSelect'),
+    sortBusinessId: document.getElementById('sortBusinessId'),
+    sortName: document.getElementById('sortName'),
+    sortCode: document.getElementById('sortCode'),
+    sortStatus: document.getElementById('sortStatus'),
+    sortCreatedAt: document.getElementById('sortCreatedAt'),
+  };
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/'/g, "\\'");
+  }
+  function fmtDate(s) {
+    try { return new Date(s).toLocaleDateString(); } catch { return '-'; }
+  }
+
+  function badgeStatus(status) {
+    if (status === 'ACTIVE') return '<span class="badge bg-success-subtle text-success border">ACTIVE</span>';
+    return '<span class="badge bg-secondary-subtle text-secondary border">INACTIVE</span>';
+  }
+
+  function setSort(col) {
+    if (state.sortBy === col) state.sortDir = state.sortDir === 'ASC' ? 'DESC' : 'ASC';
+    else { state.sortBy = col; state.sortDir = 'ASC'; }
+    state.page = 1;
+    renderSortIndicators();
+    loadDepartments();
+  }
+
+  function renderSortIndicators() {
+    const map = {
+      businessId: els.sortBusinessId,
+      name: els.sortName,
+      code: els.sortCode,
+      status: els.sortStatus,
+      createdAt: els.sortCreatedAt,
+    };
+    Object.values(map).forEach(el => el.textContent = '');
+    const active = map[state.sortBy];
+    if (active) active.textContent = state.sortDir === 'ASC' ? ' ▲' : ' ▼';
+  }
+
+  function renderPager() {
+    const totalPages = state.totalPages || 1;
+    const page = state.page;
+    const mk = (label, p, disabled, active) => `
+      <li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}">
+        <a class="page-link" href="#" onclick="gotoPage(${p}); return false;">${label}</a>
+      </li>
+    `;
+    let html = '';
+    html += mk('«', 1, page <= 1, false);
+    html += mk('‹', page - 1, page <= 1, false);
+    const start = Math.max(1, page - 2);
+    const end = Math.min(totalPages, page + 2);
+    for (let p = start; p <= end; p++) html += mk(String(p), p, false, p === page);
+    html += mk('›', page + 1, page >= totalPages, false);
+    html += mk('»', totalPages, page >= totalPages, false);
+    els.pager.innerHTML = html;
+  }
+
+  function gotoPage(p) {
+    const totalPages = state.totalPages || 1;
+    const next = Math.min(Math.max(1, p), totalPages);
+    if (next === state.page) return;
+    state.page = next;
+    loadDepartments();
+  }
+
+  function renderMeta() {
+    const total = state.total || 0;
+    const start = total === 0 ? 0 : ((state.page - 1) * state.pageSize + 1);
+    const end = Math.min(state.page * state.pageSize, total);
+    els.meta.textContent = `Showing ${start}-${end} of ${total}`;
+  }
+
+  function renderTable() {
+    const items = state.items || [];
+    if (!items.length) {
+      els.tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No departments found</td></tr>`;
+      return;
+    }
+    els.tbody.innerHTML = items.map(d => `
+      <tr>
+        <td class="text-muted">${escapeHtml(d.business?.businessName || state.businessesMap[String(d.businessId)] || ('Business #' + d.businessId))}</td>
+        <td class="fw-semibold">${escapeHtml(d.name || '')}</td>
+        <td class="text-muted">${escapeHtml(d.code || '-')}</td>
+        <td class="text-muted">${escapeHtml((d.description || '').slice(0, 80))}${(d.description && d.description.length > 80) ? '…' : ''}</td>
+        <td>${badgeStatus(d.status)}</td>
+        <td class="text-muted">${fmtDate(d.createdAt)}</td>
+        <td class="text-end">
+          <button class="btn btn-icon edit me-1" onclick="openEditDepartment('${escapeAttr(d.id)}')" title="Edit">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="btn btn-icon delete" onclick="openDelete('${escapeAttr(d.id)}', '${escapeAttr(d.name || '')}')" title="Delete">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadBusinesses() {
+    try {
+      const businesses = await apiCall('/business', { method: 'GET' });
+      const list = Array.isArray(businesses) ? businesses : (businesses?.items || []);
+      state.businessesMap = {};
+      list.forEach((b) => {
+        state.businessesMap[String(b.id)] = String(b.businessName || b.name || ('Business #' + b.id));
+      });
+      const opts = list.map(b => `<option value="${b.id}">${escapeHtml(state.businessesMap[String(b.id)])}</option>`).join('');
+      els.business.innerHTML = `<option value="">All Businesses</option>` + opts;
+
+      const formBusiness = document.getElementById('formBusinessId');
+      formBusiness.innerHTML = `<option value="">Select business</option>` + opts;
+    } catch (e) {
+      console.warn('Could not load businesses', e);
+    }
+  }
+
+  async function loadDepartments() {
+    els.tbody.innerHTML = `
+      <tr><td colspan="7" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+      </td></tr>
+    `;
+
+    const params = new URLSearchParams();
+    params.set('page', String(state.page));
+    params.set('limit', String(state.pageSize));
+    params.set('sortBy', state.sortBy);
+    params.set('sortDir', state.sortDir);
+    params.set('includeBusiness', 'true');
+    if (state.q) params.set('q', state.q);
+    if (state.businessId) params.set('businessId', state.businessId);
+
+    try {
+      const res = await apiCall(`/departments?${params.toString()}`, { method: 'GET' });
+      const rows = res.data || [];
+      const meta = res.meta || {};
+      state.items = rows;
+      state.total = meta.total || 0;
+      state.totalPages = meta.totalPages || 1;
+      renderTable();
+      renderMeta();
+      renderPager();
+    } catch (e) {
+      console.error('loadDepartments failed', e);
+      els.tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Failed to load departments</td></tr>`;
+      els.meta.textContent = '—';
+      els.pager.innerHTML = '';
+    }
+  }
+
+  function resetFilters() {
+    state.q = '';
+    state.page = 1;
+    state.pageSize = Number(els.pageSize.value) || 20;
+    state.sortBy = 'createdAt';
+    state.sortDir = 'DESC';
+    state.businessId = els.business.value || state.businessId || '';
+    els.q.value = '';
+    renderSortIndicators();
+    loadDepartments();
+  }
+
+  function showModalAlert(msg, type) {
+    document.getElementById('modalAlert').innerHTML = `<div class="alert alert-${type}">${escapeHtml(msg)}</div>`;
+  }
+
+  function openCreateDepartment() {
+    document.getElementById('departmentModalTitle').innerHTML = '<i class="fa-solid fa-building-columns me-2 text-primary"></i>Add Department';
+    document.getElementById('departmentId').value = '';
+    document.getElementById('formName').value = '';
+    document.getElementById('formCode').value = '';
+    document.getElementById('formDescription').value = '';
+    document.getElementById('formStatus').value = 'ACTIVE';
+    document.getElementById('modalAlert').innerHTML = '';
+    // Prefer current filter; otherwise pick the first available business_toggle option
+    const preferred = state.businessId || els.business.value || '';
+    const formBiz = document.getElementById('formBusinessId');
+    if (preferred) {
+      formBiz.value = preferred;
+    } else if (formBiz && formBiz.options && formBiz.options.length > 1) {
+      formBiz.selectedIndex = 1;
+    }
+  }
+
+  async function openEditDepartment(id) {
+    document.getElementById('modalAlert').innerHTML = '';
+    document.getElementById('departmentModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Update Department';
+    const modal = new bootstrap.Modal(document.getElementById('departmentModal'));
+    modal.show();
+    try {
+      const res = await apiCall(`/departments/${encodeURIComponent(id)}`, { method: 'GET' });
+      const row = res.data || res;
+      document.getElementById('departmentId').value = row.id;
+      document.getElementById('formBusinessId').value = String(row.businessId || '');
+      document.getElementById('formName').value = row.name || '';
+      document.getElementById('formCode').value = row.code || '';
+      document.getElementById('formDescription').value = row.description || '';
+      document.getElementById('formStatus').value = row.status || 'ACTIVE';
+    } catch (e) {
+      document.getElementById('modalAlert').innerHTML = `<div class="alert alert-danger">Failed to load department</div>`;
+    }
+  }
+
+  async function submitDepartment() {
+    const id = document.getElementById('departmentId').value;
+    const businessId = Number(document.getElementById('formBusinessId').value);
+    const name = document.getElementById('formName').value.trim();
+    const code = document.getElementById('formCode').value.trim();
+    const description = document.getElementById('formDescription').value.trim();
+    const status = document.getElementById('formStatus').value;
+
+    if (!businessId) return showModalAlert('Business is required', 'danger');
+    if (!name) return showModalAlert('Name is required', 'danger');
+
+    const payload = {
+      businessId,
+      name,
+      code: code || null,
+      description: description || null,
+      status,
+    };
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    try {
+      if (!id) {
+        await apiCall('/departments', { method: 'POST', body: JSON.stringify(payload) });
+      } else {
+        await apiCall(`/departments/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) });
+      }
+      bootstrap.Modal.getInstance(document.getElementById('departmentModal')).hide();
+      state.businessId = String(payload.businessId);
+      els.business.value = state.businessId;
+      state.page = 1;
+      await loadDepartments();
+    } catch (e) {
+      showModalAlert(e?.message || 'Failed to save', 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Save';
+    }
+  }
+
+  function openDelete(id, name) {
+    document.getElementById('deleteId').value = String(id);
+    document.getElementById('deleteName').textContent = name || 'this department';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  }
+
+  async function confirmDelete() {
+    const id = document.getElementById('deleteId').value;
+    try {
+      await apiCall(`/departments/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+      await loadDepartments();
+    } catch (e) {
+      alert(e?.message || 'Failed to delete');
+    }
+  }
+
+  let qTimer = null;
+  els.q.addEventListener('input', () => {
+    if (qTimer) clearTimeout(qTimer);
+    qTimer = setTimeout(() => {
+      state.q = els.q.value.trim();
+      state.page = 1;
+      loadDepartments();
+    }, 350);
+  });
+
+  els.pageSize.addEventListener('change', () => {
+    state.pageSize = Number(els.pageSize.value) || 20;
+    state.page = 1;
+    loadDepartments();
+  });
+
+  els.business.addEventListener('change', () => {
+    state.businessId = els.business.value || '';
+    state.page = 1;
+    loadDepartments();
+  });
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    renderSortIndicators();
+    await loadBusinesses();
+    await loadDepartments();
+  });
+</script>
+
+

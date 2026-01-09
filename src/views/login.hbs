@@ -1,37 +1,70 @@
-<div class="container-fluid vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-  <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
-    <div class="card-body p-4">
-      <div class="text-center mb-4">
-        <h1 class="h3 mb-2">📱 WhatsApp Manager</h1>
-        <p class="text-muted">Bulk messaging made simple</p>
+<div class="auth-shell">
+  <div class="auth-decor" aria-hidden="true">
+    <!-- HR-themed floating icons (decor only) -->
+    <div class="auth-float c1 s1 d1" style="left: 6%; top: 12%;"><i class="fa-solid fa-user-tie"></i></div>
+    <div class="auth-float c2 s2 d2" style="left: 12%; top: 42%;"><i class="fa-solid fa-users-gear"></i></div>
+    <div class="auth-float c3 s3 d3" style="left: 6%; top: 62%;"><i class="fa-solid fa-id-card-clip"></i></div>
+    <div class="auth-float c4 s2 d4" style="left: 18%; top: 82%;"><i class="fa-solid fa-briefcase"></i></div>
+    <div class="auth-float c2 s3 d1" style="right: 12%; top: 18%;"><i class="fa-solid fa-building-user"></i></div>
+    <div class="auth-float c3 s2 d2" style="right: 18%; top: 38%;"><i class="fa-solid fa-calendar-check"></i></div>
+    <div class="auth-float c5 s3 d3" style="right: 12%; top: 62%;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+    <div class="auth-float c1 s2 d4" style="right: 6%; top: 58%;"><i class="fa-solid fa-clipboard-check"></i></div>
+    <div class="auth-float c5 s2 d2" style="right: 14%; top: 82%;"><i class="fa-solid fa-sitemap"></i></div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-card-body">
+      <div class="text-center mb-3">
+        <div class="auth-mark mx-auto" style="border-radius: 999px; width: 56px; height: 56px;">HR</div>
+        <div class="mt-3">
+          <p class="auth-title" style="font-size: 22px;">mini-hr-360</p>
+          <p class="auth-subtitle">Professional HR management</p>
+        </div>
       </div>
 
       <div id="alertContainer"></div>
 
-      <form id="loginForm">
+      <form id="loginForm" class="auth-form">
         <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <input type="email" class="form-control" id="email" name="email" required>
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+          </div>
         </div>
 
         <div class="mb-3">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" class="form-control" id="password" name="password" required>
+          <div class="d-flex align-items-center justify-content-between">
+            <label for="password" class="form-label mb-0">Password</label>
+            <a class="auth-link" href="#" onclick="return false;" title="Coming soon">Forgot Password?</a>
+          </div>
+          <div class="input-group mt-2">
+            <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+          </div>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
+        <button type="submit" class="btn auth-primary w-100 mb-2" id="loginBtn">
           <span id="loginText">Login</span>
           <span id="loadingText" class="d-none">
             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             Logging in...
           </span>
         </button>
-      </form>
 
-      <div class="text-center">
-        <p class="mb-0">Don't have an account? <a href="/register" class="text-decoration-none">Register here</a></p>
-        <button type="button" class="btn btn-link btn-sm mt-2" onclick="clearStorage()">Clear Storage & Refresh</button>
-      </div>
+        <div class="auth-or">Or continue with</div>
+        <div class="auth-social" aria-label="Social login options (UI only)">
+          <a href="#" onclick="return false;" title="Google (UI only)"><i class="fa-brands fa-google"></i></a>
+          <a href="#" onclick="return false;" title="Instagram (UI only)"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" onclick="return false;" title="Facebook (UI only)"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" onclick="return false;" title="GitHub (UI only)"><i class="fa-brands fa-github"></i></a>
+          <a href="#" onclick="return false;" title="LinkedIn (UI only)"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="#" onclick="return false;" title="X (UI only)"><i class="fa-brands fa-x-twitter"></i></a>
+        </div>
+      </form>
+    </div>
+    <div class="auth-footer">
+      <div>Don’t have an account? <a href="/register">Create Account</a></div>
     </div>
   </div>
 </div>
@@ -123,11 +156,4 @@
       // Intentionally not auto-redirecting here
     }
   });
-  
-  function clearStorage() {
-    localStorage.clear();
-    sessionStorage.clear();
-    console.log('Storage cleared, refreshing page...');
-    window.location.reload();
-  }
 </script>

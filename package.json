@@ -25,7 +25,8 @@
   "scripts": {
     "dev": "DOTENV_CONFIG_PATH=./property.env nodemon -r dotenv/config --experimental-json-modules src/index.js",
     "start": "DOTENV_CONFIG_PATH=./property.env node -r dotenv/config --experimental-json-modules src/index.js",
-    "reset-db": "DOTENV_CONFIG_PATH=./property.env node -r dotenv/config --experimental-json-modules reset-database.js"
+    "reset-db": "DOTENV_CONFIG_PATH=./property.env node -r dotenv/config --experimental-json-modules reset-database.js",
+    "update-departments-business": "node scripts/update-departments-business.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

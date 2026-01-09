@@ -8,8 +8,11 @@ import DocumentType from '../models/DocumentType.js';
 export const renderEmailTemplatesPage = async (req, res, next) => {
     try {
         res.render('emailTemplates', {
+            layout: 'main',
             user: req.user,
             title: 'Email Templates',
+            active: 'emailTemplates',
+            activeGroup: 'workspace',
         });
     } catch (err) {
         next(err);

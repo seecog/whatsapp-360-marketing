@@ -15,11 +15,8 @@ const { default: connectDB } = await import('./db/index.js');
 
 await connectDB();
 
-const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () => {
-//     console.log('Server is running on port:', PORT);
-// });
+const PORT = Number.parseInt(process.env.PORT, 10) || 3007;
 
-app.listen(3002, "0.0.0.0", () => {
-  console.log("Server running on port 3002");
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });

@@ -443,6 +443,8 @@ export const renderDocumentsPage = async (req, res, next) => {
             layout: 'main',
             title: 'Documents',
             user,
+            active: 'documents',
+            activeGroup: 'workspace',
             employees: employeesPlain,
             documentTypes: documentTypesPlain,
         });

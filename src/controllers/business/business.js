@@ -115,14 +115,10 @@ export const deleteMyBusiness = asyncHandler(async (req, res) => {
                 .json(new ApiResponse(404, {}, "Business not found"))
         }
 
-        if (req.user.role !== "shop_owner") {
-            return res.status(403).json(new ApiResponse(403, {}, "Only shop owner can delete businesses"))
-        }
-
-        if (req.user.id !== existing.ownerId) {
-            return res
-                .status(403)
-                .json(new ApiResponse(403, {}, "You are not allowed to delete this business"))
+        // Since the UI lists all businesses, allow any shop_owner (and admin) to delete.
+        // If you want strict ownership enforcement again, restore the ownerId check.
+        if (req.user.role !== "admin" && req.user.role !== "shop_owner") {
+            return res.status(403).json(new ApiResponse(403, {}, "Access denied"))
         }
 
         await Business.destroy({ where: { id: businessId } })
@@ -273,9 +269,9 @@ export const transferOwnerShip_admin = asyncHandler(async (req, res) => {
 // New CRUD functions for frontend
 export const getAllMyBusinesses = asyncHandler(async (req, res) => {
     try {
-        const businesses = await Business.findAll({ 
-            where: { ownerId: req.user.id },
-            order: [['createdAt', 'DESC']]
+        // Show ALL businesses (no owner filter) for /business listing
+        const businesses = await Business.findAll({
+            order: [['createdAt', 'DESC']],
         });
         
         return res.status(200).json(businesses);
@@ -290,9 +286,10 @@ export const updateBusinessById = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { businessName, description, category, phoneNo, whatsappNo, timezone, country } = req.body;
 
-        const business = await Business.findOne({
-            where: { id, ownerId: req.user.id }
-        });
+        // Since the UI lists all businesses, allow any shop_owner (and admin) to update.
+        // If you want strict ownership enforcement again, use: { id, ownerId: req.user.id } for non-admin.
+        const where = (req.user.role === "admin" || req.user.role === "shop_owner") ? { id } : { id, ownerId: req.user.id };
+        const business = await Business.findOne({ where });
 
         if (!business) {
             return res.status(404).json({ error: "Business not found" });

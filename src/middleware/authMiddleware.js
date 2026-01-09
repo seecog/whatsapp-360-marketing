@@ -4,18 +4,32 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { User } from "../models/User.js"
 import { decodeExpUnix, verifyAccessToken } from "../utils/token.util.js"
 
+function shouldRedirectToLogin(req) {
+    // Only redirect for real browser page navigations to HTML pages.
+    // Fetch/XHR often sends Accept: */* which previously caused unwanted redirects.
+    const accept = String(req.headers?.accept || "");
+    const wantsHtml = accept.includes("text/html");
+    const isApiPath =
+        String(req.originalUrl || "").startsWith("/api/") ||
+        String(req.originalUrl || "").startsWith("/api/v1/");
+    const isGet = req.method === "GET";
+    const isXHR = req.xhr || String(req.headers?.["x-requested-with"] || "").toLowerCase() === "xmlhttprequest";
+
+    return isGet && wantsHtml && !isApiPath && !isXHR;
+}
+
 export const verifyUser = asyncHandler(async (req, res, next) => {
     try {
         const token = req.cookies?.accessToken || req.header
             ("Authorization")?.replace(/^Bearer\s+/i, "").trim();
 
         if (!token) {
-            // Check if this is a frontend request (HTML) or API request (JSON)
-            if (req.accepts('html')) {
-                return res.redirect('/login');
-            } else {
-                throw new ApiError(401, "Unauthorized request")
-            }
+            if (shouldRedirectToLogin(req)) return res.redirect('/login');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication failed',
+                error: 'Unauthorized request',
+            });
         }
 
         const decoded = verifyAccessToken(token)
@@ -26,12 +40,12 @@ export const verifyUser = asyncHandler(async (req, res, next) => {
         });
 
         if (!user) {
-            // Check if this is a frontend request (HTML) or API request (JSON)
-            if (req.accepts('html')) {
-                return res.redirect('/login');
-            } else {
-                throw new ApiError(401, "Invalid Access Token")
-            }
+            if (shouldRedirectToLogin(req)) return res.redirect('/login');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication failed',
+                error: 'Invalid access token',
+            });
         }
 
         req.user = user;
@@ -40,19 +54,16 @@ export const verifyUser = asyncHandler(async (req, res, next) => {
     } catch (error) {
         console.log("Auth error:", error.message);
         
-        // Check if this is a frontend request (HTML) or API request (JSON)
-        if (req.accepts('html')) {
-            // Clear the invalid token cookie
+        if (shouldRedirectToLogin(req)) {
             res.clearCookie('accessToken');
             return res.redirect('/login');
-        } else {
-            // For API requests, return JSON error
-            res.status(401).json({ 
-                success: false,
-                message: 'Authentication failed', 
-                error: error.message 
-            });
         }
+
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication failed',
+            error: error.message,
+        });
     }
 })
 
@@ -62,12 +73,12 @@ export const verifyOwner = asyncHandler(async (req, res, next) => {
             ("Authorization")?.replace(/^Bearer\s+/i, "").trim();
 
         if (!token) {
-            // Check if this is a frontend request (HTML) or API request (JSON)
-            if (req.accepts('html')) {
-                return res.redirect('/login');
-            } else {
-                throw new ApiError(401, "Unauthorized request")
-            }
+            if (shouldRedirectToLogin(req)) return res.redirect('/login');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication failed',
+                error: 'Unauthorized request',
+            });
         }
 
         const decoded = verifyAccessToken(token)
@@ -78,21 +89,21 @@ export const verifyOwner = asyncHandler(async (req, res, next) => {
         });
 
         if (!owner) {
-            // Check if this is a frontend request (HTML) or API request (JSON)
-            if (req.accepts('html')) {
-                return res.redirect('/login');
-            } else {
-                throw new ApiError(401, "Invalid Access Token")
-            }
+            if (shouldRedirectToLogin(req)) return res.redirect('/login');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication failed',
+                error: 'Invalid access token',
+            });
         }
 
         if (owner.role !== "shop_owner") {
-            // Check if this is a frontend request (HTML) or API request (JSON)
-            if (req.accepts('html')) {
-                return res.redirect('/login');
-            } else {
-                throw new ApiError(403, "Access denied, only shop owner can access")
-            }
+            if (shouldRedirectToLogin(req)) return res.redirect('/login');
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied',
+                error: 'only shop owner can access',
+            });
         }
 
         req.owner = owner;
@@ -101,18 +112,15 @@ export const verifyOwner = asyncHandler(async (req, res, next) => {
     } catch (error) {
         console.log("Auth error:", error.message);
         
-        // Check if this is a frontend request (HTML) or API request (JSON)
-        if (req.accepts('html')) {
-            // Clear the invalid token cookie
+        if (shouldRedirectToLogin(req)) {
             res.clearCookie('accessToken');
             return res.redirect('/login');
-        } else {
-            // For API requests, return JSON error
-            res.status(401).json({ 
-                success: false,
-                message: 'Authentication failed', 
-                error: error.message 
-            });
         }
+
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication failed',
+            error: error.message,
+        });
     }
 });

@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { engine } from 'express-handlebars';
+import handlebars from 'handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { setupSwagger } from './swagger.js';
@@ -13,6 +14,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Ensure helpers exist on the exact Handlebars instance used by express-handlebars
+handlebars.registerHelper('eq', (a, b) => a === b);
+
 // Avoid favicon spam
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
@@ -20,6 +24,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.engine(
     'hbs',
     engine({
+        handlebars,
         extname: '.hbs',
         defaultLayout: 'main',
         layoutsDir: path.join(__dirname, 'views/layouts'),
@@ -58,7 +63,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(
     cors({
         origin: [
-            'http://localhost:3002',
+            'http://localhost:3007',
             'http://localhost:5173',
             'https://bulk-whatsapp-manager-backend.onrender.com',
         ],
@@ -102,32 +107,42 @@ import { renderEmailTemplatesPage } from './controllers/emailTemplate.controller
 // ---------- Frontend pages ----------
 app.get('/', (req, res) => res.redirect('/login'));
 
-app.get('/login', (req, res) => res.render('login', { title: 'Login' }));
-app.get('/register', (req, res) => res.render('register', { title: 'Register' }));
+app.get('/login', (req, res) => res.render('login', { title: 'mini-hr-360', pageClass: 'auth' }));
+app.get('/register', (req, res) => res.render('register', { title: 'mini-hr-360', pageClass: 'auth' }));
 
 app.get('/dashboard', verifyUser, (req, res) => {
     const user = { firstName: req.user.firstName, lastName: req.user.lastName };
-    res.render('dashboard', { title: 'Dashboard', user });
+    res.render('dashboard', { title: 'Dashboard', user, active: 'dashboard', activeGroup: 'workspace' });
 });
 
 app.get('/customers', verifyUser, (req, res) => {
     const user = { firstName: req.user.firstName, lastName: req.user.lastName };
-    res.render('customers', { title: 'Customers', user });
+    res.render('customers', { title: 'Customers', user, active: 'customers', activeGroup: 'workspace' });
 });
 
 app.get('/business', verifyUser, (req, res) => {
     const user = { firstName: req.user.firstName, lastName: req.user.lastName };
-    res.render('business', { title: 'Business', user });
+    res.render('business', { title: 'Business', user, active: 'business', activeGroup: 'workspace' });
 });
 
 app.get('/templates', verifyUser, (req, res) => {
     const user = { firstName: req.user.firstName, lastName: req.user.lastName };
-    res.render('templates', { title: 'Templates', user });
+    res.render('templates', { title: 'Templates', user, active: 'templates', activeGroup: 'workspace' });
 });
 
 app.get('/campaigns', verifyUser, (req, res) => {
     const user = { firstName: req.user.firstName, lastName: req.user.lastName };
-    res.render('campaigns', { title: 'Campaigns', user });
+    res.render('campaigns', { title: 'Campaigns', user, active: 'campaigns', activeGroup: 'workspace' });
+});
+
+app.get('/designations', verifyUser, (req, res) => {
+    const user = { firstName: req.user.firstName, lastName: req.user.lastName };
+    res.render('designations', { title: 'Designations', user, active: 'designations', activeGroup: 'workspace' });
+});
+
+app.get('/departments', verifyUser, (req, res) => {
+    const user = { firstName: req.user.firstName, lastName: req.user.lastName };
+    res.render('departments', { title: 'Departments', user, active: 'departments', activeGroup: 'workspace' });
 });
 
 app.get('/clear-storage', (req, res) => {

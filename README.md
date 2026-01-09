@@ -48,8 +48,8 @@ CREATE DATABASE BulkWhatsappMessenger;
 4. Create `.env` file with the following variables:
 ```env
 # Server Configuration
-PORT=3000
-CORS_ORIGIN=http://localhost:3000
+PORT=3007
+CORS_ORIGIN=http://localhost:3007
 NODE_ENV=development
 
 # Database Configuration
@@ -87,8 +87,8 @@ npm start
 ## API Documentation
 
 Once the server is running, visit:
-- **Swagger UI**: `http://localhost:3000/api-docs`
-- **Health Check**: `http://localhost:3000/api/v1/health`
+- **Swagger UI**: `http://localhost:3007/api-docs`
+- **Health Check**: `http://localhost:3007/api/v1/health`
 
 ### Authentication in Swagger
 
@@ -142,7 +142,7 @@ The application uses the following MySQL tables:
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `PORT` | Server port | No (default: 3000) |
+| `PORT` | Server port | No (default: 3007) |
 | `CORS_ORIGIN` | CORS allowed origin | Yes |
 | `DB_NAME` | MySQL database name | Yes |
 | `JWT_ACCESS_SECRET` | JWT access token secret | Yes |

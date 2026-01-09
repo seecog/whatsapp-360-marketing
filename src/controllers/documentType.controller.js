@@ -18,6 +18,8 @@ export const renderDocumentTypesPage = async (req, res, next) => {
             layout: 'main',
             title: 'Document Types',
             user,
+            active: 'documentTypes',
+            activeGroup: 'workspace',
             documentTypes,
         });
     } catch (err) {

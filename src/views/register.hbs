@@ -1,44 +1,89 @@
-<div class="container-fluid vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-    <div class="card shadow-lg" style="width: 100%; max-width: 500px;">
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <h1 class="h3 mb-2">📱 WhatsApp Manager</h1>
-                <p class="text-muted">Create your account</p>
+<div class="auth-shell">
+    <div class="auth-card" style="max-width: 520px;">
+        <div class="auth-card-body">
+            <div class="auth-brand">
+                <div class="auth-mark">HR</div>
+                <div class="text-start">
+                    <p class="auth-title">mini-hr-360</p>
+                    <p class="auth-subtitle">Create Account</p>
+                </div>
             </div>
 
             <div id="alertContainer"></div>
 
-            <form id="registerForm">
+            <form id="registerForm" class="auth-form">
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="firstName" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                            <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter first name" required>
+                        </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="lastName" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                            <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter last name" required>
+                        </div>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="phoneNo" class="form-label">Phone Number</label>
                     <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
                         <span class="input-group-text">+91</span>
                         <input type="tel" class="form-control" id="phoneNo" name="phoneNo" placeholder="9999999999" maxlength="10" pattern="[0-9]{10}" required>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <small id="emailChecking" class="text-muted d-none">
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            Checking…
+                        </small>
+                        <small id="emailOk" class="text-success d-none" aria-live="polite">
+                            <i class="fa-solid fa-circle-check me-1"></i>
+                            Available
+                        </small>
+                        <small id="emailHelp" class="d-none"></small>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Create a strong password" required>
+                    </div>
+                    <div class="pw-row">
+                        <div class="pw-meter" aria-hidden="true"><span id="pwMeter"></span></div>
+                        <span id="pwBadge" class="pw-badge d-none"></span>
+                    </div>
+                    <ul id="pwHints" class="pw-hints"></ul>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mb-3" id="registerBtn">
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Re-Type Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+                    </div>
+                    <div class="pw-row">
+                        <div class="pw-meter" aria-hidden="true"><span id="cpwMeter"></span></div>
+                        <span id="cpwBadge" class="pw-badge d-none"></span>
+                    </div>
+                    <small id="pwMatchMsg" class="d-none"></small>
+                </div>
+
+                <button type="submit" class="btn auth-primary w-100 mb-3" id="registerBtn">
                     <span id="registerText">Register</span>
                     <span id="loadingText" class="d-none">
                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -46,10 +91,9 @@
                     </span>
                 </button>
             </form>
-
-            <div class="text-center">
-                <p class="mb-0">Already have an account? <a href="/login" class="text-decoration-none">Login here</a></p>
-            </div>
+        </div>
+        <div class="auth-footer">
+            <div>Already have an account? <a href="/login">Log in</a></div>
         </div>
     </div>
 </div>
@@ -76,6 +120,9 @@
         e.preventDefault();
 
         const phoneNumber = document.getElementById('phoneNo').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const emailValue = String(document.getElementById('email').value || '').trim().toLowerCase();
 
         // Validate phone number
         if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
@@ -83,12 +130,32 @@
             return;
         }
 
+        // Validate password match
+        if (!password || password !== confirmPassword) {
+            showAlert('Passwords do not match', 'danger');
+            return;
+        }
+
+        // Validate password strength threshold (at least Medium)
+        const pwEval = evaluatePassword(password, emailValue);
+        if (!(pwEval.level === 'medium' || pwEval.level === 'strong')) {
+            showAlert('Password strength must be at least Medium. Please improve your password.', 'danger');
+            return;
+        }
+
+        // Ensure email uniqueness check has succeeded before allowing registration
+        const ok = await ensureEmailValidated();
+        if (!ok) {
+            showAlert('Please confirm your email is available before registering.', 'danger');
+            return;
+        }
+
         const formData = {
             firstName: document.getElementById('firstName').value,
             lastName: document.getElementById('lastName').value,
             phoneNo: '+91' + phoneNumber,
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value
+            email: emailValue,
+            password
         };
 
         const registerBtn = document.getElementById('registerBtn');
@@ -140,7 +207,7 @@
             }
         } catch (error) {
             console.error('Registration error:', error);
-            showAlert(`Network error. Please try again. ${error}`, 'danger');
+            showAlert(error?.message || 'Registration failed. Please try again.', 'danger');
         } finally {
             // Hide loading
             registerBtn.disabled = false;
@@ -148,6 +215,307 @@
             loadingText.classList.add('d-none');
         }
     });
+
+    // ---------- Real-time email uniqueness check ----------
+    const emailInput = document.getElementById('email');
+    const registerBtn = document.getElementById('registerBtn');
+    const emailChecking = document.getElementById('emailChecking');
+    const emailOk = document.getElementById('emailOk');
+    const emailHelp = document.getElementById('emailHelp');
+
+    // State: 'unknown' | 'checking' | 'available' | 'exists' | 'error'
+    let emailState = 'unknown';
+    let lastCheckedEmail = '';
+    let debounceTimer = null;
+
+    // ---------- Password strength + match ----------
+    const pwInput = document.getElementById('password');
+    const cpwInput = document.getElementById('confirmPassword');
+    const pwMeter = document.getElementById('pwMeter');
+    const cpwMeter = document.getElementById('cpwMeter');
+    const pwBadge = document.getElementById('pwBadge');
+    const cpwBadge = document.getElementById('cpwBadge');
+    const pwHints = document.getElementById('pwHints');
+    const pwMatchMsg = document.getElementById('pwMatchMsg');
+
+    // State: 'unknown' | 'weak' | 'medium' | 'strong'
+    let pwStrengthState = 'unknown';
+    let cpwStrengthState = 'unknown';
+    let pwMatchState = 'unknown'; // 'unknown' | 'match' | 'mismatch'
+
+    function updateRegisterEnabled() {
+        // Must have: email validated available, password >= medium, confirm matches
+        const emailOkState = (emailState === 'available');
+        const pwOkState = (pwStrengthState === 'medium' || pwStrengthState === 'strong');
+        const matchOkState = (pwMatchState === 'match');
+        registerBtn.disabled = !(emailOkState && pwOkState && matchOkState);
+    }
+
+    function setEmailUi({ state, message, tone }) {
+        emailState = state;
+
+        // loading indicator
+        if (state === 'checking') {
+            emailChecking.classList.remove('d-none');
+        } else {
+            emailChecking.classList.add('d-none');
+        }
+
+        // available indicator
+        if (state === 'available') {
+            emailOk.classList.remove('d-none');
+        } else {
+            emailOk.classList.add('d-none');
+        }
+
+        // message
+        if (message) {
+            emailHelp.classList.remove('d-none');
+            emailHelp.textContent = message;
+            emailHelp.className = `d-block small ${tone || 'text-muted'}`;
+        } else {
+            emailHelp.classList.add('d-none');
+            emailHelp.textContent = '';
+            emailHelp.className = 'd-none';
+        }
+
+        // Disable register until a successful "available" validation occurs
+        updateRegisterEnabled();
+    }
+
+    function emailLooksValid(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    async function validateEmailNow() {
+        const email = String(emailInput.value || '').trim().toLowerCase();
+
+        if (!email) {
+            lastCheckedEmail = '';
+            setEmailUi({ state: 'unknown', message: null });
+            return false;
+        }
+
+        if (!emailLooksValid(email)) {
+            lastCheckedEmail = '';
+            setEmailUi({ state: 'error', message: 'Please enter a valid email address.', tone: 'text-danger' });
+            return false;
+        }
+
+        // Avoid re-checking same email if already checked successfully
+        if (email === lastCheckedEmail && (emailState === 'available' || emailState === 'exists')) {
+            registerBtn.disabled = (emailState !== 'available');
+            return emailState === 'available';
+        }
+
+        setEmailUi({ state: 'checking', message: null });
+
+        try {
+            const data = await apiCall(`/users/check-email?email=${encodeURIComponent(email)}`, {
+                method: 'GET',
+                skipAuth: true
+            });
+
+            const available = !!(data && data.data && data.data.available);
+            lastCheckedEmail = email;
+
+            if (!available) {
+                setEmailUi({
+                    state: 'exists',
+                    message: 'This email is already registered. Please log in or use a different email.',
+                    tone: 'text-danger'
+                });
+                return false;
+            }
+
+            setEmailUi({ state: 'available', message: null });
+            return true;
+        } catch (err) {
+            console.error('Email check failed', err);
+            lastCheckedEmail = '';
+            setEmailUi({
+                state: 'error',
+                message: 'Could not verify email right now. Please check your connection and try again.',
+                tone: 'text-warning'
+            });
+            return false;
+        }
+    }
+
+    async function ensureEmailValidated() {
+        // Must be "available" based on the current input value
+        const email = String(emailInput.value || '').trim().toLowerCase();
+        if (emailState === 'available' && email === lastCheckedEmail) return true;
+        return await validateEmailNow();
+    }
+
+    // Start disabled until we validate successfully
+    setEmailUi({ state: 'unknown', message: null });
+
+    emailInput.addEventListener('blur', () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        validateEmailNow();
+    });
+
+    emailInput.addEventListener('input', () => {
+        // Any edit invalidates previous validation
+        lastCheckedEmail = '';
+        if (debounceTimer) clearTimeout(debounceTimer);
+        setEmailUi({ state: 'checking', message: null });
+        debounceTimer = setTimeout(() => {
+            validateEmailNow();
+        }, 450);
+    });
+
+    function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+    }
+
+    function evaluatePassword(pw, contextEmail) {
+        const password = String(pw || '');
+        const email = String(contextEmail || '').trim().toLowerCase();
+        const localPart = email.includes('@') ? email.split('@')[0] : '';
+
+        const hints = [];
+        let score = 0;
+
+        // Length
+        if (password.length >= 8) score += 1; else hints.push('Use 8+ characters');
+        if (password.length >= 12) score += 1;
+
+        // Character classes
+        const hasLower = /[a-z]/.test(password);
+        const hasUpper = /[A-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+        if (hasLower) score += 1; else hints.push('Add a lowercase letter');
+        if (hasUpper) score += 1; else hints.push('Add an uppercase letter');
+        if (hasNumber) score += 1; else hints.push('Add a number');
+        if (hasSpecial) score += 1; else hints.push('Add a special character');
+
+        // Common patterns (penalties)
+        const lowered = password.toLowerCase();
+        const common = ['password', 'qwerty', 'admin', 'welcome', 'letmein', 'iloveyou', '123456', '12345678'];
+        const hasCommon = common.some(w => lowered.includes(w));
+        if (hasCommon) {
+            score -= 2;
+            hints.push('Avoid common words like “password”, “qwerty”, or “123456”');
+        }
+        if (localPart && localPart.length >= 3 && lowered.includes(localPart)) {
+            score -= 2;
+            hints.push('Avoid using parts of your email in the password');
+        }
+        if (/^(.)\1{5,}$/.test(password)) {
+            score -= 2;
+            hints.push('Avoid repeated characters (e.g., “aaaaaa”)');
+        }
+        if (/0123|1234|2345|3456|4567|5678|6789/.test(lowered)) {
+            score -= 1;
+            hints.push('Avoid sequential numbers (e.g., “1234”)');
+        }
+        if (/abcd|bcde|cdef|defg|efgh|fghi|ghij|hijk|ijkl|jklm|klmn|lmno|mnop|nopq|opqr|pqrs|qrst|rstu|stuv|tuvw|uvwx|vwxy|wxyz/.test(lowered)) {
+            score -= 1;
+            hints.push('Avoid sequential letters (e.g., “abcd”)');
+        }
+
+        score = clamp(score, 0, 7);
+
+        let level = 'weak';
+        if (score >= 5) level = 'strong';
+        else if (score >= 3) level = 'medium';
+
+        return { score, level, hints };
+    }
+
+    function setMeterAndBadge({ meterEl, badgeEl, level, score, labelPrefix }) {
+        const pct = level === 'strong' ? 100 : level === 'medium' ? 66 : 33;
+        meterEl.style.width = `${pct}%`;
+
+        let color = '#ef4444'; // red
+        if (level === 'medium') color = '#f59e0b'; // amber
+        if (level === 'strong') color = '#22c55e'; // green
+        meterEl.style.backgroundColor = color;
+
+        const text = `${labelPrefix ? labelPrefix + ': ' : ''}${level.toUpperCase()}`;
+        badgeEl.textContent = text;
+        badgeEl.classList.remove('d-none', 'weak', 'medium', 'strong');
+        badgeEl.classList.add(level);
+    }
+
+    function renderHints(hints) {
+        pwHints.innerHTML = '';
+        // Keep it helpful but short; show up to 4 hints.
+        const top = hints.slice(0, 4);
+        if (top.length === 0) {
+            pwHints.innerHTML = '<li>Great — your password meets the recommended complexity.</li>';
+            return;
+        }
+        top.forEach(h => {
+            const li = document.createElement('li');
+            li.textContent = h;
+            pwHints.appendChild(li);
+        });
+    }
+
+    function updatePasswordUi() {
+        const emailVal = String(emailInput.value || '').trim().toLowerCase();
+        const pw = pwInput.value || '';
+        const cpw = cpwInput.value || '';
+
+        // Password strength
+        const pwEval = evaluatePassword(pw, emailVal);
+        pwStrengthState = pwEval.level;
+        setMeterAndBadge({ meterEl: pwMeter, badgeEl: pwBadge, level: pwEval.level, score: pwEval.score, labelPrefix: 'Strength' });
+        renderHints(pwEval.hints);
+
+        // Confirm strength (same rules)
+        const cpwEval = evaluatePassword(cpw, emailVal);
+        cpwStrengthState = cpwEval.level;
+        setMeterAndBadge({ meterEl: cpwMeter, badgeEl: cpwBadge, level: cpwEval.level, score: cpwEval.score, labelPrefix: 'Strength' });
+
+        // Match
+        if (!cpw) {
+            pwMatchState = 'unknown';
+            pwMatchMsg.className = 'd-none';
+            pwMatchMsg.textContent = '';
+        } else if (pw === cpw) {
+            pwMatchState = 'match';
+            pwMatchMsg.className = 'd-block small text-success';
+            pwMatchMsg.textContent = 'Passwords match';
+        } else {
+            pwMatchState = 'mismatch';
+            pwMatchMsg.className = 'd-block small text-danger';
+            pwMatchMsg.textContent = 'Passwords do not match';
+        }
+
+        // If password empty, hide badges/meters and show baseline hints
+        if (!pw) {
+            pwStrengthState = 'unknown';
+            pwBadge.className = 'pw-badge d-none';
+            pwMeter.style.width = '0%';
+            pwMeter.style.backgroundColor = 'transparent';
+            pwHints.innerHTML = '<li>Use 8+ characters, one uppercase, one number, one special character.</li>';
+        }
+        if (!cpw) {
+            cpwStrengthState = 'unknown';
+            cpwBadge.className = 'pw-badge d-none';
+            cpwMeter.style.width = '0%';
+            cpwMeter.style.backgroundColor = 'transparent';
+        }
+
+        updateRegisterEnabled();
+    }
+
+    pwInput.addEventListener('input', updatePasswordUi);
+    cpwInput.addEventListener('input', updatePasswordUi);
+    // If email changes, strength scoring may change (email-local-part check)
+    emailInput.addEventListener('input', () => {
+        updatePasswordUi();
+    });
+
+    // initialize hints + disabled state
+    updatePasswordUi();
 
     // If already logged in, go to dashboard
     if (localStorage.getItem('accessToken')) {
